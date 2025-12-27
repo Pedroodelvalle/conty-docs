@@ -45,23 +45,4 @@ aside img[src*="icons"] {
   top: -0.0625rem !important;
 }
 
-/* Help Center cover page styling - simple centered hero */
-body[data-page="/help-center/index"] h1,
-body[data-page="/help-center"] h1:first-child {
-  font-size: 3rem !important;
-  font-weight: 700 !important;
-  margin: 2rem auto 1.5rem auto !important;
-  line-height: 1.2 !important;
-  text-align: center !important;
-  max-width: 800px !important;
-}
-
-body[data-page="/help-center/index"] > main > article > p:first-of-type,
-body[data-page="/help-center"] > main > article > p:first-of-type {
-  font-size: 1.25rem !important;
-  text-align: center !important;
-  margin: 0 auto 3rem auto !important;
-  max-width: 600px !important;
-  color: #6b7280 !important;
-}
 
