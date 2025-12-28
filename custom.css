@@ -1,4 +1,4 @@
-/* Increase logo size in navbar - comprehensive selectors */
+/* Increase logo size in navbar */
 header a[href="/"] img,
 header a[href="/help-center"] img,
 header > nav > a > img,
@@ -74,7 +74,7 @@ aside h3::before {
   font-weight: 600 !important;
 }
 
-/* Hide original "On this page" text by making it invisible and using ::before instead */
+/* Hide original "On this page" text */
 aside [class*="toc"] > *:first-child,
 aside [class*="on-this-page"] > *:first-child,
 aside [class*="table-of-contents"] > *:first-child {
@@ -91,4 +91,3 @@ aside [class*="table-of-contents"] > *:first-child::before {
   visibility: visible !important;
   display: block !important;
 }
-
