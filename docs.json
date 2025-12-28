@@ -1,13 +1,30 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "aspen",
-  "name": "Conty",
+  "name": "Conty - Central de Ajuda",
   "colors": {
     "primary": "#2984f6",
     "light": "#5ba3f8",
     "dark": "#1a6cd4"
   },
   "favicon": "/favicon.svg",
+  "metadata": {
+    "og:site_name": "Conty",
+    "og:title": "Conty - Central de Ajuda",
+    "og:description": "Central de ajuda da Conty. Encontre respostas sobre campanhas, pagamentos e regras do marketplace que conecta criadores e marcas.",
+    "og:image": "/images/hero-dark.png",
+    "og:locale": "pt_BR",
+    "twitter:card": "summary_large_image",
+    "twitter:site": "@ContyAppOficial",
+    "twitter:title": "Conty - Central de Ajuda",
+    "twitter:description": "Central de ajuda da Conty. Encontre respostas sobre campanhas, pagamentos e regras do marketplace.",
+    "robots": "index, follow",
+    "language": "pt-BR",
+    "author": "Conty"
+  },
+  "seo": {
+    "indexHiddenPages": false
+  },
   "styling": {
     "css": ["/custom.css"]
   },
@@ -81,9 +98,7 @@
         ]
       }
     ],
-    "global": {
-      "anchors": []
-    }
+    "global": {}
   },
   "logo": {
     "light": "/logo/logo-blue.svg",

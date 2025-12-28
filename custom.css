@@ -61,33 +61,104 @@ html.light nav img[src*="home02"],
   filter: brightness(0) !important;
 }
 
-/* Change "on this page" to "nesta página" */
+/* ============================================
+   TRADUÇÕES PT-BR
+   ============================================ */
+
+/* "On this page" → "Nesta página" */
+[class*="toc"] h2,
+[class*="toc"] h3,
+[class*="toc"] p,
+[class*="TableOfContents"] h2,
+[class*="TableOfContents"] h3,
+[class*="on-this-page"],
 aside h2,
 aside h3 {
-  position: relative;
-}
-
-aside h2::before,
-aside h3::before {
-  content: "Nesta página";
-  font-size: 0.875rem !important;
-  font-weight: 600 !important;
-}
-
-/* Hide original "On this page" text */
-aside [class*="toc"] > *:first-child,
-aside [class*="on-this-page"] > *:first-child,
-aside [class*="table-of-contents"] > *:first-child {
   font-size: 0 !important;
   visibility: hidden !important;
 }
 
-aside [class*="toc"] > *:first-child::before,
-aside [class*="on-this-page"] > *:first-child::before,
-aside [class*="table-of-contents"] > *:first-child::before {
+[class*="toc"] h2::after,
+[class*="toc"] h3::after,
+[class*="toc"] p::after,
+[class*="TableOfContents"] h2::after,
+[class*="TableOfContents"] h3::after,
+[class*="on-this-page"]::after,
+aside h2::after,
+aside h3::after {
   content: "Nesta página" !important;
-  font-size: 0.875rem !important;
+  font-size: 0.75rem !important;
   font-weight: 600 !important;
   visibility: visible !important;
-  display: block !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+}
+
+/* "Next" → "Próximo" */
+a[rel="next"] span,
+[class*="next"] span,
+[class*="Next"] span,
+a[href][class*="pagination"] span:last-child {
+  font-size: 0 !important;
+}
+
+a[rel="next"]::after,
+[class*="next"]::after,
+[class*="Next"]::after {
+  content: "Próximo" !important;
+  font-size: inherit !important;
+}
+
+/* "Previous" → "Anterior" */
+a[rel="prev"] span,
+[class*="prev"] span,
+[class*="Prev"] span,
+[class*="previous"] span,
+[class*="Previous"] span {
+  font-size: 0 !important;
+}
+
+a[rel="prev"]::after,
+[class*="prev"]::after,
+[class*="Prev"]::after,
+[class*="previous"]::after,
+[class*="Previous"]::after {
+  content: "Anterior" !important;
+  font-size: inherit !important;
+}
+
+/* Pagination footer links - more specific selectors */
+nav[aria-label*="pagination"] a:first-child span,
+nav[aria-label*="Pagination"] a:first-child span,
+[class*="pagination"] a:first-child span,
+footer a[href] span:contains("Previous"),
+[class*="PageNavigation"] a:first-child span {
+  visibility: hidden !important;
+  font-size: 0 !important;
+}
+
+nav[aria-label*="pagination"] a:first-child::before,
+nav[aria-label*="Pagination"] a:first-child::before,
+[class*="pagination"] a:first-child::before,
+[class*="PageNavigation"] a:first-child::before {
+  content: "Anterior" !important;
+  visibility: visible !important;
+  font-size: 0.875rem !important;
+}
+
+nav[aria-label*="pagination"] a:last-child span,
+nav[aria-label*="Pagination"] a:last-child span,
+[class*="pagination"] a:last-child span,
+[class*="PageNavigation"] a:last-child span {
+  visibility: hidden !important;
+  font-size: 0 !important;
+}
+
+nav[aria-label*="pagination"] a:last-child::after,
+nav[aria-label*="Pagination"] a:last-child::after,
+[class*="pagination"] a:last-child::after,
+[class*="PageNavigation"] a:last-child::after {
+  content: "Próximo" !important;
+  visibility: visible !important;
+  font-size: 0.875rem !important;
 }
