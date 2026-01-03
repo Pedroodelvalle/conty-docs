@@ -9,12 +9,12 @@ A Conty funciona com um sistema de créditos pré-pagos. Você adiciona saldo an
 
 <CardGroup cols={2}>
 
-<Card title="Créditos pré-pagos" icon="wallet">
-  Adicione créditos antes de criar campanhas. O saldo fica disponível para uso imediato.
+<Card title="Carteira integrada" icon="wallet">
+  Adicione créditos à sua carteira antes de criar campanhas. O saldo fica disponível para uso imediato.
 </Card>
 
-<Card title="Mínimo de R$1.500" icon="coins">
-  O valor mínimo para adicionar créditos é de R$1.500, garantindo liquidez no marketplace.
+<Card title="Múltiplas formas de pagamento" icon="credit-card">
+  Pague via cartão de crédito, boleto bancário ou PIX — o que for mais conveniente para você.
 </Card>
 
 </CardGroup>
@@ -56,16 +56,16 @@ A Conty funciona com um sistema de créditos pré-pagos. Você adiciona saldo an
     Faça login em [dashboard.appconty.com](https://dashboard.appconty.com/).
   </Step>
   <Step title="Vá para a área de pagamentos">
-    No menu, acesse a seção de créditos ou pagamentos.
+    No menu, acesse a seção `Cobrança` ou `Carteira`.
   </Step>
   <Step title="Escolha o valor">
-    Selecione o valor que deseja adicionar (mínimo R$1.500).
+    Selecione o valor que deseja adicionar (mínimo R$10, máximo R$50.000 por transação).
   </Step>
-  <Step title="Realize o pagamento">
-    Finalize o pagamento pelo método disponível.
+  <Step title="Escolha o método de pagamento">
+    Você pode pagar via cartão de crédito (aprovação instantânea), boleto (até 3 dias úteis) ou PIX (aprovação em segundos).
   </Step>
   <Step title="Créditos disponíveis">
-    Após a confirmação, os créditos estarão disponíveis para uso imediato.
+    Após a confirmação do pagamento, os créditos estarão disponíveis para uso imediato na sua carteira.
   </Step>
 </Steps>
 
@@ -75,28 +75,33 @@ A Conty funciona com um sistema de créditos pré-pagos. Você adiciona saldo an
 
 | Regra | Detalhe |
 |-------|---------|
-| Valor mínimo | R$1.500 |
+| Valor mínimo por recarga | R$10 |
+| Valor máximo por recarga | R$50.000 |
 | Validade | 12 meses |
 | Reembolso | Não (exceto se não houver criadores) |
 | Consumo | Apenas na aprovação do conteúdo |
 | Uso | Múltiplas campanhas |
+| Métodos de pagamento | Cartão, boleto ou PIX |
 
 ---
 
 ## Dúvidas comuns
 
 <AccordionGroup>
-  <Accordion title="Por que o mínimo é R$1.500?">
-    O valor mínimo garante que sua marca tenha saldo suficiente para campanhas relevantes e mantém a liquidez do marketplace, beneficiando tanto marcas quanto criadores.
+  <Accordion title="Posso adicionar qualquer valor?">
+    Sim, desde que esteja entre R$10 e R$50.000 por transação. Você pode fazer quantas recargas quiser.
   </Accordion>
-  <Accordion title="Posso adicionar mais créditos depois?">
-    Sim. Você pode adicionar créditos a qualquer momento, sempre respeitando o valor mínimo de R$1.500 por transação.
+  <Accordion title="Qual método de pagamento é mais rápido?">
+    **PIX** tem aprovação em segundos. **Cartão de crédito** também é instantâneo. **Boleto** pode levar até 3 dias úteis para compensar.
   </Accordion>
   <Accordion title="Como acompanho meu saldo?">
-    O saldo disponível aparece no dashboard. Você também pode ver o histórico de consumo por campanha.
+    O saldo disponível aparece no dashboard na seção de Carteira. Você também pode ver o histórico completo de transações: recargas, gastos com campanhas e estornos.
   </Accordion>
   <Accordion title="E se meus créditos estiverem acabando durante uma campanha?">
     Você receberá alertas quando o saldo estiver baixo. Adicione mais créditos para manter suas campanhas ativas.
+  </Accordion>
+  <Accordion title="O que acontece se eu aprovar um vídeo sem saldo suficiente?">
+    Você precisa ter saldo disponível para aprovar conteúdos. Se o saldo for insuficiente, adicione mais créditos antes de aprovar.
   </Accordion>
 </AccordionGroup>
 
