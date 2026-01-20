@@ -66,12 +66,23 @@
             ]
           },
           {
-            "group": "Contato",
-            "icon": "/icons/call.svg",
+            "group": "Central de Regras",
+            "icon": "/icons/rules.svg",
             "pages": [
-              "help-center/contact"
+              "help-center/rules/index",
+              "help-center/rules/how-it-works",
+              "help-center/rules/disputes",
+              "help-center/rules/fraud-safety",
+              "help-center/rules/policies"
             ]
-          }
+          },
+          {
+            "group": "Contato",
+          "icon": "/icons/call.svg",
+          "pages": [
+            "help-center/contact"
+          ]
+        }
         ]
       },
       {
@@ -80,7 +91,8 @@
           {
             "group": "Atualizações",
             "pages": [
-              "releases/index"
+              "releases/index",
+              "releases/v1.0"
             ]
           }
         ]
