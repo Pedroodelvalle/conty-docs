@@ -17,7 +17,7 @@ description: "Taxa de plataforma, bônus de primeiro depósito e melhorias na ex
 ### Bônus de primeiro depósito
 
 - Novo usuário ganha +10% de créditos extras no primeiro depósito (calculado sobre o valor já creditado após a taxa)
-- Webhook da Stripe aplica o bônus automaticamente no primeiro top-up; faturas e transações registram o valor do bônus
+- O bônus é aplicado automaticamente no primeiro depósito; faturas e transações registram o valor do bônus
 
 ---
 
@@ -31,16 +31,16 @@ description: "Taxa de plataforma, bônus de primeiro depósito e melhorias na ex
 
 ### Carteira e criação de conta
 
-- Tratamento de erros ao criar carteira: mensagens mais claras, suporte a condição de corrida (wallet já existente) e violação de foreign key (enterprise inexistente)
-- Layout de páginas privadas só chama a API de carteira quando há `enterpriseId` válido, evitando falhas para novos usuários
+- Tratamento de erros ao criar carteira: mensagens mais claras, incluindo quando a carteira já existe ou quando a conta da marca ainda não está configurada
+- As páginas privadas só carregam a carteira quando a conta da marca está pronta, evitando falhas para novos usuários
 
 ### Faturas na página de Cobrança
 
-- O ícone ao lado de cada fatura agora abre corretamente a fatura ou o recibo do pagamento na Stripe (nova aba)
+- O ícone ao lado de cada fatura agora abre corretamente a fatura ou o recibo do pagamento na nova aba
 - Funciona tanto para faturas de assinatura quanto para recargas de saldo
 
 ### Paginação na aba Interessados das campanhas
 
 - A aba "Interessados" passou a ter paginação (20 itens por página), permitindo ver todas as candidaturas além do limite anterior de 100
-- Controles Anterior/Próximo e texto "Mostrando X–Y de Z interessados"; a página é refletida na URL (`applicationsPage`)
+- Controles Anterior/Próximo e texto "Mostrando X–Y de Z interessados"; a página atual é refletida no endereço da página
 - O aviso amarelo de criadores pendentes exibe o número total real de candidaturas pendentes, e não apenas os da página atual
