@@ -78,11 +78,11 @@
           },
           {
             "group": "Contato",
-          "icon": "/icons/call.svg",
-          "pages": [
-            "help-center/contact"
-          ]
-        }
+            "icon": "/icons/call.svg",
+            "pages": [
+              "help-center/contact"
+            ]
+          }
         ]
       },
       {
@@ -127,6 +127,7 @@
           {
             "group": "Notícias",
             "pages": [
+              "news/de-100k-pagos-aos-criadores-da-conty",
               "news/index-copied-1",
               "news/conty-investimento-anjo"
             ]
