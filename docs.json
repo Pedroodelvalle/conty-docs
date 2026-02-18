@@ -86,6 +86,33 @@
         ]
       },
       {
+        "tab": "Tutoriais",
+        "groups": [
+          {
+            "group": "Início",
+            "icon": "/icons/home02.svg",
+            "pages": [
+              "tutorials/index"
+            ]
+          },
+          {
+            "group": "Criadores",
+            "icon": "/icons/user01.svg",
+            "pages": [
+              "tutorials/creators"
+            ]
+          },
+          {
+            "group": "Marcas",
+            "icon": "/icons/enterprise.svg",
+            "pages": [
+              "tutorials/brands",
+              "tutorials/brands/communities"
+            ]
+          }
+        ]
+      },
+      {
         "tab": "Atualizações",
         "groups": [
           {
