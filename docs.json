@@ -113,6 +113,19 @@
         ]
       },
       {
+        "tab": "Cases",
+        "groups": [
+          {
+            "group": "Início",
+            "icon": "/icons/home02.svg",
+            "pages": [
+              "cases/index",
+              "cases/viralizamos-x-1000-reais"
+            ]
+          }
+        ]
+      },
+      {
         "tab": "Atualizações",
         "groups": [
           {
