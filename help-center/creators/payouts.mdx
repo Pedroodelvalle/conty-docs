@@ -5,12 +5,13 @@ description: "Quando e como você recebe seus pagamentos"
 
 # Como funcionam os pagamentos na Conty
 
-Você recebe pelos conteúdos que foram aprovados pelas marcas. A partir de **20 de janeiro de 2026**, todos os pagamentos passam a ser processados através do **Stripe Connect**.
+Você recebe somente pelos conteúdos que foram aprovados pelas marcas.  \
+Todos os pagamentos passam a ser processados através do **Stripe Connect**.
 
 <Warning>
   **Dois modelos de pagamento em vigor:**
-  - **Campanhas anteriores a 20/01/2026** seguem o modelo antigo (V1) — pagamento via PIX no dia 20
-  - **Campanhas a partir de 20/01/2026** seguem o novo modelo — Stripe Connect com prazo de 14-30 dias
+
+  - **Campanhas seguem o** modelo — Stripe Connect com prazo de 30 dias.
 </Warning>
 
 ---
@@ -18,15 +19,12 @@ Você recebe pelos conteúdos que foram aprovados pelas marcas. A partir de **20
 ## Novo modelo de pagamentos (a partir de 20/01/2026)
 
 <CardGroup cols={2}>
-
-<Card title="Stripe Connect" icon="stripe-s">
-  Seus pagamentos são processados pelo Stripe, garantindo segurança e confiabilidade.
-</Card>
-
-<Card title="Depósito automático" icon="building-columns">
-  O valor é depositado automaticamente na sua conta bancária cadastrada.
-</Card>
-
+  <Card icon="stripe-s" title="Stripe Connect">
+    Seus pagamentos são processados pelo Stripe, garantindo segurança e confiabilidade.
+  </Card>
+  <Card icon="building-columns" title="Depósito automático">
+    O valor é depositado automaticamente na sua conta bancária cadastrada.
+  </Card>
 </CardGroup>
 
 ### Como funciona o repasse
@@ -78,65 +76,14 @@ Para receber seus pagamentos no novo modelo, você precisa cadastrar uma conta b
 
 ---
 
-## Modelo antigo V1 (campanhas anteriores a 20/01/2026)
-
-<Note>
-  Este modelo se aplica **apenas** a campanhas e acordos firmados **antes de 20 de janeiro de 2026**. Se você tem campanhas ativas nesse modelo, os pagamentos continuarão seguindo as regras abaixo até a conclusão.
-</Note>
-
-<CardGroup cols={2}>
-
-<Card title="Pagamento via PIX" icon="pix">
-  Todos os pagamentos são feitos por PIX, direto na sua conta.
-</Card>
-
-<Card title="Todo dia 20" icon="calendar">
-  O pagamento das campanhas aprovadas cai no dia 20 de cada mês.
-</Card>
-
-</CardGroup>
-
-### Fluxo de pagamento (modelo V1)
-
-<Steps>
-  <Step title="Entrega o conteúdo">
-    Você finaliza e envia o vídeo pelo app ou WhatsApp.
-  </Step>
-  <Step title="Marca revisa">
-    A marca tem 72 horas para aprovar. Se não responder, é aprovado automaticamente.
-  </Step>
-  <Step title="Aprovação confirmada">
-    Com a aprovação, seu pagamento entra na fila do próximo dia 20.
-  </Step>
-  <Step title="Recebe via PIX">
-    No dia 20, você recebe o valor das campanhas aprovadas no mês anterior.
-  </Step>
-</Steps>
-
-### Sobre o modelo V1
-
-<AccordionGroup>
-  <Accordion title="Como cadastro minha chave PIX?">
-    Você cadastra sua chave PIX no seu perfil dentro do app da Conty. Pode ser CPF, e-mail, telefone ou chave aleatória.
-  </Accordion>
-  <Accordion title="E se o dia 20 cair no fim de semana?">
-    O pagamento pode ser processado no próximo dia útil, mas geralmente cai no próprio dia 20.
-  </Accordion>
-  <Accordion title="Posso receber antes do dia 20?">
-    No modelo V1, não. Todos os pagamentos são consolidados e feitos no dia 20 de cada mês.
-  </Accordion>
-</AccordionGroup>
-
----
-
-## O que você precisa saber (vale para ambos os modelos)
+## O que você precisa saber 
 
 <AccordionGroup>
   <Accordion title="Quando meu pagamento é confirmado?">
     O pagamento só é confirmado **após a aprovação final da marca**. Não é possível receber antes da aprovação, em nenhuma hipótese.
   </Accordion>
   <Accordion title="E se a marca demorar para aprovar?">
-    A marca tem **72 horas** para revisar e aprovar seu conteúdo. Se não responder nesse prazo, o vídeo é **aprovado automaticamente** e o processo de pagamento se inicia.
+    A marca **não tem prazo limite** para revisar e aprovar seu conteúdo, porém o tempo médio de resposta é 7 dias, podendo ser até 60 dias.
   </Accordion>
   <Accordion title="Recebo a mais se pedirem alterações?">
     Não. Ajustes fazem parte do processo e não geram pagamento adicional. Você só recebe se fizer as alterações dentro do prazo estabelecido pela marca (geralmente 72 horas).
@@ -151,15 +98,12 @@ Para receber seus pagamentos no novo modelo, você precisa cadastrar uma conta b
 ## Sobre limites e ganhos
 
 <CardGroup cols={2}>
-
-<Card title="Sem limite de ganhos" icon="infinity">
-  Não existe teto de quanto você pode ganhar na Conty. Quanto mais campanhas aprovadas, mais você recebe.
-</Card>
-
-<Card title="Sem limite de campanhas" icon="layer-group">
-  Você pode participar de quantas campanhas quiser, desde que consiga entregar dentro dos prazos.
-</Card>
-
+  <Card icon="infinity" title="Sem limite de ganhos">
+    Não existe teto de quanto você pode ganhar na Conty. Quanto mais campanhas aprovadas, mais você recebe.
+  </Card>
+  <Card icon="layer-group" title="Sem limite de campanhas">
+    Você pode participar de quantas campanhas quiser, desde que consiga entregar dentro dos prazos.
+  </Card>
 </CardGroup>
 
 ---
@@ -171,12 +115,14 @@ Para receber seus pagamentos no novo modelo, você precisa cadastrar uma conta b
 </Note>
 
 **Por que recomendamos:**
+
 - Maior segurança jurídica para você
 - Possibilidade de formalizar sua atividade
 - Benefícios previdenciários (no caso do MEI)
 - Mais credibilidade com as marcas
 
 **Se você não tem CNPJ:**
+
 - Você ainda pode receber normalmente
 - O pagamento será feito como pessoa física
 
