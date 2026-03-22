@@ -10,14 +10,14 @@
   "favicon": "/favicon.svg",
   "metadata": {
     "og:site_name": "Conty",
-    "og:title": "Conty - Central de Ajuda",
-    "og:description": "Central de ajuda da Conty. Encontre respostas sobre campanhas, pagamentos e regras do marketplace que conecta criadores e marcas.",
+    "og:title": "Conty - Central de Ajuda, Tutoriais e Blog",
+    "og:description": "Central de ajuda da Conty. Encontre tutoriais, cases de sucesso, notícias e respostas sobre campanhas, pagamentos e a plataforma de creators para marcas.",
     "og:image": "/images/hero-dark.png",
     "og:locale": "pt_BR",
     "twitter:card": "summary_large_image",
     "twitter:site": "@ContyAppOficial",
-    "twitter:title": "Conty - Central de Ajuda",
-    "twitter:description": "Central de ajuda da Conty. Encontre respostas sobre campanhas, pagamentos e regras do marketplace.",
+    "twitter:title": "Conty - Central de Ajuda, Tutoriais e Blog",
+    "twitter:description": "Tutoriais, cases de sucesso e respostas sobre a plataforma de creators da Conty. Campanhas, pagamentos e muito mais.",
     "robots": "index, follow",
     "language": "pt-BR",
     "author": "Conty"
@@ -113,55 +113,6 @@
         ]
       },
       {
-        "tab": "Cases",
-        "groups": [
-          {
-            "group": "Início",
-            "icon": "/icons/home02.svg",
-            "pages": [
-              "cases/index",
-              "cases/viralizamos-x-mil-reais"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "Atualizações",
-        "groups": [
-          {
-            "group": "Início",
-            "pages": [
-              "releases/index"
-            ]
-          },
-          {
-            "group": "App de Creators",
-            "pages": [
-              "releases/creators/v1.0.7",
-              "releases/creators/v1.0.6",
-              "releases/creators/v1.0.5",
-              "releases/creators/v1.0.4",
-              "releases/creators/v1.0.3",
-              "releases/creators/v1.0.2",
-              "releases/creators/v1.0.1",
-              "releases/creators/v1.0.0"
-            ]
-          },
-          {
-            "group": "Software das Marcas",
-            "pages": [
-              "releases/brands/1.0.6",
-              "releases/brands/1.0.5",
-              "releases/brands/1.0.4",
-              "releases/brands/1.0.3",
-              "releases/brands/1.0.2",
-              "releases/brands/1.0.1",
-              "releases/brands/1.0.0"
-            ]
-          }
-        ]
-      },
-      {
         "tab": "Notícias",
         "groups": [
           {
@@ -181,16 +132,10 @@
     "dark": "/logo/LOGO - CONTY FUNDO PRETO.svg"
   },
   "navbar": {
-    "links": [
-      {
-        "label": "App de Creators",
-        "href": "https://appconty.com"
-      }
-    ],
     "primary": {
       "type": "button",
-      "label": "Dashboard para Marcas",
-      "href": "https://dashboard.appconty.com"
+      "label": "Acessar",
+      "href": "https://appconty.com"
     }
   },
   "contextual": {
