@@ -1,168 +1,42 @@
 ---
-title: "Pagamentos"
-description: "Quando e como você recebe seus pagamentos"
+title: "Carteira"
+description: "Como configurar sua carteira para receber pagamentos"
 ---
 
-# Como funcionam os pagamentos na Conty
+# Carteira do Criador
 
-Você recebe somente pelos conteúdos que foram aprovados pelas marcas.  \
-Todos os pagamentos passam a ser processados através do **Stripe Connect**.
+## Como configurar sua wallet
 
-<Warning>
-  **Dois modelos de pagamento em vigor:**
-
-  - **Campanhas seguem o** modelo — Stripe Connect com prazo de 30 dias.
-</Warning>
-
----
-
-## Novo modelo de pagamentos (a partir de 20/01/2026)
-
-<CardGroup cols={2}>
-  <Card icon="stripe-s" title="Stripe Connect">
-    Seus pagamentos são processados pelo Stripe, garantindo segurança e confiabilidade.
-  </Card>
-  <Card icon="building-columns" title="Depósito automático">
-    O valor é depositado automaticamente na sua conta bancária cadastrada.
-  </Card>
-</CardGroup>
-
-### Como funciona o repasse
-
-Quando uma marca cria uma campanha na Conty, ela deposita uma verba na plataforma. Após a aprovação do seu conteúdo, parte desse valor é automaticamente repassada para você através do Stripe Connect.
-
-<Info>
-  **Prazo de recebimento:** Após a aprovação do seu vídeo, o valor pode levar de **14 a 30 dias** para cair na sua conta bancária. Esse prazo segue as regras de processamento do Stripe para o Brasil.
-</Info>
-
-### Configure sua conta bancária
-
-Para receber seus pagamentos no novo modelo, você precisa cadastrar uma conta bancária no app da Conty. O Stripe suporta a maioria dos bancos brasileiros.
+Para receber pagamentos, voce precisa configurar sua wallet no Stripe. Isso pode ser feito **pelo app ou pela plataforma web**.
 
 <Steps>
-  <Step title="Acesse seu perfil">
-    No app da Conty, vá até a seção de configurações ou perfil.
+  <Step title="1) Preencha os dados de pessoa fisica (PF)">
+    Informe nome, CPF, data de nascimento e endereco. A wallet deve ser criada como **pessoa fisica (PF)**.
   </Step>
-  <Step title="Adicione sua conta bancária">
-    Informe os dados da sua conta: banco, agência, número da conta e tipo (corrente ou poupança).
+  <Step title="2) Confirme sua identidade (KYC)">
+    Envie os documentos e selfie para validacao de identidade.
   </Step>
-  <Step title="Verifique sua identidade">
-    O Stripe pode solicitar documentos para verificar sua identidade. Isso é uma exigência regulatória e garante a segurança dos pagamentos.
-  </Step>
-  <Step title="Pronto para receber">
-    Após a verificação, seus pagamentos serão depositados automaticamente nessa conta.
+  <Step title="3) Confirme sua conta bancaria">
+    Cadastre a conta para receber os repasses automaticos apos a aprovacao do conteudo.
   </Step>
 </Steps>
 
-### Fluxo de pagamento (novo modelo)
+## Problemas comuns na configuracao da wallet
 
-<Steps>
-  <Step title="Entrega o conteúdo">
-    Você finaliza e envia o vídeo pelo app.
-  </Step>
-  <Step title="Marca revisa">
-    A marca tem 72 horas para aprovar. Se não responder, é aprovado automaticamente.
-  </Step>
-  <Step title="Aprovação confirmada">
-    Com a aprovação, o Stripe inicia o processamento do pagamento.
-  </Step>
-  <Step title="Processamento">
-    O valor passa pelas verificações de segurança do Stripe (14-30 dias).
-  </Step>
-  <Step title="Recebe na conta">
-    O valor é depositado automaticamente na sua conta bancária cadastrada.
-  </Step>
-</Steps>
+### 1) Conta PJ nao conclui a configuracao
+
+**Problema:** voce tentou cadastrar uma conta bancaria de pessoa juridica (PJ).  
+**Como resolver:** use uma conta bancaria de **pessoa fisica (PF)**, vinculada ao seu CPF.
+
+### 2) CEP com erro
+
+**Problema:** o CEP informado nao passa na validacao.  
+**Como resolver:** tente outro CEP valido da mesma regiao.
+
+### 3) Conta bancaria em outro nome
+
+**Problema:** a conta bancaria cadastrada nao esta no mesmo nome do titular da conta Conty.  
+**Como resolver:** use uma conta no mesmo nome da pessoa cadastrada na plataforma.
 
 ---
-
-## O que você precisa saber 
-
-<AccordionGroup>
-  <Accordion title="Quando meu pagamento é confirmado?">
-    O pagamento só é confirmado **após a aprovação final da marca**. Não é possível receber antes da aprovação, em nenhuma hipótese.
-  </Accordion>
-  <Accordion title="E se a marca demorar para aprovar?">
-    A marca **não tem prazo limite** para revisar e aprovar seu conteúdo, porém o tempo médio de resposta é 7 dias, podendo ser até 60 dias.
-  </Accordion>
-  <Accordion title="Recebo a mais se pedirem alterações?">
-    Não. Ajustes fazem parte do processo e não geram pagamento adicional. Você só recebe se fizer as alterações dentro do prazo estabelecido pela marca (geralmente 72 horas).
-  </Accordion>
-  <Accordion title="E se meu conteúdo for recusado?">
-    Se o conteúdo for recusado por problemas de qualidade, não seguir o briefing ou outro motivo crítico, você não recebe o pagamento daquela campanha.
-  </Accordion>
-</AccordionGroup>
-
----
-
-## Sobre limites e ganhos
-
-<CardGroup cols={2}>
-  <Card icon="infinity" title="Sem limite de ganhos">
-    Não existe teto de quanto você pode ganhar na Conty. Quanto mais campanhas aprovadas, mais você recebe.
-  </Card>
-  <Card icon="layer-group" title="Sem limite de campanhas">
-    Você pode participar de quantas campanhas quiser, desde que consiga entregar dentro dos prazos.
-  </Card>
-</CardGroup>
-
----
-
-## Nota fiscal e CNPJ
-
-<Note>
-  Ter um CNPJ (MEI ou ME) e emitir nota fiscal **não é obrigatório**, mas é uma recomendação da Conty para proteger você como criador.
-</Note>
-
-**Por que recomendamos:**
-
-- Maior segurança jurídica para você
-- Possibilidade de formalizar sua atividade
-- Benefícios previdenciários (no caso do MEI)
-- Mais credibilidade com as marcas
-
-**Se você não tem CNPJ:**
-
-- Você ainda pode receber normalmente
-- O pagamento será feito como pessoa física
-
-<Tip>
-  Abrir um MEI é gratuito e leva menos de 10 minutos. Você pode fazer pelo [Portal do Empreendedor](https://www.gov.br/empresas-e-negocios/pt-br/empreendedor).
-</Tip>
-
----
-
-## Dúvidas comuns
-
-<AccordionGroup>
-  <Accordion title="Como sei qual modelo de pagamento se aplica a mim?">
-    Depende da data da campanha. Campanhas iniciadas antes de 20/01/2026 seguem o modelo V1 (PIX no dia 20). Campanhas a partir dessa data seguem o novo modelo (Stripe Connect, 14-30 dias).
-  </Accordion>
-  <Accordion title="Por que o novo modelo demora 14 a 30 dias?">
-    O Stripe processa pagamentos seguindo regulamentações financeiras do Brasil. Após a aprovação, os fundos passam por verificações de segurança e são liberados automaticamente para sua conta. Esse prazo protege todas as partes envolvidas.
-  </Accordion>
-  <Accordion title="Quais bancos são aceitos no novo modelo?">
-    O Stripe aceita a maioria dos bancos brasileiros, incluindo os principais bancos tradicionais e digitais. Você pode cadastrar conta corrente ou poupança.
-  </Accordion>
-  <Accordion title="Existe valor mínimo para receber?">
-    Não. Qualquer valor aprovado será processado e depositado na sua conta.
-  </Accordion>
-  <Accordion title="Como acompanho meus ganhos?">
-    Você pode ver o histórico de campanhas e o status dos pagamentos diretamente no app da Conty.
-  </Accordion>
-  <Accordion title="Preciso declarar esse dinheiro no imposto de renda?">
-    Depende do seu caso. Se você é MEI, os valores entram na sua declaração anual do MEI. Se é pessoa física, pode precisar declarar dependendo do total anual. Consulte um contador para orientações específicas.
-  </Accordion>
-  <Accordion title="O que acontece se meus dados bancários estiverem errados?">
-    O pagamento pode falhar e você precisará corrigir os dados no app. Isso pode causar atrasos adicionais. Sempre confira os dados antes de salvar.
-  </Accordion>
-  <Accordion title="O Stripe é seguro?">
-    Sim. O Stripe é uma das maiores plataformas de pagamento do mundo, processando bilhões de dólares por ano. Seus dados são protegidos com criptografia de ponta e o Stripe segue todas as regulamentações financeiras brasileiras.
-  </Accordion>
-</AccordionGroup>
-
----
-
-<Note>
-  **Dúvidas sobre um pagamento específico?** Entre em contato pelo [suporte](/help-center/contact) ou fale com o time no WhatsApp.
-</Note>
+Para entender prazos, taxa, recebimento em conta e pagamento condicional, acesse [Recebimentos](/help-center/creators/payouts-recebimentos).

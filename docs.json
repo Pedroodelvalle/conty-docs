@@ -1,6 +1,6 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "almond",
+  "theme": "aspen",
   "name": "Conty - Central de Ajuda",
   "colors": {
     "primary": "#2984f6",
@@ -28,6 +28,192 @@
   "styling": {
     "css": ["/custom.css"]
   },
+  "redirects": [
+    {
+      "source": "/help-center/creators/inicio",
+      "destination": "/help-center/creators/index"
+    },
+    {
+      "source": "/help-center/creators/sumario",
+      "destination": "/help-center/creators/index"
+    },
+    {
+      "source": "/help-center/creators/guia",
+      "destination": "/help-center/creators/index"
+    },
+    {
+      "source": "/help-center/creators/pagamentos",
+      "destination": "/help-center/creators/payouts"
+    },
+    {
+      "source": "/help-center/creators/carteira",
+      "destination": "/help-center/creators/payouts"
+    },
+    {
+      "source": "/help-center/creators/recebimentos",
+      "destination": "/help-center/creators/payouts-recebimentos"
+    },
+    {
+      "source": "/help-center/creators/payments",
+      "destination": "/help-center/creators/payouts"
+    },
+    {
+      "source": "/help-center/creators/payout",
+      "destination": "/help-center/creators/payouts"
+    },
+    {
+      "source": "/help-center/creators/wallet",
+      "destination": "/help-center/creators/payouts"
+    },
+    {
+      "source": "/help-center/creators/primeiros-passos",
+      "destination": "/help-center/creators/getting-started"
+    },
+    {
+      "source": "/help-center/creators/candidatura",
+      "destination": "/help-center/creators/candidatures"
+    },
+    {
+      "source": "/help-center/creators/candidature",
+      "destination": "/help-center/creators/candidatures"
+    },
+    {
+      "source": "/help-center/creators/comunidade",
+      "destination": "/help-center/creators/communities"
+    },
+    {
+      "source": "/help-center/creators/community",
+      "destination": "/help-center/creators/communities"
+    },
+    {
+      "source": "/help-center/creators/campanhas",
+      "destination": "/help-center/creators/campaigns"
+    },
+    {
+      "source": "/help-center/creators/reputacao",
+      "destination": "/help-center/creators/reputation"
+    },
+    {
+      "source": "/help-center/creators/problemas-tecnicos",
+      "destination": "/help-center/creators/troubleshooting"
+    },
+    {
+      "source": "/help-center/contato",
+      "destination": "/help-center/contact"
+    },
+    {
+      "source": "/help-center/marcas",
+      "destination": "/help-center/brands"
+    },
+    {
+      "source": "/help-center/brands/inicio",
+      "destination": "/help-center/brands/index"
+    },
+    {
+      "source": "/help-center/brands/sumario",
+      "destination": "/help-center/brands/index"
+    },
+    {
+      "source": "/help-center/brands/guia",
+      "destination": "/help-center/brands/index"
+    },
+    {
+      "source": "/help-center/marcas/inicio",
+      "destination": "/help-center/brands/index"
+    },
+    {
+      "source": "/help-center/marcas/sumario",
+      "destination": "/help-center/brands/index"
+    },
+    {
+      "source": "/help-center/marcas/guia",
+      "destination": "/help-center/brands/index"
+    },
+    {
+      "source": "/help-center/brands/primeiros-passos",
+      "destination": "/help-center/brands/getting-started"
+    },
+    {
+      "source": "/help-center/brands/campanhas",
+      "destination": "/help-center/brands/campaigns"
+    },
+    {
+      "source": "/help-center/brands/verba",
+      "destination": "/help-center/brands/payments-credits"
+    },
+    {
+      "source": "/help-center/brands/pagamentos",
+      "destination": "/help-center/brands/payments-credits"
+    },
+    {
+      "source": "/help-center/brands/revisoes",
+      "destination": "/help-center/brands/reviews-revisions"
+    },
+    {
+      "source": "/help-center/brands/resultados",
+      "destination": "/help-center/brands/results-usage-rights"
+    },
+    {
+      "source": "/help-center/brands/problemas-tecnicos",
+      "destination": "/help-center/brands/troubleshooting"
+    },
+    {
+      "source": "/help-center/regras",
+      "destination": "/help-center/rules"
+    },
+    {
+      "source": "/help-center/regras/:slug*",
+      "destination": "/help-center/rules/:slug*"
+    },
+    {
+      "source": "/help-center/rules/inicio",
+      "destination": "/help-center/rules/index"
+    },
+    {
+      "source": "/help-center/rules/sumario",
+      "destination": "/help-center/rules/index"
+    },
+    {
+      "source": "/help-center/rules/guia",
+      "destination": "/help-center/rules/index"
+    },
+    {
+      "source": "/help-center/regras/guia",
+      "destination": "/help-center/rules/index"
+    },
+    {
+      "source": "/help-center/regras/inicio",
+      "destination": "/help-center/rules/index"
+    },
+    {
+      "source": "/help-center/regras/sumario",
+      "destination": "/help-center/rules/index"
+    },
+    {
+      "source": "/tutorials/brands/communities",
+      "destination": "/help-center/brands/communities"
+    },
+    {
+      "source": "/tutorials",
+      "destination": "/help-center"
+    },
+    {
+      "source": "/tutorials/brands",
+      "destination": "/help-center/brands"
+    },
+    {
+      "source": "/tutorials/creators",
+      "destination": "/help-center/creators"
+    },
+    {
+      "source": "/help-center/brands/comunidade",
+      "destination": "/help-center/brands/communities"
+    },
+    {
+      "source": "/help-center/brands/comunidades",
+      "destination": "/help-center/brands/communities"
+    }
+  ],
   "navigation": {
     "tabs": [
       {
@@ -35,79 +221,106 @@
         "groups": [
           {
             "group": "Início",
-            "icon": "/icons/home02.svg",
             "pages": [
               "help-center/index"
             ]
           },
           {
             "group": "Criadores",
-            "icon": "/icons/user01.svg",
             "pages": [
               "help-center/creators/index",
-              "help-center/creators/getting-started",
-              "help-center/creators/campaigns",
-              "help-center/creators/payouts",
-              "help-center/creators/reputation",
+              {
+                "group": "Primeiros passos",
+                "pages": [
+                  "help-center/creators/getting-started",
+                  "help-center/creators/getting-started-installation",
+                  "help-center/creators/getting-started-notifications",
+                  "help-center/creators/getting-started-profile",
+                  "help-center/creators/getting-started-community-faq"
+                ]
+              },
+              {
+                "group": "Pagamentos",
+                "pages": [
+                  "help-center/creators/payouts",
+                  "help-center/creators/payouts-recebimentos"
+                ]
+              },
+              {
+                "group": "Trabalhos e oportunidades",
+                "pages": [
+                  "help-center/creators/candidatures",
+                  "help-center/creators/campaigns",
+                  "help-center/creators/communities",
+                  "help-center/creators/reputation"
+                ]
+              },
               "help-center/creators/troubleshooting"
             ]
           },
           {
             "group": "Marcas",
-            "icon": "/icons/enterprise.svg",
             "pages": [
               "help-center/brands/index",
-              "help-center/brands/getting-started",
-              "help-center/brands/campaigns",
-              "help-center/brands/payments-credits",
-              "help-center/brands/reviews-revisions",
-              "help-center/brands/results-usage-rights",
+              {
+                "group": "Primeiros passos",
+                "pages": [
+                  "help-center/brands/getting-started"
+                ]
+              },
+              {
+                "group": "Campanhas e verba",
+                "pages": [
+                  "help-center/brands/campaigns",
+                  "help-center/brands/payments-credits"
+                ]
+              },
+              {
+                "group": "Revisões e resultados",
+                "pages": [
+                  "help-center/brands/reviews-revisions",
+                  "help-center/brands/results-usage-rights"
+                ]
+              },
+              {
+                "group": "Comunidades",
+                "pages": [
+                  "help-center/brands/communities"
+                ]
+              },
               "help-center/brands/troubleshooting"
             ]
           },
           {
             "group": "Central de Regras",
-            "icon": "/icons/rules.svg",
             "pages": [
               "help-center/rules/index",
-              "help-center/rules/how-it-works",
-              "help-center/rules/disputes",
-              "help-center/rules/fraud-safety",
-              "help-center/rules/policies"
+              {
+                "group": "Funcionamento e pagamentos",
+                "pages": [
+                  "help-center/rules/how-it-works",
+                  "help-center/rules/conditional-payment"
+                ]
+              },
+              {
+                "group": "Disputas e segurança",
+                "pages": [
+                  "help-center/rules/disputes",
+                  "help-center/rules/fraud-safety"
+                ]
+              },
+              {
+                "group": "Políticas",
+                "pages": [
+                  "help-center/rules/policies"
+                ]
+              }
             ]
           },
           {
             "group": "Contato",
-            "icon": "/icons/call.svg",
             "pages": [
               "help-center/contact"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "Tutoriais",
-        "groups": [
-          {
-            "group": "Início",
-            "icon": "/icons/home02.svg",
-            "pages": [
-              "tutorials/index"
-            ]
-          },
-          {
-            "group": "Criadores",
-            "icon": "/icons/user01.svg",
-            "pages": [
-              "tutorials/creators"
-            ]
-          },
-          {
-            "group": "Marcas",
-            "icon": "/icons/enterprise.svg",
-            "pages": [
-              "tutorials/brands",
-              "tutorials/brands/communities"
             ]
           }
         ]

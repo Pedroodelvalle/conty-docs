@@ -133,42 +133,156 @@ nav img {
   flex-shrink: 0 !important;
 }
 
-/* Increase navigation sidebar icons size */
-aside nav svg,
-aside nav img[src*="icons"],
-[class*="sidebar"] svg,
-[class*="sidebar"] img[src*="icons"],
-nav[class*="nav"] svg,
-nav[class*="nav"] img[src*="home02"],
-nav img[src*="home02"],
-nav img[src*="icons"],
-aside img[src*="icons"] {
-  width: 1.2rem !important;
-  height: 1.2rem !important;
-  min-width: 1.2rem !important;
-  min-height: 1.2rem !important;
-  max-width: 1.2rem !important;
-  max-height: 1.2rem !important;
-  vertical-align: middle !important;
-  margin-top: -0.0625rem !important;
-  position: relative !important;
-  top: -0.0625rem !important;
+/* ============================================
+   SIDEBAR — tipografia mais compacta (grupos e páginas)
+   ============================================ */
+
+/* Mintlify: lista principal fica em #navigation-items */
+#navigation-items,
+#navigation-items a,
+#navigation-items button {
+  font-size: 0.8125rem !important;
+  line-height: 1.35 !important;
 }
 
-/* Sidebar icons should be black in light mode */
-html.light aside nav img[src*="icons"],
-html.light [class*="sidebar"] img[src*="icons"],
-html.light nav img[src*="icons"],
-html.light nav img[src*="home02"],
-[data-theme="light"] aside nav img[src*="icons"],
-[data-theme="light"] [class*="sidebar"] img[src*="icons"],
-[data-theme="light"] nav img[src*="icons"],
-[data-theme="light"] nav img[src*="home02"],
-:root:not(.dark) aside nav img[src*="icons"],
-:root:not(.dark) [class*="sidebar"] img[src*="icons"],
-:root:not(.dark) nav img[src*="icons"],
-:root:not(.dark) nav img[src*="home02"] {
-  filter: brightness(0) !important;
+/* Fallback (layouts antigos / mobile) */
+body aside:first-of-type nav,
+body aside:first-of-type nav a,
+body aside:first-of-type nav button {
+  font-size: 0.8125rem !important;
+  line-height: 1.35 !important;
+}
+
+/* ============================================
+   DIVISÓRIAS SUAVES ENTRE SEÇÕES
+   ============================================ */
+
+/* Divisória apenas quando um grupo real vem depois de outro grupo real */
+#navigation-items > *:has(.sidebar-group-header, #sidebar-title, ul.sidebar-group, ul#sidebar-group)
+  + *:has(.sidebar-group-header, #sidebar-title, ul.sidebar-group, ul#sidebar-group) {
+  border-top: 1px solid rgba(15, 23, 42, 0.07) !important;
+  margin-top: 0.85rem !important;
+  padding-top: 0.85rem !important;
+}
+
+html.dark #navigation-items > *:has(.sidebar-group-header, #sidebar-title, ul.sidebar-group, ul#sidebar-group)
+  + *:has(.sidebar-group-header, #sidebar-title, ul.sidebar-group, ul#sidebar-group),
+html[class*="dark"] #navigation-items > *:has(.sidebar-group-header, #sidebar-title, ul.sidebar-group, ul#sidebar-group)
+  + *:has(.sidebar-group-header, #sidebar-title, ul.sidebar-group, ul#sidebar-group),
+[data-theme="dark"] #navigation-items > *:has(.sidebar-group-header, #sidebar-title, ul.sidebar-group, ul#sidebar-group)
+  + *:has(.sidebar-group-header, #sidebar-title, ul.sidebar-group, ul#sidebar-group) {
+  border-top-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Conteúdo das páginas (cada ## no MDX) */
+main [class*="prose"] h2 {
+  border-top: 1px solid rgba(15, 23, 42, 0.08) !important;
+  margin-top: 1.75rem !important;
+  padding-top: 1.25rem !important;
+}
+
+main [class*="prose"] h2:first-of-type {
+  border-top: none !important;
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+html.dark main [class*="prose"] h2,
+[data-theme="dark"] main [class*="prose"] h2 {
+  border-top-color: rgba(255, 255, 255, 0.09) !important;
+}
+
+/* ============================================
+   CENTRAL DE AJUDA — início (hub): cards responsivos
+   ============================================ */
+
+.help-center-home {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+/* Duas entradas principais: uma coluna no celular */
+@media (max-width: 639px) {
+  .help-center-home [class*="grid"] {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+  }
+}
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  .help-center-home [class*="grid"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+.help-center-home a[href],
+.help-center-home [class*="Card"] {
+  min-width: 0;
+  word-break: break-word;
+}
+
+.help-center-home-rules {
+  margin-top: 1rem;
+}
+
+@media (min-width: 640px) {
+  .help-center-home-rules {
+    margin-top: 1.25rem;
+  }
+}
+
+.help-center-home-footer {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  line-height: 1.65;
+  max-width: 40rem;
+}
+
+@media (max-width: 639px) {
+  .help-center-home-footer {
+    font-size: 0.9375rem;
+  }
+}
+
+/* ============================================
+   CENTRAL DE REGRAS — Guia (hub): cards responsivos
+   ============================================ */
+
+.rules-guide-hub {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+/* Força uma coluna em mobile; evita cards estreitos e texto quebrado mal */
+@media (max-width: 639px) {
+  .rules-guide-hub [class*="grid"] {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+  }
+}
+
+/* Tablets: no máximo 2 colunas (evita 3 colunas se o tema reintroduzir) */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .rules-guide-hub [class*="grid"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+/* Cards com título longo: não estourar a largura da viewport */
+.rules-guide-hub a[href],
+.rules-guide-hub [class*="Card"] {
+  min-width: 0;
+  word-break: break-word;
+}
+
+/* Accordion nesta página: área tocável confortável em touch */
+@media (max-width: 639px) {
+  .rules-guide-accordions button {
+    padding-top: 0.85rem !important;
+    padding-bottom: 0.85rem !important;
+  }
 }
 
 /* ============================================

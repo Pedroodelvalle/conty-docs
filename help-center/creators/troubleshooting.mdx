@@ -130,6 +130,32 @@ Encontrou algum problema no app? A maioria tem solução rápida. Confira abaixo
     - Se a campanha ainda está ativa e você não consegue enviar mensagens, verifique sua conexão
     - Se o problema persistir, entre em contato com o suporte
   </Accordion>
+  <Accordion title="Não fui aprovado em uma campanha (fase de candidatura)">
+    Na **candidatura**, a marca **não é obrigada** a aprovar todo mundo: ela escolhe perfis que fazem sentido para o briefing e para o público da campanha.
+
+    **O que pode ter ocorrido:**
+    - Candidatura **fora do seu nicho** ou da audiência pedida pela marca
+    - Muitas candidaturas **em massa** sem fit real
+    - Perfil **incompleto** ou redes desatualizadas
+    - A marca **demorou** ou não respondeu (isso também acontece)
+
+    **O que fazer:**
+    1. Revise o perfil e candidate-se com estratégia — veja [Candidaturas](/help-center/creators/candidatures)
+    2. Espere outras oportunidades; ausência de resposta não é bloqueio da sua conta
+    3. Se suspeitar de erro da plataforma, fale com o [suporte](/help-center/contact) com nome da campanha e print da tela
+  </Accordion>
+  <Accordion title="Meu conteúdo foi recusado sem motivo">
+    Na maioria dos casos a marca envia **feedback** ou o motivo aparece no histórico da campanha no app.
+
+    **Confira antes de chamar suporte:**
+    - Abra a campanha e leia mensagens, status e **comentários da revisão**
+    - Veja se houve **recusa definitiva** ou pedido de ajuste que expirou
+    - Tente o **chat** com a marca, se ainda estiver disponível
+
+    Se **não houver nenhuma explicação** visível e você acreditar que foi um equívoco, entre em contato com o [suporte](/help-center/contact) informando marca, campanha e prints — a equipe pode orientar ou encaminhar à marca quando couber.
+
+    Lembrete: por política de [pagamento condicional](/help-center/rules/conditional-payment), **sem aprovação final do conteúdo não há repasse**.
+  </Accordion>
 </AccordionGroup>
 
 ---
@@ -203,14 +229,40 @@ Encontrou algum problema no app? A maioria tem solução rápida. Confira abaixo
 ## Problemas com pagamentos
 
 <Info>
-  **Dois modelos de pagamento em vigor:**
-  - **Campanhas anteriores a 20/01/2026** — pagamento via PIX no dia 20
-  - **Campanhas a partir de 20/01/2026** — Stripe Connect (14-30 dias após aprovação)
+  **Modelo atual de pagamento:** Stripe Connect.
+  O repasse é condicional e acontece após aprovação do conteúdo, com prazo de 14 a 30 dias.
 </Info>
 
 <AccordionGroup>
-  <Accordion title="Meu pagamento está demorando (novo modelo - Stripe)">
-    **Lembre-se:** Para campanhas a partir de 20/01/2026, após a aprovação do seu vídeo, o pagamento pode levar de **14 a 30 dias** para cair na sua conta bancária. Esse prazo segue as regras de processamento do Stripe para o Brasil.
+  <Accordion title="Não consegui configurar minha carteira">
+    A carteira passa por três etapas no Stripe: **dados de pessoa física (PF)**, **verificação de identidade (KYC)** e **conta bancária**. Tudo pode ser feito pelo **app** ou pela **web**.
+
+    **Revise nesta ordem:**
+    1. **PF** — Conta PJ não serve; use **conta bancária e titular PF** alinhados ao seu cadastro
+    2. **KYC** — Documento legível, boa iluminação; refaça se a verificação falhar
+    3. **Banco** — Agência, conta e dígito corretos; titular **igual** ao da Conty
+    4. **CEP** — Se der erro, teste outro CEP válido da mesma região
+
+    Guia passo a passo: [Pagamentos — configuração da wallet](/help-center/creators/payouts).  
+    Se ainda travar após isso, fale com o [suporte](/help-center/contact) com prints da tela de erro.
+  </Accordion>
+  <Accordion title="Dinheiro não caiu na minha conta">
+    **1. Houve aprovação final do conteúdo pela marca?**  
+    Sem aprovação final não há repasse ([pagamento condicional](/help-center/rules/conditional-payment)).
+
+    **2. Já passou o prazo do Stripe?**  
+    Depois da aprovação, o depósito pode levar **14 a 30 dias**.
+
+    **3. Carteira ok?**  
+    Confira se a verificação (KYC) foi concluída e se os dados bancários estão corretos — veja [Pagamentos](/help-center/creators/payouts).
+
+    **4. Extrato**  
+    O lançamento pode aparecer como **STRIPE** no extrato do banco.
+
+    Se tudo acima estiver certo e mesmo assim não caiu, entre em contato com o [suporte](/help-center/contact) com campanha, data de aprovação e print do status no app.
+  </Accordion>
+  <Accordion title="Meu pagamento está demorando">
+    **Lembre-se:** Após a aprovação do seu vídeo, o pagamento pode levar de **14 a 30 dias** para cair na sua conta bancária. Esse prazo segue as regras de processamento do Stripe para o Brasil.
 
     **Verifique também:**
     - Se sua campanha foi realmente aprovada pela marca
@@ -219,36 +271,22 @@ Encontrou algum problema no app? A maioria tem solução rápida. Confira abaixo
 
     Se já passou o prazo e você ainda não recebeu, entre em contato com o suporte.
   </Accordion>
-  <Accordion title="Não recebi meu pagamento no dia 20 (modelo V1)">
-    Para campanhas **anteriores a 20/01/2026**, o pagamento é feito via PIX no dia 20.
-    
-    **Verifique:**
-    - Se sua campanha foi aprovada pela marca
-    - Se sua chave PIX está cadastrada corretamente no app
-    - Se o dia 20 caiu em fim de semana ou feriado (pode haver atraso de 1-2 dias úteis)
-
-    Se tudo estiver certo e você ainda não recebeu, entre em contato com o suporte.
-  </Accordion>
   <Accordion title="O valor recebido está errado">
     Confira o histórico de campanhas aprovadas no app. Se o valor não bater, entre em contato com o suporte com os detalhes das campanhas.
   </Accordion>
-  <Accordion title="Não consigo cadastrar minha conta bancária (novo modelo)">
+  <Accordion title="Não consigo cadastrar minha conta bancária">
     Verifique se você está inserindo os dados corretamente:
     - **Banco** — Selecione o banco correto na lista
     - **Agência** — Apenas números, sem traços
     - **Conta** — Número da conta com dígito verificador
     - **Tipo** — Conta corrente ou poupança
+    - **Titularidade** — A conta bancária deve estar no seu nome
+    - **Pessoa física** — Cadastre conta PF (não PJ)
+    - **CEP** — Se der erro, tente outro CEP válido da mesma região
 
     O Stripe aceita a maioria dos bancos brasileiros, incluindo bancos digitais.
   </Accordion>
-  <Accordion title="Não consigo cadastrar minha chave PIX (modelo V1)">
-    Verifique se você está inserindo a chave corretamente:
-    - **CPF** — Apenas números, sem pontos ou traços
-    - **E-mail** — Verifique se não há espaços
-    - **Telefone** — Com DDD, sem espaços
-    - **Chave aleatória** — Copie e cole para evitar erros
-  </Accordion>
-  <Accordion title="Minha verificação de identidade falhou (novo modelo)">
+  <Accordion title="Minha verificação de identidade falhou">
     O Stripe pode solicitar documentos para verificar sua identidade. Se a verificação falhou:
     - Certifique-se de que o documento está legível e não está cortado
     - Use um documento válido (RG ou CNH)
@@ -267,8 +305,8 @@ Encontrou algum problema no app? A maioria tem solução rápida. Confira abaixo
 
 <CardGroup cols={2}>
 
-<Card title="WhatsApp do Suporte" icon="whatsapp" href="https://wa.me/5547996972772">
-  Fale diretamente com o time: (47) 99697-2772.
+<Card title="WhatsApp do Suporte" icon="whatsapp" href="https://wa.me/5511936201522">
+  Fale diretamente com o time: +55 11 93620-1522.
 </Card>
 
 <Card title="E-mail" icon="envelope" href="mailto:contato@appconty.com">
