@@ -7,33 +7,28 @@ description: "Sistema de verba, pagamentos e repasses para criadores"
 
 A Conty funciona com um sistema de verba pré-paga. Você adiciona saldo antes de criar campanhas, e esse saldo é consumido conforme os conteúdos são aprovados.
 
-A partir de **20 de janeiro de 2026**, todos os pagamentos passam a ser processados através do **Stripe Connect**.
-
 <Warning>
   **Dois modelos de pagamento em vigor:**
-  - **Campanhas anteriores a 20/01/2026** seguem o modelo antigo (V1) — repasse via PIX no dia 20
-  - **Campanhas a partir de 20/01/2026** seguem o novo modelo — Stripe Connect com prazo de 14-30 dias para o criador receber
+
+  - **Campanhas a partir de 20/01/2026** seguem o novo modelo — Stripe Connect com prazo de 30 dias para o criador receber
 </Warning>
 
 ---
 
-## Novo modelo de pagamentos (a partir de 20/01/2026)
+## Modelo de pagamentos 
 
 <CardGroup cols={2}>
+  <Card title="Stripe Connect" icon="stripe-s">
+    Todos os pagamentos são processados pelo Stripe, uma das plataformas mais seguras do mundo.
+  </Card>
 
-<Card title="Stripe Connect" icon="stripe-s">
-  Todos os pagamentos são processados pelo Stripe, uma das plataformas mais seguras do mundo.
-</Card>
-
-<Card title="Repasse automático" icon="arrows-rotate">
-  Quando você aprova um conteúdo, o valor é automaticamente repassado para a conta do criador.
-</Card>
-
+  <Card title="Repasse automático" icon="arrows-rotate">
+    Quando você aprova um conteúdo, o valor é automaticamente repassado para a conta do criador.
+  </Card>
 </CardGroup>
 
 <Info>
-  O repasse ao criador é **condicional à aprovação final** da entrega. Enquanto o conteúdo não for aprovado, ele permanece protegido e sem uso autorizado pela marca.
-  Veja a política em [Pagamento Condicional](/help-center/rules/conditional-payment).
+  O repasse ao criador é **condicional à aprovação final** da entrega. Enquanto o conteúdo não for aprovado, ele permanece protegido e sem uso autorizado pela marca. Veja a política em [Pagamento Condicional](/help-center/rules/conditional-payment).
 </Info>
 
 ### Como funciona o fluxo de pagamentos
@@ -78,15 +73,13 @@ O **Stripe Connect** é a solução de pagamentos para marketplaces mais utiliza
 </Note>
 
 <CardGroup cols={2}>
+  <Card title="Carteira integrada" icon="wallet">
+    Adicione créditos à sua carteira antes de criar campanhas. O saldo fica disponível para uso imediato.
+  </Card>
 
-<Card title="Carteira integrada" icon="wallet">
-  Adicione créditos à sua carteira antes de criar campanhas. O saldo fica disponível para uso imediato.
-</Card>
-
-<Card title="Repasse no dia 20" icon="calendar">
-  No modelo V1, os criadores recebem via PIX no **dia 20** (conforme o calendário vigente daquele modelo).
-</Card>
-
+  <Card title="Repasse no dia 20" icon="calendar">
+    No modelo V1, os criadores recebem via PIX no **dia 20** (conforme o calendário vigente daquele modelo).
+  </Card>
 </CardGroup>
 
 ---
@@ -101,19 +94,27 @@ O **Stripe Connect** é a solução de pagamentos para marketplaces mais utiliza
   <Accordion title="A verba expira?">
     A verba tem validade de **12 meses** a partir da data de depósito. Após esse período, o saldo não utilizado expira.
   </Accordion>
+
   <Accordion title="A verba é reembolsável?">
     **Não.** A verba não é reembolsável após o depósito.
-    
+
     A única exceção é quando **não foi encontrado nenhum criador** para sua campanha. Nesse caso, o valor reservado é devolvido ao seu saldo.
   </Accordion>
+
   <Accordion title="Quando a verba é consumida?">
     O saldo só diminui **na aprovação dos conteúdos**. Isso significa que:
+
     - Você pode recusar vídeos que não gostar sem perder verba
     - Só paga pelos conteúdos que realmente aprova
     - O valor fica reservado até a aprovação ou recusa
   </Accordion>
+
   <Accordion title="Posso usar a verba em várias campanhas?">
     Sim. A verba fica na sua conta e pode ser usada para criar quantas campanhas quiser, enquanto houver saldo disponível.
+  </Accordion>
+
+  <Accordion title="O que acontece se pauso uma campanha com vídeos aguardando aprovação?">
+    Ao pausar ou encerrar uma campanha com vídeos ainda aguardando aprovação, será cobrada uma multa de 50% do valor de cada vídeo pendente. Esse valor é repassado diretamente aos criadores, como compensação pelo tempo e esforço dedicados à produção do conteúdo.
   </Accordion>
 </AccordionGroup>
 
@@ -144,9 +145,9 @@ O **Stripe Connect** é a solução de pagamentos para marketplaces mais utiliza
 ## Resumo das regras
 
 | Regra | Detalhe |
-|-------|---------|
-| Valor mínimo por depósito | R$200 |
-| Valor máximo por depósito | R$50.000 |
+| --- | --- |
+| Valor mínimo por depósito | R\$200 |
+| Valor máximo por depósito | R\$50.000 |
 | Validade | 12 meses |
 | Reembolso | Não (exceto se não houver criadores) |
 | Consumo | Apenas na aprovação do conteúdo |
@@ -164,24 +165,31 @@ O **Stripe Connect** é a solução de pagamentos para marketplaces mais utiliza
   <Accordion title="Como sei qual modelo de pagamento se aplica à minha campanha?">
     Depende da data e do contrato vigente da campanha. Em geral, campanhas no **modelo legado (V1)** seguem as regras de repasse daquele modelo; campanhas no **modelo atual** usam **Stripe Connect**, com prazo de **14 a 30 dias** para o criador após a **aprovação final**. Em dúvida, confira o histórico da campanha no dashboard ou fale com o [suporte](/help-center/contact).
   </Accordion>
+
   <Accordion title="Posso adicionar qualquer valor?">
     Sim, desde que esteja entre R$200 e R$50.000 por transação. Você pode fazer quantos depósitos quiser.
   </Accordion>
+
   <Accordion title="Qual método de pagamento é mais rápido?">
     **PIX** tem aprovação em segundos. **Cartão de crédito** também é instantâneo. **Boleto** pode levar até 3 dias úteis para compensar.
   </Accordion>
+
   <Accordion title="Como acompanho meu saldo?">
     O saldo disponível aparece no dashboard na seção de Carteira. Você também pode ver o histórico completo de transações: depósitos, gastos com campanhas e estornos.
   </Accordion>
+
   <Accordion title="E se minha verba estiver acabando durante uma campanha?">
     Você receberá alertas quando o saldo estiver baixo. Adicione mais verba para manter suas campanhas ativas.
   </Accordion>
+
   <Accordion title="O que acontece se eu aprovar um vídeo sem saldo suficiente?">
     Você precisa ter saldo disponível para aprovar conteúdos. Se o saldo for insuficiente, adicione mais verba antes de aprovar.
   </Accordion>
+
   <Accordion title="Por que o criador demora 14-30 dias para receber no novo modelo?">
     Esse prazo é definido pelo Stripe e segue as regulamentações do sistema financeiro brasileiro. É um período de segurança que protege todas as partes envolvidas na transação.
   </Accordion>
+
   <Accordion title="Se eu aprovar a candidatura, o repasse já é feito?">
     Não. Aprovação de candidatura só libera a execução. O repasse ocorre apenas após aprovação final da entrega do conteúdo.
   </Accordion>
