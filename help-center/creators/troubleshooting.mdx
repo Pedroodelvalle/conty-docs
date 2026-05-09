@@ -9,20 +9,27 @@ Encontrou algum problema no app? A maioria tem solução rápida. Confira abaixo
 
 ## **Não consigo configurar minha carteira**
 
-**Problemas mais comuns:**
+<AccordionGroup>
+  <Accordion title="Não consigo configurar minha carteira">
+    A carteira passa por três etapas no Stripe: **dados de pessoa física (PF)**, **verificação de identidade (KYC)** e **conta bancária**. Tudo pode ser feito pelo **app** ou pela **web**.
 
-**1) Conta PJ não conclui a configuração**
+    **Revise nesta ordem:**
 
-Problema: você tentou cadastrar uma conta bancária de pessoa jurídica (PJ).\
-Como resolver: use uma conta bancária de pessoa física (PF), vinculada ao seu CPF.
+    1. **PF** — Conta PJ não serve; use conta bancária e titular PF alinhados ao seu cadastro
+    2. **KYC** — Documento legível, boa iluminação; refaça se a verificação falhar
+    3. **Banco** — Agência, conta e dígito corretos; titular igual ao da Conty
+    4. **CEP** — Se der erro, teste outro CEP válido da mesma região
 
-**2) CEP com erro**\
-Problema: o CEP informado não passa na validação.\
-Como resolver: tente outro CEP válido da mesma região.
+    <Warning>
+      **Agibank e Banco Inter não estão funcionando na plataforma no momento.**
+      Use uma conta de **pessoa física (PF)** vinculada ao seu CPF. Recomendamos o **Nubank**.
+      Conta CNPJ (PJ) não é aceita.
+    </Warning>
 
-**3) Conta bancária em outro nome**\
-Problema: a conta bancária cadastrada não está no mesmo nome do titular da conta Conty.\
-Como resolver: use uma conta no mesmo nome da pessoa cadastrada na plataforma.
+    Guia passo a passo: [Pagamentos — configuração da wallet](/help-center/creators/payouts).
+    Se ainda travar após isso, fale com o [suporte](/help-center/contact) com prints da tela de erro.
+  </Accordion>
+</AccordionGroup>
 
 ---
 
@@ -145,24 +152,6 @@ Como resolver: use uma conta no mesmo nome da pessoa cadastrada na plataforma.
     Se você aceitou uma campanha e percebeu que o prazo é inviável, fale com o suporte imediatamente. Em alguns casos, conseguimos negociar uma extensão com a marca.
   </Accordion>
 
-  <Accordion title="O roteiro não está sendo gerado">
-    O app gera roteiros automaticamente para algumas campanhas. Se o roteiro não aparecer:
-
-    - Verifique sua conexão com a internet
-    - Aguarde alguns segundos — a geração pode demorar um pouco
-    - Feche e abra a campanha novamente
-    - Se persistir, você pode escrever seu próprio roteiro ou falar com o suporte
-  </Accordion>
-
-  <Accordion title="Não consigo usar o teleprompter">
-    O teleprompter é uma ferramenta do app que mostra o roteiro enquanto você grava. Se não estiver funcionando:
-
-    - Verifique se você permitiu acesso à câmera
-    - Tente fechar outros apps em segundo plano
-    - Reinicie o app da Conty
-    - Se o problema continuar, grave o vídeo normalmente e leia o roteiro de outra forma
-  </Accordion>
-
   <Accordion title="Não consigo responder no chat da campanha">
     O chat com a marca só fica disponível enquanto a campanha está ativa. Se o chat está bloqueado:
 
@@ -200,6 +189,17 @@ Como resolver: use uma conta no mesmo nome da pessoa cadastrada na plataforma.
     Se **não houver nenhuma explicação** visível e você acreditar que foi um equívoco, entre em contato com o [suporte](/help-center/contact) informando marca, campanha e prints — a equipe pode orientar ou encaminhar à marca quando couber.
 
     Lembrete: por política de [pagamento condicional](/help-center/rules/conditional-payment), **sem aprovação final do conteúdo não há repasse**.
+  </Accordion>
+
+  <Accordion title="Tenho uma dúvida sobre o briefing ou sobre a marca">
+    A Conty é somente a intermediadora entre você e a marca. Dúvidas sobre briefing, entrega de produto, detalhes da campanha ou qualquer informação específica da marca só podem ser respondidas pela própria marca.
+
+    Entre em contato com ela diretamente pela **aba de mensagens**, no canto superior direito da campanha.
+
+    Se já enviou mensagem e não teve retorno:
+
+    - **Menos de 7 dias:** aguarde, pois as marcas têm um prazo médio de até 7 dias para responder.
+    - **Mais de 7 dias sem resposta:** abra um ticket em [contato@appconty.com](mailto:contato@appconty.com) informando nome da marca, nome da campanha, valor da campanha, seu @ do Instagram e seu e-mail cadastrado na plataforma.
   </Accordion>
 </AccordionGroup>
 
@@ -284,21 +284,27 @@ Como resolver: use uma conta no mesmo nome da pessoa cadastrada na plataforma.
 ## Problemas com pagamentos
 
 <Info>
-  **Modelo atual de pagamento:** Stripe Connect. O repasse é condicional e acontece após aprovação do conteúdo, com prazo de 14 a 30 dias.
+  **Modelo atual de pagamento:** Stripe Connect. O repasse é condicional e acontece após aprovação do conteúdo, com prazo de até 32 dias.
 </Info>
 
 <AccordionGroup>
-  <Accordion title="Não consegui configurar minha carteira">
+  <Accordion title="Não consigo configurar minha carteira">
     A carteira passa por três etapas no Stripe: **dados de pessoa física (PF)**, **verificação de identidade (KYC)** e **conta bancária**. Tudo pode ser feito pelo **app** ou pela **web**.
 
     **Revise nesta ordem:**
 
-    1. **PF** — Conta PJ não serve; use **conta bancária e titular PF** alinhados ao seu cadastro
+    1. **PF** — Conta PJ não serve; use conta bancária e titular PF alinhados ao seu cadastro
     2. **KYC** — Documento legível, boa iluminação; refaça se a verificação falhar
-    3. **Banco** — Agência, conta e dígito corretos; titular **igual** ao da Conty
+    3. **Banco** — Agência, conta e dígito corretos; titular igual ao da Conty
     4. **CEP** — Se der erro, teste outro CEP válido da mesma região
 
-    Guia passo a passo: [Pagamentos — configuração da wallet](/help-center/creators/payouts).\
+    <Warning>
+      **Agibank e Banco Inter não estão funcionando na plataforma no momento.**
+      Use uma conta de **pessoa física (PF)** vinculada ao seu CPF. Recomendamos o **Nubank**.
+      Conta CNPJ (PJ) não é aceita.
+    </Warning>
+
+    Guia passo a passo: [Pagamentos — configuração da wallet](/help-center/creators/payouts).
     Se ainda travar após isso, fale com o [suporte](/help-center/contact) com prints da tela de erro.
   </Accordion>
 
@@ -307,7 +313,7 @@ Como resolver: use uma conta no mesmo nome da pessoa cadastrada na plataforma.
     Sem aprovação final não há repasse ([pagamento condicional](/help-center/rules/conditional-payment)).
 
     **2. Já passou o prazo do Stripe?**\
-    Depois da aprovação, o depósito pode levar **14 a 30 dias**.
+    Depois da aprovação, o depósito pode levar **até 32 dias**.
 
     **3. Carteira ok?**\
     Confira se a verificação (KYC) foi concluída e se os dados bancários estão corretos — veja [Pagamentos](/help-center/creators/payouts).
@@ -319,7 +325,7 @@ Como resolver: use uma conta no mesmo nome da pessoa cadastrada na plataforma.
   </Accordion>
 
   <Accordion title="Meu pagamento está demorando">
-    **Lembre-se:** Após a aprovação do seu vídeo, o pagamento pode levar de **14 a 30 dias** para cair na sua conta bancária. Esse prazo segue as regras de processamento do Stripe para o Brasil.
+    **Lembre-se:** Após a aprovação do seu vídeo, o pagamento pode levar **até 32 dias** para cair na sua conta bancária. Esse prazo segue as regras de processamento do Stripe para o Brasil.
 
     **Verifique também:**
 
@@ -331,7 +337,15 @@ Como resolver: use uma conta no mesmo nome da pessoa cadastrada na plataforma.
   </Accordion>
 
   <Accordion title="O valor recebido está errado">
-    Confira o histórico de campanhas aprovadas no app. Se o valor não bater, entre em contato com o suporte com os detalhes das campanhas.
+    Antes de entrar em contato com o suporte, verifique o seguinte:
+
+    A Conty retém **5%** de taxa sobre cada campanha aprovada. O criador recebe os **95% restantes**.
+
+    Exemplo: campanha de R$ 100,00 = você recebe R$ 95,00.
+
+    Se a diferença entre o valor esperado e o valor recebido for exatamente 5%, o pagamento está correto.
+
+    Se o valor recebido for diferente mesmo após descontar os 5%, entre em contato com o suporte em [contato@appconty.com](mailto:contato@appconty.com) informando o nome da campanha, o valor que aparecia e o valor que você recebeu.
   </Accordion>
 
   <Accordion title="Não consigo cadastrar minha conta bancária">
