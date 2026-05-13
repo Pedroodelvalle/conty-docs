@@ -212,6 +212,62 @@
     {
       "source": "/help-center/brands/comunidades",
       "destination": "/help-center/brands/communities"
+    },
+    {
+      "source": "/help-center/termos-de-uso",
+      "destination": "/help-center/legal/terms-of-use"
+    },
+    {
+      "source": "/help-center/legal/termos-de-uso",
+      "destination": "/help-center/legal/terms-of-use"
+    },
+    {
+      "source": "/help-center/legal/terms",
+      "destination": "/help-center/legal/terms-of-use"
+    },
+    {
+      "source": "/help-center/politica-de-privacidade",
+      "destination": "/help-center/legal/privacy-policy"
+    },
+    {
+      "source": "/help-center/legal/politica-de-privacidade",
+      "destination": "/help-center/legal/privacy-policy"
+    },
+    {
+      "source": "/help-center/legal/privacy",
+      "destination": "/help-center/legal/privacy-policy"
+    },
+    {
+      "source": "/help-center/influenciador-magalu/termos-de-uso",
+      "destination": "/help-center/legal/influenciador-magalu/terms-of-use"
+    },
+    {
+      "source": "/help-center/influenciador-magalu/politica-de-privacidade",
+      "destination": "/help-center/legal/influenciador-magalu/privacy-policy"
+    },
+    {
+      "source": "/help-center/legal/influenciador-magalu/termos-de-uso",
+      "destination": "/help-center/legal/influenciador-magalu/terms-of-use"
+    },
+    {
+      "source": "/help-center/legal/influenciador-magalu/politica-de-privacidade",
+      "destination": "/help-center/legal/influenciador-magalu/privacy-policy"
+    },
+    {
+      "source": "/help-center/legal/influenciador-magalu/terms",
+      "destination": "/help-center/legal/influenciador-magalu/terms-of-use"
+    },
+    {
+      "source": "/help-center/legal/influenciador-magalu/privacy",
+      "destination": "/help-center/legal/influenciador-magalu/privacy-policy"
+    },
+    {
+      "source": "/help-center/magalu/termos-de-uso",
+      "destination": "/help-center/legal/influenciador-magalu/terms-of-use"
+    },
+    {
+      "source": "/help-center/magalu/politica-de-privacidade",
+      "destination": "/help-center/legal/influenciador-magalu/privacy-policy"
     }
   ],
   "navigation": {
@@ -313,6 +369,20 @@
                 "group": "Políticas",
                 "pages": [
                   "help-center/rules/policies"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Documentos legais",
+            "pages": [
+              "help-center/legal/terms-of-use",
+              "help-center/legal/privacy-policy",
+              {
+                "group": "Influenciador Magalu",
+                "pages": [
+                  "help-center/legal/influenciador-magalu/terms-of-use",
+                  "help-center/legal/influenciador-magalu/privacy-policy"
                 ]
               }
             ]

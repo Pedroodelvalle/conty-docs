@@ -340,3 +340,99 @@ footer nav a[rel="next"]::after {
   visibility: visible !important;
   font-size: 0.875rem !important;
 }
+
+/* ============================================
+   SELO ASAAS — disclaimer regulatório (BaaS)
+   ============================================ */
+
+.asaas-seal-block {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  margin: 1.25rem 0;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 0.75rem;
+  background: rgba(15, 23, 42, 0.025);
+}
+
+html.dark .asaas-seal-block,
+[data-theme="dark"] .asaas-seal-block {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.asaas-seal-block .asaas-seal-link {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+}
+
+.asaas-seal-block .asaas-seal-link img {
+  display: block;
+  height: 48px;
+  width: auto;
+}
+
+.asaas-seal-block .asaas-seal-copy {
+  margin: 0 !important;
+  font-size: 0.875rem !important;
+  line-height: 1.5 !important;
+  color: rgba(15, 23, 42, 0.78);
+}
+
+html.dark .asaas-seal-block .asaas-seal-copy,
+[data-theme="dark"] .asaas-seal-block .asaas-seal-copy {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+@media (max-width: 639px) {
+  .asaas-seal-block {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem;
+  }
+}
+
+/* Variante compacta (rodapé/notice) */
+.asaas-notice {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  margin: 1rem 0 !important;
+  border-left: 3px solid rgba(15, 23, 42, 0.12);
+  background: rgba(15, 23, 42, 0.02);
+  border-radius: 0 0.5rem 0.5rem 0;
+  font-size: 0.8125rem !important;
+  line-height: 1.5 !important;
+  color: rgba(15, 23, 42, 0.72);
+}
+
+html.dark .asaas-notice,
+[data-theme="dark"] .asaas-notice {
+  border-left-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.025);
+  color: rgba(255, 255, 255, 0.74);
+}
+
+.asaas-notice .asaas-notice-link {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+}
+
+.asaas-notice .asaas-notice-link img {
+  display: block;
+  height: 36px;
+  width: auto;
+}
+
+@media (max-width: 639px) {
+  .asaas-notice {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.625rem;
+  }
+}
