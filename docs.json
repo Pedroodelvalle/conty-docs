@@ -25,6 +25,11 @@
   "seo": {
     "indexHiddenPages": false
   },
+  "integrations": {
+    "intercom": {
+      "appId": "fvi6sxbz"
+    }
+  },
   "styling": {
     "css": ["/custom.css"]
   },
