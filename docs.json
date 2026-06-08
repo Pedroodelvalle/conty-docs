@@ -373,7 +373,8 @@
               {
                 "group": "Políticas",
                 "pages": [
-                  "help-center/rules/policies"
+                  "help-center/rules/policies",
+                  "help-center/rules/reembolso"
                 ]
               }
             ]
