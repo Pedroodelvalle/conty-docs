@@ -1,11 +1,14 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "aspen",
+  "theme": "palm",
   "name": "Conty - Central de Ajuda",
   "colors": {
-    "primary": "#2984f6",
-    "light": "#5ba3f8",
-    "dark": "#1a6cd4"
+    "primary": "#2073df",
+    "light": "#2b7fff",
+    "dark": "#0b65da"
+  },
+  "fonts": {
+    "family": "Inter"
   },
   "favicon": "/favicon.svg",
   "metadata": {
@@ -401,23 +404,6 @@
             ]
           }
         ]
-      },
-      {
-        "tab": "Notícias",
-        "groups": [
-          {
-            "group": "Notícias",
-            "pages": [
-              "news/ifood-move-conty",
-              "news/conty-rodada-pre-seed",
-              "news/ganhos-de-criadores",
-              "news/index-copied-1"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "Untitled Tab"
       }
     ]
   },
