@@ -8,7 +8,7 @@
     "dark": "#0b65da"
   },
   "fonts": {
-    "family": "Inter"
+    "family": "Geist"
   },
   "favicon": "/favicon.svg",
   "metadata": {
@@ -281,7 +281,74 @@
   "navigation": {
     "tabs": [
       {
-        "tab": "Central de ajuda",
+        "tab": "Conheça a Conty",
+        "groups": [
+          {
+            "group": "Visão geral",
+            "pages": [
+              "index"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Marcas",
+        "groups": [
+          {
+            "group": "Visão geral",
+            "pages": [
+              "marcas/index"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Criadores",
+        "groups": [
+          {
+            "group": "Visão geral",
+            "pages": [
+              "criadores/index"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Pagamentos",
+        "groups": [
+          {
+            "group": "Visão geral",
+            "pages": [
+              "pagamentos/index"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Conta",
+        "groups": [
+          {
+            "group": "Visão geral",
+            "pages": [
+              "conta/index"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Legal",
+        "groups": [
+          {
+            "group": "Documentos legais",
+            "pages": [
+              "legal/index"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Doc Antiga",
+        "hidden": true,
         "groups": [
           {
             "group": "Início",
