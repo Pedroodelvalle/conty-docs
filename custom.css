@@ -312,11 +312,10 @@ html.dark main [class*="prose"] h2,
 [class*="TableOfContents"] h3::after,
 [class*="on-this-page"]::after {
   content: "Nesta página" !important;
-  font-size: 0.75rem !important;
+  font-size: 0.8125rem !important;
   font-weight: 600 !important;
   visibility: visible !important;
-  text-transform: uppercase !important;
-  letter-spacing: 0.05em !important;
+  letter-spacing: 0.01em !important;
 }
 
 /* Pagination footer links - specific selectors only */
@@ -515,11 +514,10 @@ html[class*="dark"] .conty-home,
 .conty-home-kicker {
   margin: 0 0 0.85rem !important;
   color: var(--conty-primary);
-  font-size: 0.78rem !important;
-  font-weight: 700;
-  letter-spacing: 0.12em;
+  font-size: 0.85rem !important;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   line-height: 1.4 !important;
-  text-transform: uppercase;
 }
 
 .conty-home-eyebrow {
@@ -1432,8 +1430,16 @@ html[class*="dark"] .conty-site-dashboard-dark,
 @media (prefers-reduced-motion: reduce) {
   .conty-site-announcement,
   .conty-site-button,
-  .conty-site-paths a {
+  .conty-site-paths a,
+  .conty-help-paths .card,
+  .conty-help-capabilities .card,
+  .conty-help-more .card,
+  .conty-help-card-cta span[aria-hidden] {
     transition: none;
+  }
+
+  .conty-help-paths .card:hover {
+    transform: none;
   }
 }
 
@@ -1444,13 +1450,37 @@ html[class*="dark"] .conty-site-dashboard-dark,
 
 .conty-help-hero {
   display: grid;
-  min-height: 26rem;
+  min-height: 24rem;
   place-items: center;
+  border-bottom: 0;
+}
+
+.conty-help-hero::before {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  content: "";
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 60% 55% at 50% 38%,
+    color-mix(in srgb, var(--conty-site-primary) 5%, transparent),
+    transparent 70%
+  );
+}
+
+.conty-help-hero::after {
+  position: absolute;
+  z-index: 2;
+  inset: auto 0 0;
+  height: 9rem;
+  content: "";
+  pointer-events: none;
+  background: linear-gradient(to bottom, transparent, var(--conty-site-background));
 }
 
 .conty-help-hero .conty-site-hero-inner {
   width: min(100%, var(--conty-help-max-width));
-  padding: 4.5rem 1.5rem;
+  padding: 5rem 1.5rem 8.5rem;
   text-align: center;
 }
 
@@ -1478,15 +1508,62 @@ html[class*="dark"] .conty-site-dashboard-dark,
 }
 
 .conty-help-paths {
+  position: relative;
+  z-index: 4;
   width: min(calc(100% - 3rem), var(--conty-help-max-width));
-  margin: 0 auto;
-  padding: 3rem 0 3.5rem;
+  margin: -5.5rem auto 0;
+  padding: 0 0 4.5rem;
 }
 
 .conty-help-paths .card {
   height: 100%;
-  min-height: 13rem;
+  min-height: 12rem;
   margin: 0 !important;
+  border-radius: 1rem !important;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+  transition: border-color 180ms ease;
+}
+
+.conty-help-paths .card:hover {
+  border-color: color-mix(in srgb, var(--conty-site-primary) 40%, var(--conty-site-border)) !important;
+}
+
+html.dark .conty-help-paths .card,
+html[class*="dark"] .conty-help-paths .card,
+[data-theme="dark"] .conty-help-paths .card {
+  background: var(--conty-site-panel);
+  box-shadow: none;
+}
+
+.conty-help-paths [data-component-part="card-content-container"] {
+  padding: 1.5rem !important;
+}
+
+.conty-help-paths [data-component-part="card-icon"] {
+  display: grid;
+  width: 2.75rem !important;
+  height: 2.75rem !important;
+  flex: 0 0 2.75rem;
+  place-items: center;
+  border-radius: 0.7rem;
+  background: color-mix(in srgb, var(--conty-site-primary) 8%, transparent);
+}
+
+.conty-help-paths [data-component-part="card-icon"] > svg {
+  width: 1.25rem !important;
+  height: 1.25rem !important;
+}
+
+.conty-help-paths [data-component-part="card-title"] {
+  margin-top: 1.15rem !important;
+  font-size: 1.05rem !important;
+  letter-spacing: -0.015em;
+}
+
+.conty-help-paths [data-component-part="card-content"] {
+  color: var(--conty-site-muted) !important;
+  font-size: 0.9rem !important;
+  line-height: 1.6 !important;
 }
 
 .conty-help-paths [data-component-part="card-content-container"],
@@ -1516,15 +1593,32 @@ html[class*="dark"] .conty-site-dashboard-dark,
   gap: 0.4rem;
   margin-top: auto;
   padding-top: 1rem;
-  color: var(--conty-site-primary);
+  color: var(--conty-site-primary, var(--conty-primary));
   font-size: 0.875rem;
   font-weight: 600;
 }
 
+.conty-help-card-cta span[aria-hidden] {
+  transition: transform 180ms ease;
+}
+
+.card:hover .conty-help-card-cta span[aria-hidden] {
+  transform: translateX(4px);
+}
+
+.conty-help-kicker {
+  margin: 0 0 0.5rem !important;
+  color: var(--conty-site-primary) !important;
+  font-size: 0.8125rem !important;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.4 !important;
+}
+
 .conty-help-about {
   width: min(calc(100% - 3rem), var(--conty-help-max-width));
-  margin: 0 auto 4rem;
-  padding: 2.75rem 0;
+  margin: 0 auto 4.5rem;
+  padding: 3rem 0;
   border-top: 1px solid var(--conty-site-border);
   border-bottom: 1px solid var(--conty-site-border);
 }
@@ -1533,18 +1627,19 @@ html[class*="dark"] .conty-site-dashboard-dark,
   margin: 0 0 0.85rem !important;
   padding: 0 !important;
   color: var(--conty-site-foreground);
-  font-size: 1.45rem !important;
+  font-size: 1.5rem !important;
   font-weight: 600 !important;
-  letter-spacing: -0.025em !important;
+  letter-spacing: -0.028em !important;
   line-height: 1.3 !important;
 }
 
 .conty-help-about > p {
-  max-width: 60rem;
+  max-width: 48rem;
   margin: 0 !important;
   color: var(--conty-site-muted);
-  font-size: 1rem !important;
+  font-size: 1.05rem !important;
   line-height: 1.75 !important;
+  text-wrap: pretty;
 }
 
 .conty-help-capabilities {
@@ -1558,25 +1653,39 @@ html[class*="dark"] .conty-site-dashboard-dark,
 }
 
 .conty-help-capabilities h2 {
-  margin: 0 0 1.25rem !important;
+  margin: 0 0 1.5rem !important;
   padding: 0 !important;
   color: var(--conty-site-foreground);
-  font-size: 1.45rem !important;
+  font-size: 1.5rem !important;
   font-weight: 600 !important;
-  letter-spacing: -0.025em !important;
+  letter-spacing: -0.028em !important;
   line-height: 1.3 !important;
+}
+
+.conty-help-capabilities .conty-help-kicker + h2,
+.conty-help-more .conty-help-kicker + h2 {
+  margin-top: 0 !important;
 }
 
 .conty-help-capabilities .card-group,
 .conty-help-more .card-group {
-  row-gap: 1.25rem !important;
+  row-gap: 1rem !important;
+  column-gap: 1rem !important;
 }
 
 .conty-help-capabilities .card,
 .conty-help-more .card {
-  min-height: 12.5rem;
+  min-height: 0;
   margin: 0 !important;
-  border-radius: 0.75rem !important;
+  border-radius: 0.85rem !important;
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease;
+}
+
+.conty-help-capabilities .card:hover,
+.conty-help-more .card:hover {
+  border-color: color-mix(in srgb, var(--conty-site-primary) 35%, var(--conty-site-border)) !important;
 }
 
 .conty-help-capabilities [data-component-part="card-content-container"],
@@ -1589,23 +1698,28 @@ html[class*="dark"] .conty-site-dashboard-dark,
 
 .conty-help-capabilities [data-component-part="card-icon"],
 .conty-help-more [data-component-part="card-icon"] {
-  width: 1.25rem !important;
-  height: 1.25rem !important;
-  flex: 0 0 1.25rem;
+  display: grid;
+  width: 2.25rem !important;
+  height: 2.25rem !important;
+  flex: 0 0 2.25rem;
+  place-items: center;
+  border-radius: 0.6rem;
+  background: color-mix(in srgb, var(--conty-site-primary) 8%, transparent);
 }
 
 .conty-help-capabilities [data-component-part="card-icon"] > svg,
 .conty-help-more [data-component-part="card-icon"] > svg {
-  width: 1.25rem !important;
-  height: 1.25rem !important;
+  width: 1.05rem !important;
+  height: 1.05rem !important;
 }
 
 .conty-help-capabilities [data-component-part="card-title"],
 .conty-help-more [data-component-part="card-title"] {
   min-height: 0;
-  margin-top: 1.15rem !important;
+  margin-top: 1rem !important;
   font-size: 0.95rem !important;
-  line-height: 1.3 !important;
+  letter-spacing: -0.01em;
+  line-height: 1.35 !important;
 }
 
 .conty-help-capabilities [data-component-part="card-content"],
@@ -1623,13 +1737,56 @@ html[class*="dark"] .conty-site-dashboard-dark,
 }
 
 .conty-help-more h2 {
-  margin: 0 0 1.25rem !important;
+  margin: 0 0 1.5rem !important;
   padding: 0 !important;
   color: var(--conty-site-foreground);
-  font-size: 1.45rem !important;
+  font-size: 1.5rem !important;
   font-weight: 600 !important;
-  letter-spacing: -0.025em !important;
+  letter-spacing: -0.028em !important;
   line-height: 1.3 !important;
+}
+
+/* Cards de opção (ex.: UGC / Influência / Clipping) em páginas padrão */
+.conty-option-cards .card {
+  height: 100%;
+  margin: 0 !important;
+}
+
+.conty-option-cards [data-component-part="card-content-container"] {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  padding: 1.5rem !important;
+}
+
+.conty-option-cards [data-component-part="card-content-container"] > a > .w-full,
+.conty-option-cards [data-component-part="card-content"] {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.conty-option-cards [data-component-part="card-content-container"] > a > .w-full {
+  height: 100%;
+}
+
+.conty-option-cards .card h2[data-component-part="card-title"],
+.conty-option-cards .card [data-component-part="card-title"] {
+  margin-top: 1.5rem !important;
+  margin-bottom: 0 !important;
+  font-size: 1rem !important;
+  letter-spacing: -0.01em;
+  line-height: 1.35 !important;
+}
+
+.conty-option-cards [data-component-part="card-content"] {
+  margin-top: 0.5rem !important;
+  font-size: 0.9rem !important;
+  line-height: 1.6 !important;
+}
+
+.conty-option-cards .conty-help-card-cta {
+  padding-top: 1.25rem;
 }
 
 .conty-theme-toggle {
@@ -1708,24 +1865,62 @@ html[class*="dark"] .conty-theme-toggle-dark,
   background: color-mix(in srgb, var(--conty-site-foreground) 10%, transparent) !important;
 }
 
+@media (min-width: 640px) and (max-width: 1023px) {
+  .conty-help-hero .conty-site-hero-inner {
+    padding-top: 7.5rem;
+  }
+
+  .conty-help-capabilities [class*="grid"],
+  .conty-help-more [class*="grid"],
+  .conty-option-cards [class*="grid"] {
+    --cols: 2 !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
 @media (max-width: 639px) {
   .conty-help-hero {
-    min-height: 28rem;
+    min-height: 27rem;
   }
 
   .conty-help-hero .conty-site-hero-inner {
-    padding: 7.5rem 1.25rem 3.5rem;
+    padding: 8.5rem 1.25rem 6.5rem;
+  }
+
+  .conty-help-hero h1 {
+    font-size: clamp(1.9rem, 8.5vw, 2.4rem) !important;
+  }
+
+  .conty-help-hero .conty-site-hero-description {
+    font-size: 0.95rem !important;
   }
 
   .conty-help-paths {
     width: calc(100% - 2rem);
-    padding: 2rem 0 3rem;
+    margin-top: -3.5rem;
+    padding: 0 0 3rem;
+  }
+
+  .conty-help-paths [class*="grid"],
+  .conty-help-capabilities [class*="grid"],
+  .conty-help-more [class*="grid"],
+  .conty-option-cards [class*="grid"] {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+  }
+
+  .conty-help-paths .card {
+    min-height: 0;
+  }
+
+  .conty-help-paths [data-component-part="card-content-container"] {
+    padding: 1.25rem !important;
   }
 
   .conty-help-about {
     width: calc(100% - 2rem);
     margin-bottom: 3.5rem;
-    padding: 2.25rem 0;
+    padding: 2.5rem 0;
   }
 
   .conty-help-capabilities {
