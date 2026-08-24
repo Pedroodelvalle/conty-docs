@@ -1,4 +1,92 @@
 ---
 title: "Pagamentos"
-description: "Informações sobre pagamentos na Conty."
+description: "Como o dinheiro entra, sai e chega até o criador na Conty."
+keywords:
+  - pagamentos
+  - carteira
+  - pix
+  - saldo
 ---
+
+import { AsaasFootnote } from "/snippets/asaas-disclaimer.mdx"
+
+A Conty usa uma carteira pré-paga. A marca adiciona saldo, a campanha reserva esse valor e o criador recebe depois da aprovação do conteúdo. O saque é via Pix.
+
+<div className="conty-option-cards">
+<CardGroup cols={2}>
+  <Card title="Sou marca" icon="/icons/building01.svg" href="/pagamentos/marcas">
+    Adicionar saldo, taxas e como a campanha consome a verba.
+  </Card>
+  <Card title="Sou criador" icon="/icons/user01.svg" href="/pagamentos/criadores">
+    Cadastro, recebimento, saque e extrato no app.
+  </Card>
+</CardGroup>
+</div>
+
+## Como o dinheiro se move
+
+<Steps>
+  <Step title="A marca adiciona saldo">
+    Pix, boleto ou cartão de crédito. O depósito confirmado já pode ser usado em campanha.
+  </Step>
+  <Step title="A campanha reserva o valor">
+    O orçamento fica separado para aquela campanha. O criador só é pago com essa reserva.
+  </Step>
+  <Step title="O conteúdo é aprovado">
+    Sem aprovação final, não há pagamento. Recusar um vídeo não gera custo.
+  </Step>
+  <Step title="O criador recebe e saca">
+    O valor entra na carteira. Quando estiver disponível, o saque cai via Pix.
+  </Step>
+</Steps>
+
+<Frame caption="Fluxo marca → campanha → criador">
+  <img
+    src="/images/pagamentos/fluxo-marca-campanha-criador.jpg"
+    alt="Como o dinheiro se move: a marca adiciona saldo, a campanha reserva o valor, o conteúdo é aprovado e o criador recebe e saca via Pix."
+  />
+</Frame>
+
+## Saldo pendente e saldo disponível
+
+Confirmado não é o mesmo que liquidado.
+
+| Quem | Pendente | Disponível |
+| --- | --- | --- |
+| Marca | Já dá para criar campanha e pagar criadores | Dinheiro já liquidado |
+| Criador | Valor a caminho. Ainda não dá para sacar | Pode sacar via Pix |
+
+O prazo de liquidação depende do método de depósito da marca: Pix é imediato, boleto leva cerca de 1 dia útil, cartão cerca de 30 dias. Enquanto isso, o criador vê o valor como pendente.
+
+## Formatos de pagamento da campanha
+
+- **Valor fixo** — a marca define quanto paga por conteúdo aprovado.
+- **Por views** — o valor depende das visualizações da campanha.
+- **Permuta** — não há pagamento em dinheiro. A marca descreve o item; o criador vê **PERMUTA**.
+
+A taxa da plataforma para o criador é de **5%** sobre cada valor aprovado. Campanhas de permuta não geram saque.
+
+<Info>
+  A aprovação da candidatura só libera a produção. O pagamento acontece na aprovação final da entrega. Veja [Pagamento condicional](/help-center/rules/conditional-payment).
+</Info>
+
+## Próximo passo
+
+<div className="conty-option-cards">
+<CardGroup cols={2}>
+  <Card title="Marcas" href="/pagamentos/marcas" icon="/icons/creditCard.svg">
+    Depósito, taxas e extrato.
+  </Card>
+  <Card title="Criadores" href="/pagamentos/criadores" icon="/icons/wallet01.svg">
+    Cadastro facial, Pix e saque.
+  </Card>
+  <Card title="Perguntas frequentes" href="/pagamentos/perguntas-frequentes" icon="/icons/helpCircle.svg">
+    Prazos, taxas e problemas comuns.
+  </Card>
+  <Card title="Suporte" href="/help-center/contact" icon="/icons/customerService01.svg">
+    Fale com o time se o saldo não bater.
+  </Card>
+</CardGroup>
+</div>
+
+<AsaasFootnote />

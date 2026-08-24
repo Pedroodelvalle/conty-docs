@@ -186,10 +186,24 @@ main [class*="prose"] h2 {
   padding-top: 1.25rem !important;
 }
 
+/* Primeiro h2: sem divisória. Mantém espaço se houver texto, imagem ou cards acima. */
 main [class*="prose"] h2:first-of-type {
   border-top: none !important;
-  margin-top: 0 !important;
+  margin-top: 2.5rem !important;
   padding-top: 0 !important;
+}
+
+/* Só cola no título da página quando o h2 é o primeiro bloco */
+main [class*="prose"] > h2:first-child {
+  margin-top: 0 !important;
+}
+
+/* Imagem, frame, vídeo ou mockup imediatamente acima do título.
+   O Frame do Mintlify vem dentro de uma div sem classe. */
+main [class*="prose"] :is(figure, video, .conty-mockup-slot) + :is(h2, h3),
+main [class*="prose"] :has(> figure) + :is(h2, h3),
+main [class*="prose"] :is(figure, video) + :is(h2, h3):first-of-type {
+  margin-top: 2.5rem !important;
 }
 
 html.dark main [class*="prose"] h2,
@@ -346,99 +360,18 @@ footer nav a[rel="next"]::after {
 }
 
 /* ============================================
-   SELO ASAAS — disclaimer regulatório (BaaS)
+   ASAAS — nota discreta (só páginas legais / FAQ)
    ============================================ */
 
-.asaas-seal-block {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem 1.25rem;
-  margin: 1.25rem 0;
-  border: 1px solid var(--conty-border);
-  border-radius: 0.75rem;
-  background: color-mix(in srgb, var(--conty-muted) 50%, transparent);
-}
-
-html.dark .asaas-seal-block,
-[data-theme="dark"] .asaas-seal-block {
-  border-color: var(--conty-border);
-  background: color-mix(in srgb, var(--conty-muted) 50%, transparent);
-}
-
-.asaas-seal-block .asaas-seal-link {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-}
-
-.asaas-seal-block .asaas-seal-link img {
-  display: block;
-  height: 48px;
-  width: auto;
-}
-
-.asaas-seal-block .asaas-seal-copy {
-  margin: 0 !important;
-  font-size: 0.875rem !important;
+.asaas-footnote {
+  margin: 2.5rem 0 0 !important;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 0.75rem !important;
   line-height: 1.5 !important;
   color: var(--conty-muted-foreground);
-}
-
-html.dark .asaas-seal-block .asaas-seal-copy,
-[data-theme="dark"] .asaas-seal-block .asaas-seal-copy {
-  color: var(--conty-muted-foreground);
-}
-
-@media (max-width: 639px) {
-  .asaas-seal-block {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.75rem;
-    padding: 0.875rem 1rem;
-  }
-}
-
-/* Variante compacta (rodapé/notice) */
-.asaas-notice {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
-  margin: 1rem 0 !important;
-  border-left: 3px solid var(--conty-primary);
-  background: color-mix(in srgb, var(--conty-accent) 35%, transparent);
-  border-radius: 0 0.5rem 0.5rem 0;
-  font-size: 0.8125rem !important;
-  line-height: 1.5 !important;
-  color: var(--conty-muted-foreground);
-}
-
-html.dark .asaas-notice,
-[data-theme="dark"] .asaas-notice {
-  border-left-color: var(--conty-primary);
-  background: color-mix(in srgb, var(--conty-accent) 35%, transparent);
-  color: var(--conty-muted-foreground);
-}
-
-.asaas-notice .asaas-notice-link {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-}
-
-.asaas-notice .asaas-notice-link img {
-  display: block;
-  height: 36px;
-  width: auto;
-}
-
-@media (max-width: 639px) {
-  .asaas-notice {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.625rem;
-  }
+  opacity: 0.75;
 }
 
 /* ============================================
@@ -1747,6 +1680,15 @@ html[class*="dark"] .conty-help-paths .card,
 }
 
 /* Cards de opção (ex.: UGC / Influência / Clipping) em páginas padrão */
+.conty-option-cards {
+  margin-top: 1.25rem;
+  margin-bottom: 2.5rem;
+}
+
+.conty-option-cards + :is(h2, h3) {
+  margin-top: 2.5rem !important;
+}
+
 .conty-option-cards .card {
   height: 100%;
   margin: 0 !important;
@@ -1770,6 +1712,23 @@ html[class*="dark"] .conty-help-paths .card,
   height: 100%;
 }
 
+.conty-option-cards [data-component-part="card-icon"] {
+  margin-bottom: 0.35rem;
+}
+
+.conty-option-cards [data-component-part="card-icon"] img,
+.conty-option-cards [data-component-part="card-icon"] svg {
+  display: block;
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.mdx-content .card [data-component-part="card-icon"] {
+  margin-bottom: 0.35rem;
+}
+
+.mdx-content .card h2[data-component-part="card-title"],
+.mdx-content .card [data-component-part="card-title"],
 .conty-option-cards .card h2[data-component-part="card-title"],
 .conty-option-cards .card [data-component-part="card-title"] {
   margin-top: 1.5rem !important;
@@ -1936,4 +1895,30 @@ html[class*="dark"] .conty-theme-toggle-dark,
     width: calc(100% - 2rem);
     padding-bottom: 4rem;
   }
+}
+
+/* Espaços para mockups na documentação de pagamentos */
+.conty-mockup-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 220px;
+  width: 100%;
+  padding: 2rem 1.25rem;
+  background: var(--conty-muted);
+  border: 1px dashed var(--conty-border);
+  color: var(--conty-muted-foreground);
+  text-align: center;
+}
+
+.conty-mockup-slot-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--conty-foreground);
+}
+
+.conty-mockup-slot-hint {
+  font-size: 0.8rem;
 }
