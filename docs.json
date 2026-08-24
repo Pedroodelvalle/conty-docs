@@ -8,7 +8,7 @@
     "dark": "#0b65da"
   },
   "fonts": {
-    "family": "Inter"
+    "family": "Geist"
   },
   "favicon": "/favicon.svg",
   "metadata": {
@@ -51,27 +51,35 @@
     },
     {
       "source": "/help-center/creators/pagamentos",
-      "destination": "/help-center/creators/payouts"
+      "destination": "/pagamentos/criadores"
     },
     {
       "source": "/help-center/creators/carteira",
-      "destination": "/help-center/creators/payouts"
+      "destination": "/pagamentos/criadores"
     },
     {
       "source": "/help-center/creators/recebimentos",
-      "destination": "/help-center/creators/payouts-recebimentos"
+      "destination": "/pagamentos/criadores"
     },
     {
       "source": "/help-center/creators/payments",
-      "destination": "/help-center/creators/payouts"
+      "destination": "/pagamentos/criadores"
     },
     {
       "source": "/help-center/creators/payout",
-      "destination": "/help-center/creators/payouts"
+      "destination": "/pagamentos/criadores"
     },
     {
       "source": "/help-center/creators/wallet",
-      "destination": "/help-center/creators/payouts"
+      "destination": "/pagamentos/criadores"
+    },
+    {
+      "source": "/help-center/creators/payouts",
+      "destination": "/pagamentos/criadores"
+    },
+    {
+      "source": "/help-center/creators/payouts-recebimentos",
+      "destination": "/pagamentos/criadores"
     },
     {
       "source": "/help-center/creators/primeiros-passos",
@@ -147,11 +155,15 @@
     },
     {
       "source": "/help-center/brands/verba",
-      "destination": "/help-center/brands/payments-credits"
+      "destination": "/pagamentos/marcas"
     },
     {
       "source": "/help-center/brands/pagamentos",
-      "destination": "/help-center/brands/payments-credits"
+      "destination": "/pagamentos/marcas"
+    },
+    {
+      "source": "/help-center/brands/payments-credits",
+      "destination": "/pagamentos/marcas"
     },
     {
       "source": "/help-center/brands/revisoes",
@@ -223,27 +235,35 @@
     },
     {
       "source": "/help-center/termos-de-uso",
-      "destination": "/help-center/legal/terms-of-use"
+      "destination": "/legal/termos-de-uso"
     },
     {
       "source": "/help-center/legal/termos-de-uso",
-      "destination": "/help-center/legal/terms-of-use"
+      "destination": "/legal/termos-de-uso"
     },
     {
       "source": "/help-center/legal/terms",
-      "destination": "/help-center/legal/terms-of-use"
+      "destination": "/legal/termos-de-uso"
+    },
+    {
+      "source": "/help-center/legal/terms-of-use",
+      "destination": "/legal/termos-de-uso"
     },
     {
       "source": "/help-center/politica-de-privacidade",
-      "destination": "/help-center/legal/privacy-policy"
+      "destination": "/legal/politica-de-privacidade"
     },
     {
       "source": "/help-center/legal/politica-de-privacidade",
-      "destination": "/help-center/legal/privacy-policy"
+      "destination": "/legal/politica-de-privacidade"
     },
     {
       "source": "/help-center/legal/privacy",
-      "destination": "/help-center/legal/privacy-policy"
+      "destination": "/legal/politica-de-privacidade"
+    },
+    {
+      "source": "/help-center/legal/privacy-policy",
+      "destination": "/legal/politica-de-privacidade"
     },
     {
       "source": "/help-center/influenciador-magalu/termos-de-uso",
@@ -281,7 +301,106 @@
   "navigation": {
     "tabs": [
       {
-        "tab": "Central de ajuda",
+        "tab": "Conheça a Conty",
+        "groups": [
+          {
+            "group": "Visão geral",
+            "pages": [
+              "index"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Marcas",
+        "groups": [
+          {
+            "group": "Visão geral",
+            "pages": [
+              "marcas/index"
+            ]
+          },
+          {
+            "group": "Primeiros passos",
+            "pages": [
+              "marcas/comecar",
+              "marcas/campanhas",
+              "marcas/verba"
+            ]
+          },
+          {
+            "group": "Operação",
+            "pages": [
+              "marcas/criadores",
+              "marcas/revisoes",
+              "marcas/comunidades",
+              "marcas/resultados"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Criadores",
+        "groups": [
+          {
+            "group": "Visão geral",
+            "pages": [
+              "criadores/index"
+            ]
+          },
+          {
+            "group": "Primeiros passos",
+            "pages": [
+              "criadores/baixar-o-app",
+              "criadores/candidaturas",
+              "criadores/carteira"
+            ]
+          },
+          {
+            "group": "Formas de ganhar",
+            "pages": [
+              "criadores/ugc",
+              "criadores/influencia",
+              "criadores/clipping"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Pagamentos",
+        "groups": [
+          {
+            "group": "Visão geral",
+            "pages": [
+              "pagamentos/index",
+              "pagamentos/perguntas-frequentes"
+            ]
+          },
+          {
+            "group": "Por perfil",
+            "pages": [
+              "pagamentos/marcas",
+              "pagamentos/criadores"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Legal",
+        "groups": [
+          {
+            "group": "Documentos legais",
+            "pages": [
+              "legal/index",
+              "legal/termos-de-uso",
+              "legal/politica-de-privacidade"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Doc Antiga",
+        "hidden": true,
         "groups": [
           {
             "group": "Início",

@@ -1,0 +1,162 @@
+---
+title: "Conheça a Conty"
+description: "Bem-vindo à central de ajuda da Conty. Aqui você encontra todas as respostas que precisa."
+mode: "custom"
+"og:title": "Central de ajuda da Conty"
+keywords:
+  - creators
+  - campanhas
+  - UGC
+  - influenciadores
+  - marketing de influência
+---
+
+export const HelpThemeToggle = () => {
+  const switchTheme = (theme) => {
+    document
+      .querySelector(`[data-theme-preference-value="${theme}"]`)
+      ?.click();
+  };
+
+  return (
+    <div className="conty-theme-toggle" role="group" aria-label="Alterar tema">
+      <button
+        className="conty-theme-toggle-light"
+        type="button"
+        aria-label="Usar tema claro"
+        onClick={() => switchTheme("light")}
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4" />
+          <path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41" />
+        </svg>
+      </button>
+      <button
+        className="conty-theme-toggle-dark"
+        type="button"
+        aria-label="Usar tema escuro"
+        onClick={() => switchTheme("dark")}
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M20.5 14.1A8.5 8.5 0 0 1 9.9 3.5 8.5 8.5 0 1 0 20.5 14.1Z" />
+        </svg>
+      </button>
+    </div>
+  );
+};
+
+<div className="conty-home">
+  <HelpThemeToggle />
+
+  <section className="conty-site-hero conty-help-hero" aria-labelledby="conty-home-title">
+    <img
+      className="conty-site-ribbon"
+      src="/images/home/ribbon.svg"
+      alt=""
+      aria-hidden="true"
+    />
+
+    <div className="conty-site-hero-inner">
+      <h1 id="conty-home-title">Bem-vindo à central de ajuda da Conty.</h1>
+
+      <p className="conty-site-hero-description">
+        Aqui você encontra todas as respostas que precisa.
+      </p>
+    </div>
+  </section>
+
+  <div className="conty-help-paths">
+    <CardGroup cols={2}>
+      <Card title="Sou criador de conteúdo" icon="user" href="/criadores">
+        Quero tirar dúvidas e/ou entender melhor como posso ganhar dinheiro
+        criando conteúdo na Conty.
+        <span className="conty-help-card-cta">
+          Acessar <span aria-hidden="true">→</span>
+        </span>
+      </Card>
+      <Card title="Sou agência ou marca" icon="building" href="/marcas">
+        Quero tirar dúvidas sobre campanhas, pagamentos e como encontrar
+        criadores na Conty.
+        <span className="conty-help-card-cta">
+          Acessar <span aria-hidden="true">→</span>
+        </span>
+      </Card>
+    </CardGroup>
+  </div>
+
+  <section className="conty-help-about" aria-labelledby="conty-about-title">
+    <p className="conty-help-kicker">Sobre a plataforma</p>
+    <h2 id="conty-about-title">O que é a Conty?</h2>
+    <p>
+      A Conty é uma plataforma que conecta marcas e creators para organizar
+      campanhas de ponta a ponta. Descoberta, comunicação, entregas, aprovações,
+      pagamentos e resultados ficam reunidos no mesmo lugar.
+    </p>
+  </section>
+
+  <section className="conty-help-capabilities" aria-labelledby="conty-creator-capabilities-title">
+    <p className="conty-help-kicker">Para creators</p>
+    <h2 id="conty-creator-capabilities-title">O que você pode fazer como creator</h2>
+
+    <CardGroup cols={3}>
+      <Card title="Encontrar oportunidades" icon="briefcase" href="/criadores/candidaturas">
+        Descubra campanhas compatíveis com o seu perfil.
+      </Card>
+      <Card title="Enviar candidaturas" icon="paper-plane" href="/criadores/candidaturas#como-se-candidatar">
+        Candidate-se às campanhas em que deseja trabalhar.
+      </Card>
+      <Card title="Enviar entregas" icon="cloud-arrow-up" href="/criadores/candidaturas#depois-de-aprovado">
+        Organize roteiros, conteúdos e ajustes solicitados.
+      </Card>
+      <Card title="Receber pagamentos" icon="wallet" href="/criadores/carteira">
+        Acompanhe valores, status e informações de recebimento.
+      </Card>
+      <Card title="Construir reputação" icon="star" href="/help-center/creators/reputation">
+        Entenda seu desempenho e fortaleça seu histórico na Conty.
+      </Card>
+    </CardGroup>
+  </section>
+
+  <section className="conty-help-capabilities" aria-labelledby="conty-brand-capabilities-title">
+    <p className="conty-help-kicker">Para marcas</p>
+    <h2 id="conty-brand-capabilities-title">O que você pode fazer como marca</h2>
+
+    <CardGroup cols={3}>
+      <Card title="Criar campanhas" icon="bullhorn" href="/marcas/campanhas">
+        Estruture oportunidades, briefings, prazos e pagamentos.
+      </Card>
+      <Card title="Encontrar e selecionar creators" icon="magnifying-glass" href="/marcas/criadores">
+        Busque perfis, envie convites e selecione candidaturas.
+      </Card>
+      <Card title="Revisar conteúdos" icon="circle-check" href="/marcas/revisoes">
+        Converse, solicite ajustes e aprove os materiais entregues.
+      </Card>
+      <Card title="Fazer pagamentos" icon="wallet" href="/marcas/verba">
+        Pague creators e acompanhe o status de cada repasse.
+      </Card>
+      <Card title="Acompanhar resultados" icon="chart-line" href="/marcas/resultados">
+        Consulte o desempenho e os principais dados das campanhas.
+      </Card>
+      <Card title="Construir comunidades" icon="users" href="/marcas/comunidades">
+        Crie grupos de creators e fortaleça relacionamentos recorrentes.
+      </Card>
+    </CardGroup>
+  </section>
+
+  <section className="conty-help-more" aria-labelledby="conty-more-title">
+    <p className="conty-help-kicker">Recursos</p>
+    <h2 id="conty-more-title">Saiba mais sobre a Conty</h2>
+
+    <CardGroup cols={3}>
+      <Card title="Site da Conty" icon="globe" href="https://appconty.com">
+        Conheça a plataforma e veja como a Conty funciona.
+      </Card>
+      <Card title="Blog da Conty" icon="newspaper" href="https://blog.appconty.com">
+        Acompanhe novidades, cases e conteúdos sobre Creator Economy.
+      </Card>
+      <Card title="Suporte" icon="life-ring" href="/help-center/contact">
+        Fale com o nosso time quando precisar de ajuda.
+      </Card>
+    </CardGroup>
+  </section>
+</div>
