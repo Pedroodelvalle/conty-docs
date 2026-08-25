@@ -296,6 +296,26 @@
     {
       "source": "/help-center/magalu/politica-de-privacidade",
       "destination": "/help-center/legal/influenciador-magalu/privacy-policy"
+    },
+    {
+      "source": "/lgpd",
+      "destination": "/legal/lgpd"
+    },
+    {
+      "source": "/dpo",
+      "destination": "/legal/lgpd"
+    },
+    {
+      "source": "/encarregado",
+      "destination": "/legal/lgpd"
+    },
+    {
+      "source": "/legal/dpo",
+      "destination": "/legal/lgpd"
+    },
+    {
+      "source": "/help-center/lgpd",
+      "destination": "/legal/lgpd"
     }
   ],
   "navigation": {
@@ -393,7 +413,8 @@
             "pages": [
               "legal/index",
               "legal/termos-de-uso",
-              "legal/politica-de-privacidade"
+              "legal/politica-de-privacidade",
+              "legal/lgpd"
             ]
           }
         ]
