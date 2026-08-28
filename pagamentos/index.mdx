@@ -6,6 +6,9 @@ keywords:
   - carteira
   - pix
   - saldo
+  - views
+  - visualizações
+  - validação
 ---
 
 import { AsaasFootnote } from "/snippets/asaas-disclaimer.mdx"
@@ -61,13 +64,29 @@ O prazo de liquidação depende do método de depósito da marca: Pix é imediat
 ## Formatos de pagamento da campanha
 
 - **Valor fixo** — a marca define quanto paga por conteúdo aprovado.
-- **Por views** — o valor depende das visualizações da campanha.
+- **Por views** — o valor depende das visualizações **validadas** da campanha.
 - **Permuta** — não há pagamento em dinheiro. A marca descreve o item; o criador vê **PERMUTA**.
 
 A taxa da plataforma para o criador é de **5%** sobre cada valor aprovado. Campanhas de permuta não geram saque.
 
 <Info>
   A aprovação da candidatura só libera a produção. O pagamento acontece na aprovação final da entrega. Veja [Pagamento condicional](/help-center/rules/conditional-payment).
+</Info>
+
+## Campanhas por views
+
+O pagamento por views usa as visualizações do conteúdo publicado na campanha. A Conty tem um sistema próprio de detecção de fraude e validação dessas views: ele analisa diferentes sinais para identificar quando as visualizações não conseguem ser validadas de forma confiável. Só entram no pagamento as views que passam nessa validação.
+
+Alguns exemplos do que o sistema observa:
+
+- **Reels de teste.** As visualizações desses conteúdos não conseguem ser validadas da mesma forma que um Reel publicado normalmente. Como a campanha exige uma publicação oficial, essas views podem ser classificadas como suspeitas.
+- **Comportamento muito fora do padrão.** Por exemplo, um vídeo com 50 mil visualizações, mas praticamente nenhum like, comentário ou outro tipo de interação. Esse tipo de discrepância pode indicar tráfego artificial.
+- **Métricas inconsistentes.** O sistema cruza diferentes informações do conteúdo para identificar padrões que não parecem compatíveis com visualizações orgânicas reais.
+
+Isso **não** significa automaticamente que o criador fez algo errado. É uma camada de segurança para proteger as campanhas, os criadores e as marcas, e para garantir que os pagamentos sejam feitos em cima de visualizações validadas.
+
+<Info>
+  Se o valor da campanha por views não bater com o que aparece nas redes, confira se a publicação é a oficial da campanha. Dúvidas sobre um caso específico: [suporte](/help-center/contact).
 </Info>
 
 ## Próximo passo
