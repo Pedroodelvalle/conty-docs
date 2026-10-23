@@ -1939,3 +1939,98 @@ html[class*="dark"] .conty-theme-toggle-dark,
   height: 1rem;
   flex-shrink: 0;
 }
+
+/* API: selo Beta do hero e conteúdo corrido abaixo dos cards */
+.conty-api-badge {
+  display: inline-flex;
+  margin-bottom: 1.25rem;
+  padding: 0.2rem 0.7rem;
+  border: 1px solid color-mix(in srgb, var(--conty-site-primary) 30%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--conty-site-primary) 8%, transparent);
+  color: var(--conty-site-primary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.conty-api-content > p,
+.conty-api-content > ul {
+  color: var(--conty-site-muted);
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+.conty-api-conventions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 1rem;
+  margin-top: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+.conty-api-convention {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  border: 1px solid var(--conty-site-border);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--conty-site-panel) 45%, transparent);
+}
+
+.conty-api-convention p {
+  margin: 0 !important;
+}
+
+.conty-api-convention-title {
+  color: var(--conty-site-foreground);
+  font-size: 1rem !important;
+  font-weight: 600;
+}
+
+.conty-api-convention-rule {
+  color: var(--conty-site-muted);
+  font-size: 0.875rem !important;
+  line-height: 1.6 !important;
+}
+
+.conty-api-convention code {
+  align-self: flex-start;
+  max-width: 100%;
+  padding: 0.2rem 0.5rem;
+  overflow-x: auto;
+  border-radius: 0.4rem;
+  background: color-mix(in srgb, var(--conty-site-primary) 8%, transparent);
+  color: var(--conty-site-foreground);
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
+
+/* Seletor de versão depois do seletor de produto */
+div:has(> [data-component-part="version-select-trigger"]) {
+  order: 1;
+}
+
+#conty-llms-link {
+  align-items: center;
+}
+
+#conty-llms-link a {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.375rem 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.25rem;
+  color: var(--conty-muted-foreground);
+  white-space: nowrap;
+}
+
+#conty-llms-link a:hover {
+  color: var(--conty-foreground);
+}
+
+body:has(.conty-theme-toggle) #conty-llms-link {
+  margin-right: 4.75rem;
+}

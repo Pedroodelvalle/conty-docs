@@ -1,0 +1,44 @@
+---
+title: "Changelog"
+description: "Mudanças na API pública e nos webhooks da Conty."
+icon: "clock-rotate-left"
+keywords:
+  - changelog
+  - versões
+  - mudanças
+---
+
+Toda mudança no contrato da API aparece aqui antes de entrar no ar. Enquanto a API estiver em beta, mudanças que quebram compatibilidade são possíveis, sempre anunciadas nesta página com o que muda e o que fazer.
+
+<Update label="Campanhas e quadro" description="23 de outubro de 2026">
+  Leitura das campanhas e do quadro pela chave, com os mesmos status, rótulos e contagens do painel. Só leitura.
+
+  **API**
+  - `GET /campaigns` e `GET /campaigns/{id}`: campanha é o acordo (`kind: "agreement"`) ou a avulsa (`kind: "campaign"`), com um id só, o mesmo `data.campaign.id` dos webhooks. Filtro por `status` (vários, separados por vírgula) e `q`, paginação por cursor. Id de bloco de acordo responde `404 not_found`.
+  - `GET /campaigns/{id}/stages`: as etapas do quadro com `count`, a unidade da contagem (`unit`: `missions`, `creators` ou `applications`) e as `sorts` e `filters` que valem em cada etapa.
+  - `GET /campaigns/{id}/items`: os itens de uma etapa, com todos os filtros e ordenações do quadro (inclusive `sort=match`), `total` filtrado e `compatible_count`. Cursor de posição, amarrado à etapa, aos filtros e à ordenação.
+  - `GET /missions/{id}`: a missão com entregas, conteúdo enviado, link do post por rede, métricas, datas, valor e cupom.
+  - `money_visible`: quando a marca não vê preço, todo campo `*_cents` e `*_bps` sai `null`.
+  - Novo erro `403 forbidden` para chave sem acesso a campanhas ou de conta de agência. Rotas de cupom passam a documentar `403 coupons_disabled`.
+</Update>
+
+<Update label="0.1.0-beta" description="21 de outubro de 2026">
+  Primeira versão pública, em beta.
+
+  **API**
+  - Autenticação por chave de API (`ck_live_…`), criada e revogada pela marca em **Desenvolvedores**.
+  - `GET /me` para conferir a chave.
+  - Cupom por creator: `POST /coupons`, `GET /coupons`, `GET /coupons/{id}` e `PATCH /coupons/{id}`.
+  - Vendas do cupom: `PUT /coupons/{id}/sales/{external_id}` (idempotente) e `GET /coupons/{id}/sales`, com a comissão calculada pela taxa da campanha. Taxa `0` é cupom só de rastreio.
+  - Cupons disponíveis da campanha: `POST /coupons` aceita `campaign_id` no lugar de `mission_id` e cria o cupom livre, sem creator. `POST /coupons/{id}/assign` vincula o cupom livre ao creator de uma missão (o cupom que ele já tinha fica disponível) e `POST /coupons/{id}/unassign` desvincula o cupom do creator. Novos erros `409 coupon_assigned` e `422 coupon_campaign_mismatch`.
+  - `Coupon.creator` e `Coupon.mission_id` podem ser `null` (cupom livre). `CouponSale` traz `creator` e `mission_id`: o dono do cupom no momento da venda, que não muda se o cupom trocar de dono. Venda em cupom livre é aceita, com `creator` nulo.
+  - Filtro `assigned=true|false` em `GET /coupons`, para separar os cupons com creator dos disponíveis.
+  - Paginação por cursor, envelope de erro único e limite de 120 requisições por minuto por chave.
+
+  **Webhooks**
+  - Cadastro de endpoints pela própria marca, com envio de teste, giro de segredo, histórico e reenvio de entregas.
+  - Eventos de candidatura: `application.created`, `application.approved` e `application.rejected`.
+  - Envios do creator: `mission.accepted`, `mission.script_submitted`, `mission.cover_submitted`, `mission.caption_submitted`, `mission.video_submitted` e `mission.post_link_added`.
+  - Decisões e estado da missão: `mission.changes_requested`, `mission.approved`, `mission.rejected`, `mission.expired` e `mission.canceled`.
+  - Evento `webhook.test`, enviado pelo botão **Enviar teste**.
+</Update>

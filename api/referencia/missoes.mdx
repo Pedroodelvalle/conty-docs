@@ -1,0 +1,145 @@
+---
+title: "Missões"
+description: "A missão do creator na campanha: status como o painel mostra, entregas, conteúdo enviado, link do post, métricas, datas, valor e cupom."
+icon: "clapperboard"
+keywords:
+  - missão
+  - entregas
+  - roteiro
+  - vídeo
+  - post
+  - status
+---
+
+A missão é o trabalho de um creator numa campanha: as entregas (roteiro, capa, legenda e vídeo), o post publicado e o que ele recebe. `GET /missions/{id}` devolve a missão como o painel da marca a apresenta. O mesmo objeto, sem `campaign` e `content`, é o item `mission` de [`GET /campaigns/{id}/items`](/api/referencia/campanhas#itens-de-uma-etapa).
+
+O id da missão chega no `data.mission.id` dos [eventos de missão](/api/webhooks/eventos/missoes) e no `mission_id` do [cupom](/api/referencia/cupons).
+
+## O objeto Mission
+
+```json
+{
+  "kind": "mission",
+  "id": "2b9e4d7a-1c3f-4e5a-8b6d-9f0a1c2e3d4b",
+  "campaign_id": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f",
+  "campaign": { "id": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f", "kind": "agreement", "name": "Verão 2027" },
+  "block": { "id": "3e7a9c1d-2b4f-4d6e-8a0c-5f1b3d7e9a2c", "platform": "reels_collab" },
+  "creator": {
+    "id": "9d3f1b7c-5e2a-4c8d-a6b1-2f3e4d5c6b7a",
+    "name": "Ana Souza",
+    "handles": { "instagram": "ana.souza", "tiktok": "anasouza", "youtube": null },
+    "profile_image_url": "https://cdn.appconty.com/avatars/ana.jpg",
+    "instagram_followers": 48200
+  },
+  "status": "em_analise",
+  "status_label": "Aguardando sua revisão",
+  "status_tone": "warning",
+  "stage": "approved",
+  "steps": [
+    { "id": "script", "label": "Roteiro", "state": "review", "waiting_on": "Aguardando sua revisão", "content_hidden": false }
+  ],
+  "content": {
+    "video_url": "https://customer-abc.cloudflarestream.com/1a2b3c/watch",
+    "thumbnail_url": "https://customer-abc.cloudflarestream.com/1a2b3c/thumbnails/thumbnail.jpg",
+    "cover_url": null,
+    "caption": "Verão chegou com proteção de verdade #publi",
+    "script": null
+  },
+  "post_urls": { "instagram": "https://www.instagram.com/p/C9xYz12AbCd/", "tiktok": null, "youtube": null, "x": null },
+  "posted_at": null,
+  "metrics": { "views": 15320, "likes": 1204, "comments": 87 },
+  "dates": {
+    "accepted_at": "2026-11-02T13:05:00.000Z",
+    "sent_at": "2026-11-01T18:00:00.000Z",
+    "first_submitted_at": "2026-11-12T20:40:00.000Z",
+    "approved_at": null,
+    "script_deadline_at": "2026-11-10T23:59:59.000Z",
+    "change_deadline_at": null
+  },
+  "payment_amount_cents": 50000,
+  "coupon": {
+    "id": "4f2c7a1e-9b3d-4c8a-a1f0-6d2e8b7c5a10",
+    "code": "ANA10",
+    "discount_description": "10% off na primeira compra",
+    "commission_rate_bps": 2500,
+    "sales_count": 3,
+    "revenue_cents": 45000,
+    "commission_cents": 11250
+  },
+  "is_compatible": true,
+  "match_tags": ["Nicho: beleza", "SP"],
+  "created_at": "2026-11-01"
+}
+```
+
+<ResponseField name="campaign" type="object" required>
+  A campanha raiz: o acordo quando há, ou a avulsa. `id`, `kind` e `name`. O `id` é o mesmo de [`GET /campaigns/{id}`](/api/referencia/campanhas).
+</ResponseField>
+
+<ResponseField name="block" type="object | null" required>
+  O bloco do acordo da missão (`id` e `platform`). `null` na avulsa.
+</ResponseField>
+
+<ResponseField name="creator" type="object" required>
+  `id`, `name`, `handles` (`instagram`, `tiktok`, `youtube`), `profile_image_url` e `instagram_followers`. Nunca e-mail, telefone, documento ou endereço.
+</ResponseField>
+
+<ResponseField name="status" type="string | null" required>
+  Status bruto: `convidado`, `fazendo`, `em_analise`, `editado`, `aprovado`, `recusado`, `recusado_permanentemente` ou `expirado`. Para exibir, use `status_label` e `status_tone`.
+</ResponseField>
+
+<ResponseField name="status_label" type="string" required>
+  O status como o painel mostra.
+</ResponseField>
+
+<ResponseField name="status_tone" type="string" required>
+  `success`, `muted`, `info`, `warning` ou `destructive`, a cor do status no painel.
+</ResponseField>
+
+<ResponseField name="stage" type="string" required>
+  A etapa do quadro em que a missão está, um `id` do [`/stages`](/api/referencia/campanhas#etapas-do-quadro).
+</ResponseField>
+
+<ResponseField name="steps" type="object[]" required>
+  As entregas, na ordem. `id` é `script` (roteiro), `cover` (capa), `caption` (legenda) ou `delivery` (o vídeo). `state` é `approved`, `rejected`, `review` (esperando revisão), `awaiting` (esperando o creator), `idle` (ainda não começou) ou `locked` (a campanha não pede). `waiting_on` diz de quem é a vez, como o painel mostra. `content_hidden` é `true` quando a cadeia de revisão ainda não liberou o conteúdo para a marca.
+</ResponseField>
+
+<ResponseField name="content" type="object" required>
+  O conteúdo enviado: `video_url`, `thumbnail_url`, `cover_url`, `caption` e `script`. O que a cadeia de revisão ainda não liberou para a marca sai `null`: com agência no meio, o roteiro só aparece depois que a agência aprova. `video_url` é o link que o painel usa para tocar, não o download do original. Só em `GET /missions/{id}`.
+</ResponseField>
+
+<ResponseField name="post_urls" type="object" required>
+  O link do post por rede: `instagram`, `tiktok`, `youtube` e `x`. `null` na rede sem post.
+</ResponseField>
+
+<ResponseField name="metrics" type="object" required>
+  `views`, `likes` e `comments` do post.
+</ResponseField>
+
+<ResponseField name="dates" type="object" required>
+  `accepted_at`, `sent_at`, `first_submitted_at`, `approved_at`, `script_deadline_at` e `change_deadline_at`, em ISO 8601.
+</ResponseField>
+
+<ResponseField name="payment_amount_cents" type="integer | null" required>
+  O que o creator recebe por esta missão, em centavos. `null` quando `money_visible` é `false` (veja [Dinheiro](/api/referencia/campanhas#dinheiro-e-money_visible)).
+</ResponseField>
+
+<ResponseField name="coupon" type="object | null" required>
+  O cupom ativo do creator na campanha: `id`, `code`, `discount_description`, `commission_rate_bps`, `sales_count`, `revenue_cents` e `commission_cents`. `null` sem cupom ativo.
+</ResponseField>
+
+<ResponseField name="is_compatible" type="boolean" required>
+  Se o creator atende ao perfil pedido pela campanha. `match_tags` diz por quê, como o painel mostra.
+</ResponseField>
+
+## O que nunca sai
+
+Contato e documento do creator, ações (aprovar, pedir alteração, recusar), formulários, versões anteriores, histórico de revisão e dados de anúncio. A chave só lê.
+
+## Erros
+
+| Status | Código | Quando |
+|---|---|---|
+| 403 | `forbidden` | A chave não tem acesso a campanhas |
+| 404 | `not_found` | Missão de outra marca, inexistente ou numa etapa que a chave não enxerga. A resposta é a mesma nos três casos |
+| 422 | `validation_failed` | O `id` não é um UUID |

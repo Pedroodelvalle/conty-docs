@@ -1,0 +1,278 @@
+---
+title: "Campanhas e quadro"
+sidebarTitle: "Campanhas"
+description: "As campanhas da marca, as etapas do quadro com a contagem do painel e os itens de cada etapa, com os mesmos filtros e ordenações."
+icon: "megaphone"
+keywords:
+  - campanhas
+  - acordo
+  - quadro
+  - etapas
+  - candidaturas
+  - filtros
+---
+
+A chave lê as campanhas da marca como o painel mostra para o dono da marca: os mesmos status, rótulos, contagens e valores. Tudo é só leitura. O passo a passo de ponta a ponta está no guia [Acompanhar o quadro](/api/guias/acompanhar-quadro).
+
+## Fluxo
+
+1. `GET /campaigns` lista as campanhas, da mais nova para a mais antiga.
+2. `GET /campaigns/{id}` traz o detalhe, com os blocos por plataforma e as opções de escopo.
+3. `GET /campaigns/{id}/stages` traz as etapas do quadro, com a contagem e o que cada etapa aceita de filtro e ordenação.
+4. `GET /campaigns/{id}/items?stage=<id>` lista as missões ou as candidaturas de uma etapa.
+5. `GET /missions/{id}` abre uma missão (veja [Missões](/api/referencia/missoes)).
+
+## Campanha é o acordo ou a avulsa
+
+Para a API, campanha é uma de duas coisas, e cada uma tem um id só:
+
+| `kind` | O que é | `id` |
+|---|---|---|
+| `agreement` | O acordo, com um bloco por plataforma | O id do acordo |
+| `campaign` | A campanha avulsa, sem acordo | O id da campanha |
+
+- O bloco de plataforma de um acordo não aparece na lista e não é aceito como `{id}`: responde `404 not_found`. Ele aparece em `blocks[]` no detalhe do acordo.
+- A avulsa também tem `blocks[]`, com um bloco só: ela mesma.
+- O `id` é o mesmo `data.campaign.id` que os [webhooks](/api/webhooks/visao-geral) mandam e o mesmo `campaign.id` do [cupom](/api/referencia/cupons). Um acordo com Reels e TikTok conta como uma campanha.
+- Campanha de outra marca ou inexistente responde `404 not_found`, igual nos dois casos.
+
+## Filtros da lista
+
+| Parâmetro | O que faz |
+|---|---|
+| `status` | Um ou mais de `draft`, `review`, `approved`, `paused`, `completed`, `archived`, separados por vírgula. Sem `status`, as arquivadas ficam de fora; `archived` lista só as arquivadas e não combina com outros status: `status=archived,approved` responde `422 validation_failed` com `path: "status"`. |
+| `q` | Busca pelo nome da campanha, até 80 caracteres. |
+| `limit` | De 1 a 100. Padrão 20. |
+| `cursor` | O `next_cursor` da página anterior. |
+
+O filtro é aplicado no servidor, antes da paginação. O cursor é a posição `created_at|id` do último item: campanha criada depois da primeira página não desloca as seguintes. Rascunho (`draft`) aparece na lista, como no painel.
+
+## Dinheiro e `money_visible`
+
+Valores saem em centavos (`*_cents`) e taxas em pontos-base (`*_bps`, `2500` = 25%).
+
+Quando a marca é assistida por uma agência que não liberou ver preço, `money_visible` é `false` e **todo** campo `*_cents` e `*_bps` sai `null`: na campanha, no detalhe, nos itens do quadro e na missão. O campo nunca é omitido nem vira `0`; `null` com `money_visible: false` é a máscara. Quando a marca vê preço, `money_visible` é `true` e os valores são os do painel.
+
+```json
+{
+  "budget_cents": null,
+  "spent_cents": null,
+  "money_visible": false,
+  "payment": { "type": "per_video", "amount_per_content_cents": null, "per_view": null, "product": null, "payment_terms_days": 30 }
+}
+```
+
+## O objeto Campaign
+
+```json
+{
+  "id": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f",
+  "kind": "agreement",
+  "name": "Verão 2027",
+  "status": "approved",
+  "platforms": ["reels_collab", "tiktok"],
+  "start_date": "2026-11-01",
+  "end_date": "2027-01-31",
+  "created_at": "2026-10-21T14:30:00.000Z",
+  "payment": {
+    "type": "per_video",
+    "amount_per_content_cents": 50000,
+    "per_view": null,
+    "product": null,
+    "payment_terms_days": 30
+  },
+  "budget_cents": 1000000,
+  "spent_cents": 250000,
+  "money_visible": true,
+  "creators_limit": 20,
+  "creators_count": 12,
+  "panel_url": "https://app.appconty.com/campanhas/6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f"
+}
+```
+
+<ResponseField name="kind" type="string" required>
+  `agreement` (acordo) ou `campaign` (avulsa).
+</ResponseField>
+
+<ResponseField name="status" type="string" required>
+  `draft` (rascunho), `review` (em aprovação), `approved` (no ar), `paused`, `completed` ou `archived`.
+</ResponseField>
+
+<ResponseField name="platforms" type="string[]" required>
+  Formatos de entrega. No acordo, um por bloco.
+</ResponseField>
+
+<ResponseField name="payment" type="object" required>
+  `type` é `per_video` (valor fixo por conteúdo), `per_view` (pelas visualizações) ou `permuta` (só produto). `per_view` traz `amount_per_1000_views_cents`, `min_cents`, `max_cents`, `bonus_every_views` e `bonus_cap_cents`, ou `null`. `product` traz `item`, `value_cents` e `description`, ou `null`. Na permuta pura, `amount_per_content_cents` é `null`.
+</ResponseField>
+
+<ResponseField name="creators_limit" type="integer | null" required>
+  Teto de creators. `null` quando não há teto; na avulsa é sempre `null`. As vagas calculadas (abertas, em espera, o que limita) saem só em `vacancies`, no `/stages`.
+</ResponseField>
+
+<ResponseField name="creators_count" type="integer" required>
+  Creators com missão na campanha, como na lista do painel.
+</ResponseField>
+
+<ResponseField name="panel_url" type="string" required>
+  Link da campanha no painel da marca.
+</ResponseField>
+
+O detalhe (`GET /campaigns/{id}`) soma `description`, `objective`, `review_chain` (quem revisa cada entrega, na ordem: `["brand"]` ou `["agency", "brand"]`), `requires` (`script`, `cover`, `caption`, `ad_code`, `product_shipping`), `blocks[]` (`id`, `platform`, `video_format`, `quantity`, `status`, `script_deadline`, `delivery_deadline`, `posting_date`) e `scope_options[]` (`id`, `name`, `items[]` com `block_id` e `quantity`, e `amount_cents`). Na avulsa, `scope_options` vem vazia.
+
+## Etapas do quadro
+
+`GET /campaigns/{id}/stages` devolve as etapas que a chave enxerga, na ordem do painel, mais os grupos e as vagas.
+
+```json
+{
+  "stages": [
+    {
+      "id": "interested",
+      "group": "curation",
+      "label": "Interessados",
+      "kind": "applications",
+      "unit": "applications",
+      "count": 30,
+      "closed": false,
+      "sorts": [
+        { "value": "match", "label": "Maior match" },
+        { "value": "rating", "label": "Melhor nota" },
+        { "value": "followers", "label": "Mais seguidores" },
+        { "value": "recent", "label": "Mais recentes" },
+        { "value": "oldest", "label": "Mais antigos" }
+      ],
+      "filters": ["followers", "sort", "compatible", "elsewhere"]
+    },
+    {
+      "id": "approved",
+      "group": "deliveries",
+      "label": "Aprovados",
+      "kind": "missions",
+      "unit": "missions",
+      "count": 7,
+      "closed": false,
+      "sorts": [
+        { "value": "recent", "label": "Mais recentes" },
+        { "value": "deadline", "label": "Prazo mais próximo" },
+        { "value": "started", "label": "Início mais recente" },
+        { "value": "followers", "label": "Mais seguidores" },
+        { "value": "name", "label": "Nome de A a Z" },
+        { "value": "rating", "label": "Melhor avaliados" },
+        { "value": "views", "label": "Mais views" },
+        { "value": "engagement", "label": "Mais engajamento (curtidas + comentários)" }
+      ],
+      "filters": ["followers", "sort", "compatible", "elsewhere"]
+    }
+  ],
+  "groups": [{ "id": "deliveries", "label": "Entregas", "count": 18 }],
+  "vacancies": {
+    "filled": 12,
+    "total": 20,
+    "open": 8,
+    "waiting": 3,
+    "limited_by": "creators_limit",
+    "label": "8 de 20 vagas abertas"
+  }
+}
+```
+
+### A unidade da contagem
+
+`count` é o mesmo número que o painel mostra na etapa. O que ele conta está em `unit`:
+
+| `unit` | O que `count` conta |
+|---|---|
+| `missions` | Missões |
+| `creators` | Creators distintos. No acordo, o quadro conta pessoas: cada creator vem nos itens com todas as entregas dele naquela etapa |
+| `applications` | Candidaturas |
+
+`kind` diz o que a etapa lista: `missions` ou `applications`.
+
+### O que cada etapa aceita
+
+- `sorts` lista os valores aceitos em `sort` nos itens daquela etapa, com o rótulo do painel.
+- `filters` lista os grupos de filtro da etapa: `followers` (`followers_min` e `followers_max`), `sort` (`sort` e `order`), `compatible` (`only_compatible`) e `elsewhere` (`elsewhere_*`).
+
+Leia o `/stages` antes de montar a consulta de `/items`, em vez de fixar a lista no seu código.
+
+`q` no `/stages` filtra a contagem como filtra a lista. Os outros filtros não entram na contagem da etapa: com eles, a contagem é o `total` de `/items`.
+
+## Itens de uma etapa
+
+`GET /campaigns/{id}/items` exige `stage`, um `id` devolvido pelo `/stages`. O recorte da etapa sai do servidor. Etapa que não existe ou que a chave não vê responde `422 validation_failed` com `details[0].path = "stage"`.
+
+### Filtros e ordenações
+
+Os mesmos do quadro do painel, aplicados no banco antes da paginação.
+
+| Parâmetro | O que faz |
+|---|---|
+| `q` | Busca de creator: nome, @instagram ou @tiktok. Até 80 caracteres. |
+| `sort` | Ordenação, uma das `sorts` da etapa. Etapa de candidatura: `match` (os mais compatíveis), `rating`, `followers`, `recent`, `oldest`. Etapa de missão: `recent`, `deadline`, `started`, `followers`, `name`, `rating`, `views`, `engagement`. Sem `sort`, vale a ordem padrão da etapa. |
+| `order` | `asc` ou `desc`. |
+| `only_compatible` | `true` lista só candidaturas compatíveis com a campanha. |
+| `gender` | `feminino`, `masculino` ou `nao_binario`. |
+| `state` | UF do creator, como `SP`. |
+| `city` | Cidades do creator, separadas por vírgula. |
+| `location` | Locais no formato `país:UF:cidade`, separados por vírgula. UF e cidade são opcionais: `BR:SP:São Paulo`. |
+| `networks` | Redes que o creator tem conectadas, separadas por vírgula: `instagram,tiktok`. |
+| `followers_min` / `followers_max` | Faixa de seguidores no Instagram. `followers_max` tem de ser maior ou igual a `followers_min`. |
+| `scope_option_id` | Só creators desta opção de escopo do acordo. |
+| `briefing_id` | Só creators com este briefing do acordo. |
+| `exclude_in_other_campaigns` | `true` tira quem está em outra campanha ativa da marca. |
+| `elsewhere_status` | Situação do creator nas outras campanhas da marca: `participating`, `rejected` ou `approved`. |
+| `elsewhere_mode` | `include` mantém só quem bate o filtro, `exclude` tira. |
+| `elsewhere_campaigns` | Campanhas consideradas, separadas por vírgula. |
+| `elsewhere_min` | Em quantas dessas campanhas, no mínimo, o creator precisa estar (1 a 3). |
+| `limit` | De 1 a 100. Padrão 20. Em etapa com `unit: "creators"`, conta creators, e a página traz todas as missões de cada um. |
+| `cursor` | O `next_cursor` da página anterior. |
+
+Qualquer outro parâmetro responde `422 validation_failed`. A lista de creators da marca (`creator_lists`) é organização interna e não é filtro da API.
+
+### Contagem com filtro
+
+```json
+{
+  "data": [ { "kind": "application", "id": "0f4b8d2c-6a1e-4c3f-9b5d-2e7a4c1f8b63" } ],
+  "has_more": false,
+  "next_cursor": null,
+  "total": 12,
+  "compatible_count": 9
+}
+```
+
+- `total` é a contagem da etapa com os filtros aplicados, na unidade da etapa. É a mesma consulta da lista: percorrer todas as páginas traz exatamente `total`.
+- `compatible_count` conta as candidaturas compatíveis com os filtros. É `null` fora de etapa de candidatura, ou quando a compatibilidade não aparece para a marca.
+
+### O cursor é de posição
+
+O `next_cursor` guarda a posição na etapa e vale só com a mesma `stage`, os mesmos filtros (inclusive `q`) e a mesma ordenação. Trocar qualquer um deles com um cursor antigo responde `422 validation_failed` com `details[0].path = "cursor"`; comece de novo sem `cursor`.
+
+O cursor é estável enquanto a etapa não muda. Um item que entra ou sai da etapa entre duas páginas pode repetir ou pular uma posição. Para uma varredura completa, releia o `/stages` no fim e confira a contagem.
+
+### Os itens
+
+Cada item tem `kind`:
+
+- `mission`: o mesmo objeto de [Missões](/api/referencia/missoes), sem `campaign` e `content`.
+- `application`: `id`, `campaign_id`, `creator`, `status` (`pending`, `approved`, `rejected`, `expired`), `status_label`, `status_tone`, `mission_id` (a missão aberta pela aprovação, `null` antes), `proposed_amount_cents`, `is_compatible`, `match_tags` e `created_at`.
+
+Os dois tipos trazem `status_label` e `status_tone` (`success`, `muted`, `info`, `warning`, `destructive`) como o painel mostra, e `is_compatible` e `match_tags` do quadro.
+
+## O que nunca sai
+
+A projeção é uma lista fechada de campos. Campo novo no painel só aparece na API quando entra no contrato, com entrada no [changelog](/api/changelog).
+
+- **Contato do creator**: e-mail, telefone, documento e endereço. Do creator saem só `id`, `name`, `handles`, `profile_image_url` e `instagram_followers`.
+- **Ações e formulários**: aprovar, recusar, pedir alteração e os formulários do painel. A chave só lê.
+- Histórico de revisão, versões enviadas, nota interna, score de match, listas da marca e dados de anúncio.
+
+## Erros
+
+| Status | Código | Quando |
+|---|---|---|
+| 403 | `forbidden` | A chave não tem acesso a campanhas, ou é de uma conta que não é de marca |
+| 403 | `plan_required` | A marca está sem plano ativo |
+| 404 | `not_found` | Campanha de outra marca, inexistente, ou id de bloco de acordo |
+| 422 | `validation_failed` | Parâmetro inválido, `archived` junto com outro status (`path: "status"`), `stage` desconhecida (`path: "stage"`) ou cursor de outra consulta (`path: "cursor"`) |

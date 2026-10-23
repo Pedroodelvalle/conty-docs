@@ -1,0 +1,192 @@
+---
+title: "Acompanhar o quadro"
+description: "Liste as campanhas da marca, leia as etapas do quadro, pagine os itens de uma etapa com filtro e abra a missão. Depois, mantenha tudo em dia com os webhooks."
+icon: "table-columns"
+keywords:
+  - quadro
+  - campanhas
+  - etapas
+  - missões
+  - candidaturas
+  - filtros
+---
+
+O seu sistema enxerga o quadro da campanha como a marca vê no painel: as mesmas etapas, as mesmas contagens e os mesmos status. Este guia vai da lista de campanhas até a missão de um creator, e termina com os webhooks, para você atualizar o que mudou sem varrer o quadro de novo.
+
+<Note>
+  Tudo aqui é só leitura. Aprovar, recusar e pedir alteração continuam no painel por enquanto (veja [Aprovar entrega](/api/referencia/em-breve/aprovar-entrega), em breve).
+</Note>
+
+<Steps>
+  <Step title="Liste as campanhas">
+    Campanha é o acordo (`kind: "agreement"`) ou a campanha avulsa (`kind: "campaign"`). Filtre por status e por nome no servidor:
+
+    ```bash
+    curl "https://api.appconty.com/public/v1/campaigns?status=approved,paused&limit=20" \
+      -H "Authorization: Bearer $CONTY_API_KEY"
+    ```
+
+    ```json 200
+    {
+      "data": [
+        {
+          "id": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f",
+          "kind": "agreement",
+          "name": "Verão 2027",
+          "status": "approved",
+          "platforms": ["reels_collab", "tiktok"],
+          "start_date": "2026-11-01",
+          "end_date": "2027-01-31",
+          "money_visible": true,
+          "creators_limit": 20,
+          "creators_count": 12,
+          "panel_url": "https://app.appconty.com/campanhas/6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f"
+        }
+      ],
+      "has_more": false,
+      "next_cursor": null
+    }
+    ```
+
+    Guarde o `id`: é o mesmo `data.campaign.id` dos webhooks. Resposta encurtada; o objeto completo está em [Campanhas](/api/referencia/campanhas#o-objeto-campaign).
+  </Step>
+
+  <Step title="Leia as etapas do quadro">
+    ```bash
+    curl "https://api.appconty.com/public/v1/campaigns/6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f/stages" \
+      -H "Authorization: Bearer $CONTY_API_KEY"
+    ```
+
+    ```json 200
+    {
+      "stages": [
+        {
+          "id": "interested",
+          "group": "curation",
+          "label": "Interessados",
+          "kind": "applications",
+          "unit": "applications",
+          "count": 30,
+          "closed": false,
+          "sorts": [{ "value": "match", "label": "Maior match" }],
+          "filters": ["followers", "sort", "compatible", "elsewhere"]
+        }
+      ],
+      "groups": [{ "id": "curation", "label": "Curadoria", "count": 30 }],
+      "vacancies": {
+        "filled": 12,
+        "total": 20,
+        "open": 8,
+        "waiting": 3,
+        "limited_by": "creators_limit",
+        "label": "8 de 20 vagas abertas"
+      }
+    }
+    ```
+
+    Cada etapa diz o que conta (`unit`: `missions`, `creators` ou `applications`) e quais `sorts` e `filters` valem nos itens dela. Monte a consulta do próximo passo a partir daqui, em vez de fixar a lista no código.
+  </Step>
+
+  <Step title="Pagine os itens de uma etapa com filtro">
+    Os candidatos interessados com 10 mil seguidores ou mais, com Instagram e TikTok conectados, dos mais compatíveis para os menos:
+
+    ```bash
+    curl -G "https://api.appconty.com/public/v1/campaigns/6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f/items" \
+      -H "Authorization: Bearer $CONTY_API_KEY" \
+      --data-urlencode "stage=interested" \
+      --data-urlencode "followers_min=10000" \
+      --data-urlencode "networks=instagram,tiktok" \
+      --data-urlencode "sort=match" \
+      --data-urlencode "limit=20"
+    ```
+
+    ```json 200
+    {
+      "data": [
+        {
+          "kind": "application",
+          "id": "0f4b8d2c-6a1e-4c3f-9b5d-2e7a4c1f8b63",
+          "campaign_id": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f",
+          "creator": {
+            "id": "9d3f1b7c-5e2a-4c8d-a6b1-2f3e4d5c6b7a",
+            "name": "Ana Souza",
+            "handles": { "instagram": "ana.souza", "tiktok": "anasouza", "youtube": null },
+            "profile_image_url": "https://cdn.appconty.com/avatars/ana.jpg",
+            "instagram_followers": 48200
+          },
+          "status": "pending",
+          "status_label": "Interessado",
+          "status_tone": "info",
+          "mission_id": null,
+          "proposed_amount_cents": 50000,
+          "is_compatible": true,
+          "match_tags": ["Nicho: beleza", "SP"],
+          "created_at": "2026-10-21T14:30:00.000Z"
+        }
+      ],
+      "has_more": false,
+      "next_cursor": null,
+      "total": 12,
+      "compatible_count": 9
+    }
+    ```
+
+    `total` é a contagem da etapa com os filtros, e `compatible_count` quantas dessas candidaturas são compatíveis. Enquanto `has_more` for `true`, repita a mesma chamada com `cursor=<next_cursor>`. A tabela completa de filtros está em [Campanhas](/api/referencia/campanhas#filtros-e-ordenações).
+
+    <Warning>
+      **O cursor é de posição.** Ele vale só com a mesma etapa, os mesmos filtros e a mesma ordenação: trocar qualquer um com um cursor antigo responde `422 validation_failed` com `details[0].path = "cursor"`. O cursor é estável enquanto a etapa não muda; um item que entra ou sai da etapa entre duas páginas pode repetir ou pular uma posição. Para uma varredura completa, releia o `/stages` no fim e confira a contagem.
+    </Warning>
+  </Step>
+
+  <Step title="Abra a missão">
+    Item de missão (ou candidatura aprovada, pelo `mission_id`) abre com `GET /missions/{id}`, que traz também o conteúdo enviado e o link do post:
+
+    ```bash
+    curl "https://api.appconty.com/public/v1/missions/2b9e4d7a-1c3f-4e5a-8b6d-9f0a1c2e3d4b" \
+      -H "Authorization: Bearer $CONTY_API_KEY"
+    ```
+
+    ```json 200
+    {
+      "kind": "mission",
+      "id": "2b9e4d7a-1c3f-4e5a-8b6d-9f0a1c2e3d4b",
+      "campaign": { "id": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f", "kind": "agreement", "name": "Verão 2027" },
+      "status": "em_analise",
+      "status_label": "Aguardando sua revisão",
+      "status_tone": "warning",
+      "stage": "approved",
+      "steps": [
+        { "id": "script", "label": "Roteiro", "state": "review", "waiting_on": "Aguardando sua revisão", "content_hidden": false }
+      ],
+      "post_urls": { "instagram": "https://www.instagram.com/p/C9xYz12AbCd/", "tiktok": null, "youtube": null, "x": null },
+      "metrics": { "views": 15320, "likes": 1204, "comments": 87 },
+      "payment_amount_cents": 50000,
+      "coupon": { "id": "4f2c7a1e-9b3d-4c8a-a1f0-6d2e8b7c5a10", "code": "ANA10", "sales_count": 3 }
+    }
+    ```
+
+    Resposta encurtada; o objeto completo está em [Missões](/api/referencia/missoes).
+  </Step>
+</Steps>
+
+## Mantenha em dia com os webhooks
+
+Não varra o quadro em laço para descobrir o que mudou. Assine os [eventos de missão](/api/webhooks/eventos/missoes) e os de [candidatura](/api/webhooks/eventos/candidaturas): cada evento traz `data.mission.id` (ou a candidatura) e `data.campaign.id`. Ao receber, releia só aquela missão com `GET /missions/{id}`.
+
+| Quando | Evento | O que reler |
+|---|---|---|
+| Creator se candidatou ou foi aprovado | `application.created`, `application.approved` | `GET /campaigns/{id}/stages` |
+| Creator enviou roteiro, capa, legenda ou vídeo | `mission.script_submitted`, `mission.cover_submitted`, `mission.caption_submitted`, `mission.video_submitted` | `GET /missions/{id}` |
+| Post publicado | `mission.post_link_added` | `GET /missions/{id}` |
+| Decisão na missão | `mission.approved`, `mission.changes_requested`, `mission.rejected` | `GET /missions/{id}` |
+
+A varredura completa por `/items` fica para a carga inicial e para uma conferência de tempos em tempos.
+
+## Erros comuns
+
+| Status | Código | O que fazer |
+|---|---|---|
+| 403 | `open_api_disabled` | A API não está liberada para a sua marca. Veja [Disponibilidade](/api/autenticacao#disponibilidade). |
+| 403 | `forbidden` | A chave não tem acesso a campanhas, ou é de uma conta de agência. |
+| 404 | `not_found` | O id é de outra marca, não existe, ou é de um bloco do acordo. Use o id do acordo. |
+| 422 | `validation_failed` | Veja `details[0].path`: `stage` (etapa que não veio no `/stages`) ou `cursor` (cursor de outra consulta). |

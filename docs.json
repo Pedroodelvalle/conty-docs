@@ -34,7 +34,20 @@
     }
   },
   "styling": {
-    "css": ["/custom.css"]
+    "css": [
+      "/custom.css"
+    ]
+  },
+  "api": {
+    "playground": {
+      "display": "interactive"
+    },
+    "mdx": {
+      "server": "https://api.appconty.com/public/v1",
+      "auth": {
+        "method": "bearer"
+      }
+    }
   },
   "redirects": [
     {
@@ -319,262 +332,464 @@
     }
   ],
   "navigation": {
-    "tabs": [
+    "products": [
       {
-        "tab": "Conheça a Conty",
-        "groups": [
+        "product": "Central de ajuda",
+        "description": "Tutoriais e respostas para marcas e creators",
+        "icon": "life-ring",
+        "tabs": [
           {
-            "group": "Visão geral",
-            "pages": [
-              "index"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "Marcas",
-        "groups": [
-          {
-            "group": "Visão geral",
-            "pages": [
-              "marcas/index"
-            ]
-          },
-          {
-            "group": "Primeiros passos",
-            "pages": [
-              "marcas/comecar",
-              "marcas/planos",
-              "marcas/campanhas",
-              "marcas/verba"
-            ]
-          },
-          {
-            "group": "Operação",
-            "pages": [
-              "marcas/criadores",
-              "marcas/revisoes",
-              "marcas/comunidades",
-              "marcas/resultados"
-            ]
-          },
-          {
-            "group": "Inteligência artificial",
-            "pages": [
-              "marcas/mcp"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "Criadores",
-        "groups": [
-          {
-            "group": "Visão geral",
-            "pages": [
-              "criadores/index"
-            ]
-          },
-          {
-            "group": "Primeiros passos",
-            "pages": [
-              "criadores/baixar-o-app",
-              "criadores/candidaturas",
-              "criadores/carteira",
-              "criadores/como-voce-recebe",
-              "criadores/direitos-de-uso",
-              "criadores/strikes",
-              "criadores/boas-praticas"
-            ]
-          },
-          {
-            "group": "Formas de ganhar",
-            "pages": [
-              "criadores/escopos-e-pagamentos",
-              "criadores/ugc",
-              "criadores/influencia",
-              "criadores/clipping"
-            ]
-          },
-          {
-            "group": "Ferramentas",
-            "pages": [
-              "criadores/conty-bio"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "Pagamentos",
-        "groups": [
-          {
-            "group": "Visão geral",
-            "pages": [
-              "pagamentos/index",
-              "pagamentos/perguntas-frequentes"
-            ]
-          },
-          {
-            "group": "Por perfil",
-            "pages": [
-              "pagamentos/marcas",
-              "pagamentos/criadores"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "Agências",
-        "groups": [
-          {
-            "group": "Agências",
-            "pages": [
-              "agencias/index",
-              "agencias/cadastro",
-              "agencias/comissoes",
-              "agencias/pagamentos",
-              "agencias/suporte",
-              "agencias/comunidade"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "Legal",
-        "groups": [
-          {
-            "group": "Documentos legais",
-            "pages": [
-              "legal/index",
-              "legal/termos-de-uso",
-              "legal/politica-de-privacidade",
-              "legal/lgpd"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "Doc Antiga",
-        "hidden": true,
-        "groups": [
-          {
-            "group": "Início",
-            "pages": [
-              "help-center/index"
-            ]
-          },
-          {
-            "group": "Criadores",
-            "pages": [
-              "help-center/creators/index",
+            "tab": "Conheça a Conty",
+            "groups": [
               {
-                "group": "Primeiros passos",
+                "group": "Visão geral",
                 "pages": [
-                  "help-center/creators/getting-started",
-                  "help-center/creators/getting-started-installation",
-                  "help-center/creators/getting-started-notifications",
-                  "help-center/creators/getting-started-profile",
-                  "help-center/creators/getting-started-community-faq"
-                ]
-              },
-              {
-                "group": "Pagamentos",
-                "pages": [
-                  "help-center/creators/payouts",
-                  "help-center/creators/payouts-recebimentos"
-                ]
-              },
-              {
-                "group": "Trabalhos e oportunidades",
-                "pages": [
-                  "help-center/creators/candidatures",
-                  "help-center/creators/campaigns",
-                  "help-center/creators/communities",
-                  "help-center/creators/reputation"
-                ]
-              },
-              "help-center/creators/troubleshooting"
-            ]
-          },
-          {
-            "group": "Marcas",
-            "pages": [
-              "help-center/brands/index",
-              {
-                "group": "Primeiros passos",
-                "pages": [
-                  "help-center/brands/getting-started"
-                ]
-              },
-              {
-                "group": "Campanhas e verba",
-                "pages": [
-                  "help-center/brands/campaigns",
-                  "help-center/brands/payments-credits",
-                  "help-center/brands/aprovacao-automatica"
-                ]
-              },
-              {
-                "group": "Revisões e resultados",
-                "pages": [
-                  "help-center/brands/reviews-revisions",
-                  "help-center/brands/results-usage-rights"
-                ]
-              },
-              {
-                "group": "Comunidades",
-                "pages": [
-                  "help-center/brands/communities"
-                ]
-              },
-              "help-center/brands/troubleshooting"
-            ]
-          },
-          {
-            "group": "Central de Regras",
-            "pages": [
-              "help-center/rules/index",
-              {
-                "group": "Funcionamento e pagamentos",
-                "pages": [
-                  "help-center/rules/how-it-works",
-                  "help-center/rules/conditional-payment"
-                ]
-              },
-              {
-                "group": "Disputas e segurança",
-                "pages": [
-                  "help-center/rules/disputes",
-                  "help-center/rules/fraud-safety"
-                ]
-              },
-              {
-                "group": "Políticas",
-                "pages": [
-                  "help-center/rules/policies",
-                  "help-center/rules/reembolso"
+                  "index"
                 ]
               }
             ]
           },
           {
-            "group": "Documentos legais",
-            "pages": [
-              "help-center/legal/terms-of-use",
-              "help-center/legal/privacy-policy",
+            "tab": "Marcas",
+            "groups": [
               {
-                "group": "Influenciador Magalu",
+                "group": "Visão geral",
                 "pages": [
-                  "help-center/legal/influenciador-magalu/terms-of-use",
-                  "help-center/legal/influenciador-magalu/privacy-policy"
+                  "marcas/index"
+                ]
+              },
+              {
+                "group": "Primeiros passos",
+                "pages": [
+                  "marcas/comecar",
+                  "marcas/planos",
+                  "marcas/campanhas",
+                  "marcas/verba"
+                ]
+              },
+              {
+                "group": "Operação",
+                "pages": [
+                  "marcas/criadores",
+                  "marcas/revisoes",
+                  "marcas/comunidades",
+                  "marcas/resultados"
+                ]
+              },
+              {
+                "group": "Inteligência artificial",
+                "pages": [
+                  "marcas/mcp"
                 ]
               }
             ]
           },
           {
-            "group": "Contato",
-            "pages": [
-              "help-center/contact"
+            "tab": "Criadores",
+            "groups": [
+              {
+                "group": "Visão geral",
+                "pages": [
+                  "criadores/index"
+                ]
+              },
+              {
+                "group": "Primeiros passos",
+                "pages": [
+                  "criadores/baixar-o-app",
+                  "criadores/candidaturas",
+                  "criadores/carteira",
+                  "criadores/como-voce-recebe",
+                  "criadores/direitos-de-uso",
+                  "criadores/strikes",
+                  "criadores/boas-praticas"
+                ]
+              },
+              {
+                "group": "Formas de ganhar",
+                "pages": [
+                  "criadores/escopos-e-pagamentos",
+                  "criadores/ugc",
+                  "criadores/influencia",
+                  "criadores/clipping"
+                ]
+              },
+              {
+                "group": "Ferramentas",
+                "pages": [
+                  "criadores/conty-bio"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Pagamentos",
+            "groups": [
+              {
+                "group": "Visão geral",
+                "pages": [
+                  "pagamentos/index",
+                  "pagamentos/perguntas-frequentes"
+                ]
+              },
+              {
+                "group": "Por perfil",
+                "pages": [
+                  "pagamentos/marcas",
+                  "pagamentos/criadores"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Agências",
+            "groups": [
+              {
+                "group": "Agências",
+                "pages": [
+                  "agencias/index",
+                  "agencias/cadastro",
+                  "agencias/comissoes",
+                  "agencias/pagamentos",
+                  "agencias/suporte",
+                  "agencias/comunidade"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Legal",
+            "groups": [
+              {
+                "group": "Documentos legais",
+                "pages": [
+                  "legal/index",
+                  "legal/termos-de-uso",
+                  "legal/politica-de-privacidade",
+                  "legal/lgpd"
+                ]
+              }
+            ]
+          },
+          {
+            "tab": "Doc Antiga",
+            "hidden": true,
+            "groups": [
+              {
+                "group": "Início",
+                "pages": [
+                  "help-center/index"
+                ]
+              },
+              {
+                "group": "Criadores",
+                "pages": [
+                  "help-center/creators/index",
+                  {
+                    "group": "Primeiros passos",
+                    "pages": [
+                      "help-center/creators/getting-started",
+                      "help-center/creators/getting-started-installation",
+                      "help-center/creators/getting-started-notifications",
+                      "help-center/creators/getting-started-profile",
+                      "help-center/creators/getting-started-community-faq"
+                    ]
+                  },
+                  {
+                    "group": "Pagamentos",
+                    "pages": [
+                      "help-center/creators/payouts",
+                      "help-center/creators/payouts-recebimentos"
+                    ]
+                  },
+                  {
+                    "group": "Trabalhos e oportunidades",
+                    "pages": [
+                      "help-center/creators/candidatures",
+                      "help-center/creators/campaigns",
+                      "help-center/creators/communities",
+                      "help-center/creators/reputation"
+                    ]
+                  },
+                  "help-center/creators/troubleshooting"
+                ]
+              },
+              {
+                "group": "Marcas",
+                "pages": [
+                  "help-center/brands/index",
+                  {
+                    "group": "Primeiros passos",
+                    "pages": [
+                      "help-center/brands/getting-started"
+                    ]
+                  },
+                  {
+                    "group": "Campanhas e verba",
+                    "pages": [
+                      "help-center/brands/campaigns",
+                      "help-center/brands/payments-credits",
+                      "help-center/brands/aprovacao-automatica"
+                    ]
+                  },
+                  {
+                    "group": "Revisões e resultados",
+                    "pages": [
+                      "help-center/brands/reviews-revisions",
+                      "help-center/brands/results-usage-rights"
+                    ]
+                  },
+                  {
+                    "group": "Comunidades",
+                    "pages": [
+                      "help-center/brands/communities"
+                    ]
+                  },
+                  "help-center/brands/troubleshooting"
+                ]
+              },
+              {
+                "group": "Central de Regras",
+                "pages": [
+                  "help-center/rules/index",
+                  {
+                    "group": "Funcionamento e pagamentos",
+                    "pages": [
+                      "help-center/rules/how-it-works",
+                      "help-center/rules/conditional-payment"
+                    ]
+                  },
+                  {
+                    "group": "Disputas e segurança",
+                    "pages": [
+                      "help-center/rules/disputes",
+                      "help-center/rules/fraud-safety"
+                    ]
+                  },
+                  {
+                    "group": "Políticas",
+                    "pages": [
+                      "help-center/rules/policies",
+                      "help-center/rules/reembolso"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Documentos legais",
+                "pages": [
+                  "help-center/legal/terms-of-use",
+                  "help-center/legal/privacy-policy",
+                  {
+                    "group": "Influenciador Magalu",
+                    "pages": [
+                      "help-center/legal/influenciador-magalu/terms-of-use",
+                      "help-center/legal/influenciador-magalu/privacy-policy"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Contato",
+                "pages": [
+                  "help-center/contact"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "product": "API",
+        "description": "Integre o seu sistema com a Conty",
+        "icon": "code",
+        "tag": "Beta",
+        "versions": [
+          {
+            "version": "v1",
+            "default": true,
+            "tabs": [
+              {
+                "tab": "Comece aqui",
+                "groups": [
+                  {
+                    "group": "Comece aqui",
+                    "pages": [
+                      "api/introducao",
+                      "api/quickstart",
+                      "api/autenticacao"
+                    ]
+                  }
+                ]
+              },
+              {
+                "tab": "Guias",
+                "groups": [
+                  {
+                    "group": "Guias",
+                    "pages": [
+                      "api/guias/cupom-por-creator",
+                      "api/guias/acompanhar-quadro"
+                    ]
+                  }
+                ]
+              },
+              {
+                "tab": "Webhooks",
+                "groups": [
+                  {
+                    "group": "Visão geral",
+                    "pages": [
+                      "api/webhooks/visao-geral"
+                    ]
+                  },
+                  {
+                    "group": "Segurança",
+                    "pages": [
+                      "api/webhooks/assinatura"
+                    ]
+                  },
+                  {
+                    "group": "Eventos",
+                    "pages": [
+                      "api/webhooks/eventos/candidaturas",
+                      "api/webhooks/eventos/missoes",
+                      "api/webhooks/eventos/teste"
+                    ]
+                  },
+                  {
+                    "group": "Entrega",
+                    "pages": [
+                      "api/webhooks/retentativas"
+                    ]
+                  }
+                ]
+              },
+              {
+                "tab": "Referência",
+                "groups": [
+                  {
+                    "group": "API Conty",
+                    "pages": [
+                      "api/referencia/introducao",
+                      {
+                        "group": "Conta",
+                        "expanded": false,
+                        "openapi": "api/openapi.json",
+                        "pages": [
+                          "GET /me"
+                        ]
+                      },
+                      {
+                        "group": "Cupons",
+                        "expanded": false,
+                        "openapi": "api/openapi.json",
+                        "pages": [
+                          "api/referencia/cupons",
+                          "POST /coupons",
+                          "GET /coupons",
+                          "GET /coupons/{id}",
+                          "PATCH /coupons/{id}",
+                          "POST /coupons/{id}/assign",
+                          "POST /coupons/{id}/unassign"
+                        ]
+                      },
+                      {
+                        "group": "Vendas",
+                        "expanded": false,
+                        "openapi": "api/openapi.json",
+                        "pages": [
+                          "PUT /coupons/{id}/sales/{external_id}",
+                          "GET /coupons/{id}/sales"
+                        ]
+                      },
+                      {
+                        "group": "Campanhas",
+                        "expanded": false,
+                        "openapi": "api/openapi.json",
+                        "pages": [
+                          "api/referencia/campanhas",
+                          "GET /campaigns",
+                          "GET /campaigns/{id}",
+                          "api/referencia/em-breve/criar-campanha"
+                        ]
+                      },
+                      {
+                        "group": "Creators",
+                        "tag": "Em breve",
+                        "expanded": false,
+                        "pages": [
+                          "api/referencia/em-breve/buscar-creators"
+                        ]
+                      },
+                      {
+                        "group": "Quadro",
+                        "expanded": false,
+                        "openapi": "api/openapi.json",
+                        "pages": [
+                          "GET /campaigns/{id}/stages",
+                          "GET /campaigns/{id}/items",
+                          "api/referencia/em-breve/aprovar-candidatura",
+                          "api/referencia/em-breve/recusar-creator",
+                          "api/referencia/em-breve/aprovar-entrega",
+                          "api/referencia/em-breve/pedir-alteracao"
+                        ]
+                      },
+                      {
+                        "group": "Missões",
+                        "expanded": false,
+                        "openapi": "api/openapi.json",
+                        "pages": [
+                          "api/referencia/missoes",
+                          "GET /missions/{id}"
+                        ]
+                      },
+                      {
+                        "group": "Chat",
+                        "tag": "Em breve",
+                        "expanded": false,
+                        "pages": [
+                          "api/referencia/em-breve/enviar-mensagem",
+                          "api/referencia/em-breve/listar-conversas"
+                        ]
+                      },
+                      {
+                        "group": "Comunidades",
+                        "tag": "Em breve",
+                        "expanded": false,
+                        "pages": [
+                          "api/referencia/em-breve/listar-comunidades",
+                          "api/referencia/em-breve/listar-membros"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "tab": "IA",
+                "groups": [
+                  {
+                    "group": "IA",
+                    "pages": [
+                      "api/ia/visao-geral",
+                      "api/ia/mcp",
+                      "api/ia/skills"
+                    ]
+                  }
+                ]
+              },
+              {
+                "tab": "Changelog",
+                "groups": [
+                  {
+                    "group": "Changelog",
+                    "pages": [
+                      "api/changelog"
+                    ]
+                  }
+                ]
+              }
             ]
           }
         ]
@@ -594,15 +809,15 @@
   },
   "contextual": {
     "options": [
-     "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
-   ]
+      "copy",
+      "view",
+      "chatgpt",
+      "claude",
+      "perplexity",
+      "mcp",
+      "cursor",
+      "vscode"
+    ]
   },
   "footer": {
     "socials": {
@@ -613,4 +828,3 @@
     }
   }
 }
-

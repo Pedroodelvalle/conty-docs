@@ -1,0 +1,159 @@
+---
+title: "Verificação e segurança"
+description: "Confira que o evento veio da Conty e não foi alterado no caminho."
+icon: "shield-check"
+keywords:
+  - webhooks
+  - assinatura
+  - hmac
+  - segurança
+---
+
+Toda entrega leva o cabeçalho `X-Conty-Signature`. Conferir a assinatura garante duas coisas: o evento veio da Conty, e o corpo não foi alterado no caminho. Faça isso em todo evento, antes de processar.
+
+## O formato
+
+```text
+X-Conty-Signature: t=1792591805,v1=5f2b0c3e9a8d7f6e1b4c2a9d8e7f6a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f
+```
+
+- `t`: a hora da assinatura, em segundos Unix;
+- `v1`: o HMAC-SHA256, em hexadecimal, da string `"<t>.<corpo cru>"`, usando como chave o segredo do endpoint (`whsec_…`, a string inteira).
+
+## Como verificar
+
+1. Leia o **corpo cru** da requisição, exatamente como chegou. Não faça `JSON.parse` e `JSON.stringify` antes: qualquer diferença de espaço ou de ordem quebra a assinatura.
+2. Separe `t` e `v1` do cabeçalho.
+3. Recuse se `t` estiver a mais de 5 minutos da hora atual. Isso barra a repetição de uma requisição antiga capturada.
+4. Calcule o HMAC-SHA256 de `"<t>.<corpo cru>"` com o segredo.
+5. Compare com `v1` em **tempo constante**. Comparação comum (`===`, `==`) vaza informação pelo tempo de resposta.
+
+<CodeGroup>
+
+```javascript Node.js (Express)
+import crypto from "node:crypto";
+import express from "express";
+
+const WEBHOOK_SECRET = process.env.CONTY_WEBHOOK_SECRET;
+const TOLERANCE_SECONDS = 5 * 60;
+
+function parseSignature(header) {
+  const parts = Object.fromEntries(
+    header.split(",").map((part) => {
+      const index = part.indexOf("=");
+      return [part.slice(0, index).trim(), part.slice(index + 1).trim()];
+    }),
+  );
+  return { timestamp: Number(parts.t), signature: parts.v1 };
+}
+
+function verifyContySignature(rawBody, header, secret) {
+  if (!header) return false;
+
+  const { timestamp, signature } = parseSignature(header);
+  if (!Number.isFinite(timestamp) || !signature) return false;
+
+  const age = Math.abs(Math.floor(Date.now() / 1000) - timestamp);
+  if (age > TOLERANCE_SECONDS) return false;
+
+  const expected = crypto
+    .createHmac("sha256", secret)
+    .update(`${timestamp}.${rawBody}`)
+    .digest("hex");
+
+  const received = Buffer.from(signature, "utf8");
+  const computed = Buffer.from(expected, "utf8");
+  return received.length === computed.length && crypto.timingSafeEqual(received, computed);
+}
+
+const app = express();
+
+app.post("/webhooks/conty", express.raw({ type: "application/json" }), (req, res) => {
+  const rawBody = req.body.toString("utf8");
+  const header = req.get("X-Conty-Signature");
+
+  if (!verifyContySignature(rawBody, header, WEBHOOK_SECRET)) {
+    return res.sendStatus(400);
+  }
+
+  const event = JSON.parse(rawBody);
+  console.log(`Evento ${event.type} (${req.get("X-Conty-Event-Id")}): ${event.summary}`);
+  res.sendStatus(200);
+});
+
+app.listen(3000);
+```
+
+```python Python (Flask)
+import hashlib
+import hmac
+import json
+import os
+import time
+
+from flask import Flask, abort, request
+
+WEBHOOK_SECRET = os.environ["CONTY_WEBHOOK_SECRET"]
+TOLERANCE_SECONDS = 5 * 60
+
+app = Flask(__name__)
+
+
+def parse_signature(header: str) -> tuple[int | None, str | None]:
+    parts = dict(part.strip().split("=", 1) for part in header.split(",") if "=" in part)
+    try:
+        timestamp = int(parts.get("t", ""))
+    except ValueError:
+        timestamp = None
+    return timestamp, parts.get("v1")
+
+
+def verify_conty_signature(raw_body: bytes, header: str | None, secret: str) -> bool:
+    if not header:
+        return False
+
+    timestamp, signature = parse_signature(header)
+    if timestamp is None or not signature:
+        return False
+
+    if abs(int(time.time()) - timestamp) > TOLERANCE_SECONDS:
+        return False
+
+    signed_payload = f"{timestamp}.".encode("utf-8") + raw_body
+    expected = hmac.new(secret.encode("utf-8"), signed_payload, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(expected, signature)
+
+
+@app.post("/webhooks/conty")
+def conty_webhook():
+    raw_body = request.get_data()
+    if not verify_conty_signature(raw_body, request.headers.get("X-Conty-Signature"), WEBHOOK_SECRET):
+        abort(400)
+
+    event = json.loads(raw_body)
+    print(f"Evento {event['type']} ({request.headers.get('X-Conty-Event-Id')}): {event['summary']}")
+    return "", 200
+
+
+if __name__ == "__main__":
+    app.run(port=3000)
+```
+
+</CodeGroup>
+
+<Warning>
+  Frameworks que fazem o parse do JSON automaticamente (o `express.json()`, por exemplo) descartam o corpo cru. Na rota do webhook, use o leitor de corpo cru do seu framework, como o `express.raw()` do exemplo.
+</Warning>
+
+## Girar o segredo
+
+No painel, em **Desenvolvedores → Webhooks**, abra o endpoint e clique em **Girar segredo**. O segredo novo aparece uma vez só e passa a valer **na hora**: as entregas seguintes já são assinadas com ele, e o antigo deixa de conferir.
+
+Para não perder eventos na troca, aceite os dois segredos por alguns minutos: tente verificar com o novo e, se falhar, com o antigo. Depois remova o antigo.
+
+## Se a verificação falhar
+
+- Confira se está usando o segredo do endpoint certo, e a string inteira, com o `whsec_`.
+- Confira se está assinando o corpo cru, sem reformatar.
+- Confira o relógio do servidor: com mais de 5 minutos de diferença, todo evento é recusado. Use NTP.
+- Responda `400` para assinatura inválida. A Conty vai tentar de novo e a falha fica visível no histórico de entregas do painel.

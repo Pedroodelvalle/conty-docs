@@ -1,0 +1,158 @@
+---
+title: "API da Conty"
+sidebarTitle: "Introdução"
+description: "Integre o seu sistema com a Conty: crie cupons para os creators, registre vendas e receba eventos das campanhas em tempo real."
+icon: "book-open"
+mode: "custom"
+keywords:
+  - api
+  - integração
+  - webhooks
+  - cupom
+---
+
+export const ApiThemeToggle = () => {
+  const switchTheme = (theme) => {
+    document
+      .querySelector(`[data-theme-preference-value="${theme}"]`)
+      ?.click();
+  };
+
+  return (
+    <div className="conty-theme-toggle" role="group" aria-label="Alterar tema">
+      <button
+        className="conty-theme-toggle-light"
+        type="button"
+        aria-label="Usar tema claro"
+        onClick={() => switchTheme("light")}
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4" />
+          <path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41" />
+        </svg>
+      </button>
+      <button
+        className="conty-theme-toggle-dark"
+        type="button"
+        aria-label="Usar tema escuro"
+        onClick={() => switchTheme("dark")}
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M20.5 14.1A8.5 8.5 0 0 1 9.9 3.5 8.5 8.5 0 1 0 20.5 14.1Z" />
+        </svg>
+      </button>
+    </div>
+  );
+};
+
+<div className="conty-home">
+  <ApiThemeToggle />
+
+  <section className="conty-site-hero conty-help-hero" aria-labelledby="conty-api-title">
+    <img
+      className="conty-site-ribbon"
+      src="/images/home/ribbon.svg"
+      alt=""
+      aria-hidden="true"
+    />
+
+    <div className="conty-site-hero-inner">
+      <span className="conty-api-badge">Beta</span>
+
+      <h1 id="conty-api-title">Construa com a API da Conty.</h1>
+
+      <p className="conty-site-hero-description">
+        Conecte o seu sistema às campanhas, creators e cupons da Conty.
+      </p>
+    </div>
+  </section>
+
+  <div className="conty-help-paths">
+    <CardGroup cols={3}>
+      <Card title="Comece em 5 minutos" icon="rocket" href="/api/quickstart">
+        Crie a chave, faça a primeira chamada e receba o primeiro webhook.
+        <span className="conty-help-card-cta">
+          Acessar <span aria-hidden="true">→</span>
+        </span>
+      </Card>
+      <Card title="Receba eventos por webhook" icon="webhook" href="/api/webhooks/visao-geral">
+        Saiba na hora quando um creator é aprovado, envia conteúdo ou publica o post.
+        <span className="conty-help-card-cta">
+          Acessar <span aria-hidden="true">→</span>
+        </span>
+      </Card>
+      <Card title="Referência da API" icon="code" href="/api/referencia/introducao">
+        Endpoints, objetos, erros, paginação e limites, com playground interativo.
+        <span className="conty-help-card-cta">
+          Acessar <span aria-hidden="true">→</span>
+        </span>
+      </Card>
+    </CardGroup>
+  </div>
+
+  <section className="conty-help-capabilities conty-api-content" aria-labelledby="conty-api-about-title">
+    <p className="conty-help-kicker">Sobre a API</p>
+    <h2 id="conty-api-about-title">O que dá para fazer</h2>
+
+    <Warning>
+      **A API está em beta.** O contrato pode mudar enquanto ela estiver nesta fase. Toda mudança é anunciada antes no [changelog](/api/changelog), com o que muda e o que você precisa fazer.
+    </Warning>
+
+    A API pública da Conty deixa o seu sistema conversar direto com as suas campanhas. Com ela você:
+
+    - **recebe eventos** quando um creator é aprovado, aceita a campanha, envia conteúdo ou publica o post, por [webhooks](/api/webhooks/visao-geral);
+    - **cria um cupom de desconto por creator** e avisa o creator no app na hora, como mostra o guia [Cupom por creator](/api/guias/cupom-por-creator);
+    - **registra as vendas** feitas com cada cupom, e a Conty calcula a comissão do creator.
+  </section>
+
+  <section className="conty-help-capabilities conty-api-content" aria-labelledby="conty-api-base-title">
+    <p className="conty-help-kicker">Base URL</p>
+    <h2 id="conty-api-base-title">Onde ficam as rotas</h2>
+
+    ```text
+    https://api.appconty.com/public/v1
+    ```
+
+    As chamadas são de servidor para servidor, sempre por HTTPS, com a sua [chave de API](/api/autenticacao) no cabeçalho `Authorization`.
+  </section>
+
+  <section className="conty-help-capabilities conty-api-content" aria-labelledby="conty-api-conventions-title">
+    <p className="conty-help-kicker">Convenções</p>
+    <h2 id="conty-api-conventions-title">Formato dos dados</h2>
+
+    <div className="conty-api-conventions">
+      <div className="conty-api-convention">
+        <p className="conty-api-convention-title">Nome de campo</p>
+        <p className="conty-api-convention-rule">Sempre em snake_case.</p>
+        <code>discount_description</code>
+      </div>
+      <div className="conty-api-convention">
+        <p className="conty-api-convention-title">Dinheiro</p>
+        <p className="conty-api-convention-rule">Inteiro em centavos, sufixo _cents. 15000 é R$ 150,00.</p>
+        <code>amount_cents: 15000</code>
+      </div>
+      <div className="conty-api-convention">
+        <p className="conty-api-convention-title">Taxa</p>
+        <p className="conty-api-convention-rule">Inteiro em pontos-base, sufixo _bps. 2500 é 25%.</p>
+        <code>commission_rate_bps: 2500</code>
+      </div>
+      <div className="conty-api-convention">
+        <p className="conty-api-convention-title">Data e hora</p>
+        <p className="conty-api-convention-rule">ISO 8601, sempre em UTC.</p>
+        <code>2026-10-21T15:42:00Z</code>
+      </div>
+      <div className="conty-api-convention">
+        <p className="conty-api-convention-title">Lista</p>
+        <p className="conty-api-convention-rule">Paginada por cursor. Veja a <a href="/api/referencia/introducao">referência</a>.</p>
+        <code>{"{ data, has_more, next_cursor }"}</code>
+      </div>
+      <div className="conty-api-convention">
+        <p className="conty-api-convention-title">Erro</p>
+        <p className="conty-api-convention-rule">Sempre o mesmo envelope. Veja a <a href="/api/referencia/introducao">referência</a>.</p>
+        <code>{"{ error: { code, message } }"}</code>
+      </div>
+    </div>
+
+    Toda resposta traz o cabeçalho `X-Conty-Api-Stage: beta`.
+  </section>
+</div>

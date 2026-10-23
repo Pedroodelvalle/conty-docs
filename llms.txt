@@ -1,0 +1,56 @@
+# Conty: guia de integração para IAs
+
+> A Conty conecta marcas a creators de conteúdo (UGC). Este arquivo é o ponto de partida para um agente de IA integrar um sistema com a Conty: a API pública REST (`https://api.appconty.com/public/v1`), os webhooks da marca e o servidor MCP.
+
+## Antes de começar
+
+- A API pública é servidor a servidor, autenticada pela chave da marca: `Authorization: Bearer ck_live_...`. A chave é criada no painel da marca, em Desenvolvedores, e aparece uma vez só.
+- A API pública, os webhooks e os cupons são liberados por marca pela Conty. Sem liberação, `/public/v1/*` responde 403 `open_api_disabled` e as rotas de cupom respondem 403 `coupons_disabled`.
+- Todo erro vem no mesmo envelope: `{ "error": { "code", "message", "details?", "request_id" } }`. Decida pelo `code`, nunca pela `message`.
+- Listas paginam por cursor no servidor: `{ data, has_more, next_cursor }`, com `limit` de 1 a 100. Repita a chamada com `cursor=<next_cursor>` até `has_more` ser `false`. Não filtre nem ordene no cliente: use os parâmetros da rota.
+- Valores em dinheiro vêm em centavos (`*_cents`) e taxas em pontos-base (`*_bps`). Com `money_visible: false`, todo valor sai `null`.
+- O limite é de 120 chamadas por minuto por chave. Acima disso a API responde 429 `rate_limited` com `Retry-After`.
+- O contrato completo, com todos os campos e exemplos, está no OpenAPI 3.1: [`GET /public/v1/openapi.json`](https://api.appconty.com/public/v1/openapi.json).
+
+## Comece aqui
+
+- [Introdução](/api/introducao): o que a API faz e para quem.
+- [Quickstart](/api/quickstart): da chave de API ao primeiro webhook recebido.
+- [Autenticação e disponibilidade](/api/autenticacao): formato da chave, erros de acesso e o que depende de liberação.
+
+## Guias
+
+- [Cupom por creator](/api/guias/cupom-por-creator): criar ou vincular um cupom para cada creator, registrar vendas e calcular a comissão.
+- [Acompanhar o quadro](/api/guias/acompanhar-quadro): listar campanhas, ler as etapas, paginar os itens com filtros e abrir a missão.
+
+## Referência
+
+- [Visão geral da referência](/api/referencia/introducao)
+- [Cupons e vendas](/api/referencia/cupons): `POST /coupons`, `GET /coupons`, `GET /coupons/{id}`, `PATCH /coupons/{id}`, `POST /coupons/{id}/assign`, `POST /coupons/{id}/unassign`, `PUT /coupons/{id}/sales/{external_id}`, `GET /coupons/{id}/sales`.
+- [Campanhas e quadro](/api/referencia/campanhas): `GET /campaigns`, `GET /campaigns/{id}`, `GET /campaigns/{id}/stages`, `GET /campaigns/{id}/items`. Campanha é o acordo ou a campanha avulsa, com um id só. `/items` aceita os filtros e as ordenações do quadro, e o `/stages` diz quais valem em cada etapa.
+- [Missões](/api/referencia/missoes): `GET /missions/{id}`, com creator, etapas, conteúdo, link do post e cupom.
+- `GET /me`: identifica a marca dona da chave. Use para testar a chave.
+
+## Webhooks
+
+- [Visão geral](/api/webhooks/visao-geral): cadastro do endpoint e formato do evento.
+- [Assinatura](/api/webhooks/assinatura): como validar o `X-Conty-Signature` antes de processar.
+- [Eventos de candidatura](/api/webhooks/eventos/candidaturas) e [eventos de missão](/api/webhooks/eventos/missoes).
+- [Retentativas](/api/webhooks/retentativas): o que acontece quando o endpoint falha.
+
+Use os webhooks para saber o que mudou e a API para ler o estado atual. Assim não é preciso varrer o quadro a cada minuto.
+
+## Agentes com login de pessoa (MCP)
+
+- [IA na Conty](/api/ia/visao-geral): quando usar MCP e skills em vez da API.
+- [Servidor MCP](/api/ia/mcp): `https://mcp.appconty.com/mcp`, com login OAuth na conta da marca.
+- [Skills](/api/ia/skills): fluxos prontos para agentes de código.
+
+## Em breve
+
+Criar campanha, buscar creators, aprovar e recusar creators, aprovar entregas, pedir alteração, chat com creators e comunidades ainda não estão na API pública. Não invente rotas para isso: acompanhe o [changelog](/api/changelog).
+
+## Opcional
+
+- [Changelog da API](/api/changelog)
+- [Documentação completa em um arquivo](/llms-full.txt)

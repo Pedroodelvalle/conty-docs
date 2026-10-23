@@ -1,0 +1,121 @@
+---
+title: "Eventos de candidatura"
+sidebarTitle: "Candidaturas"
+description: "Eventos enviados quando o creator se candidata e quando a marca aprova ou recusa a candidatura."
+icon: "user-check"
+keywords:
+  - webhooks
+  - application.created
+  - application.approved
+  - application.rejected
+  - candidatura
+---
+
+Todo evento usa o [envelope comum](/api/webhooks/visao-geral). O que muda de um para outro é o `type`, o `summary` e os blocos extras dentro de `data`.
+
+| Evento | Quando sai |
+|---|---|
+| `application.created` | O creator se candidatou à campanha ou ao acordo |
+| `application.approved` | A marca aprovou a candidatura e o creator tem uma missão aberta |
+| `application.rejected` | A marca ou a agência recusou a candidatura |
+
+Num acordo, sai **um evento por candidatura**: o pacote é a unidade, e `data.campaign` é o acordo.
+
+## Campos comuns de `data`
+
+<ResponseField name="data.brand" type="object" required>
+  A marca dona da campanha: `id` e `name`.
+</ResponseField>
+
+<ResponseField name="data.campaign" type="object" required>
+  A campanha: `id`, `name` e `url` (link da campanha no painel, ou `null`). Em campanha de acordo, `id` e `name` são os do acordo.
+</ResponseField>
+
+<ResponseField name="data.creator" type="object" required>
+  O creator: `id`, `name` e `handle` (o @ na rede, ou `null`).
+</ResponseField>
+
+<ResponseField name="data.application" type="object" required>
+  A candidatura: `id` e `status` (`pending`, `approved` ou `rejected`).
+</ResponseField>
+
+<ResponseField name="data.mission" type="object | null" required>
+  A missão (`id`, `status`, `platform`), ou `null` quando a candidatura ainda não tem missão.
+</ResponseField>
+
+## application.created
+
+O creator se candidatou à campanha avulsa ou ao acordo. Ainda não existe missão: `data.mission` vem `null`.
+
+```json
+{
+  "id": "6e5d4c3b-2a1f-4e0d-9c8b-7a6f5e4d3c2b",
+  "type": "application.created",
+  "created_at": "2026-10-20T18:22:09.301Z",
+  "tenant": "conty",
+  "summary": "BeConfident: Fulana Souza se candidatou à campanha \"Outubro\".",
+  "data": {
+    "brand": { "id": "5e4d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c1b", "name": "BeConfident" },
+    "campaign": {
+      "id": "2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5",
+      "name": "Outubro",
+      "url": "https://appconty.com/campaigns/2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5"
+    },
+    "creator": { "id": "8d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a", "name": "Fulana Souza", "handle": "@fulana" },
+    "application": { "id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d", "status": "pending" },
+    "mission": null
+  }
+}
+```
+
+## application.approved
+
+A marca aprovou a candidatura e o creator ficou com uma missão aberta na campanha. Sai uma vez por candidatura aprovada, em qualquer caminho: aprovação unitária, em lote, por convite ou no acordo. Num acordo com várias plataformas, `data.mission` é a missão representante do pacote. Aprovar quem já tinha missão aberta também emite, com a missão existente.
+
+É o evento de partida do [cupom por creator](/api/guias/cupom-por-creator): `data.mission.id` é o `mission_id` que o `POST /coupons` espera.
+
+```json
+{
+  "id": "4c3b2a1f-0e9d-4c8b-a7f6-e5d4c3b2a1f0",
+  "type": "application.approved",
+  "created_at": "2026-10-21T13:00:41.512Z",
+  "tenant": "conty",
+  "summary": "BeConfident: Fulana Souza foi aprovado(a) na campanha \"Outubro\".",
+  "data": {
+    "brand": { "id": "5e4d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c1b", "name": "BeConfident" },
+    "campaign": {
+      "id": "2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5",
+      "name": "Outubro",
+      "url": "https://appconty.com/campaigns/2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5"
+    },
+    "creator": { "id": "8d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a", "name": "Fulana Souza", "handle": "@fulana" },
+    "application": { "id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d", "status": "approved" },
+    "mission": { "id": "c3a2b1d0-e9f8-4a7b-9c6d-5e4f3a2b1c0d", "status": "fazendo", "platform": "instagram" }
+  }
+}
+```
+
+## application.rejected
+
+A marca ou a agência recusou a candidatura, de forma unitária, em lote ou no acordo. `data.mission` vem `null`, ou com a missão, se ela já existia.
+
+```json
+{
+  "id": "8b7a6f5e-4d3c-4b2a-9f1e-0d9c8b7a6f5e",
+  "type": "application.rejected",
+  "created_at": "2026-10-21T13:02:15.877Z",
+  "tenant": "conty",
+  "summary": "BeConfident: a candidatura de Fulana Souza na campanha \"Outubro\" foi recusada.",
+  "data": {
+    "brand": { "id": "5e4d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c1b", "name": "BeConfident" },
+    "campaign": {
+      "id": "2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5",
+      "name": "Outubro",
+      "url": "https://appconty.com/campaigns/2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5"
+    },
+    "creator": { "id": "8d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a", "name": "Fulana Souza", "handle": "@fulana" },
+    "application": { "id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d", "status": "rejected" },
+    "mission": null
+  }
+}
+```

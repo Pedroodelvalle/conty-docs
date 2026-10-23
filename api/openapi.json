@@ -1,0 +1,4399 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "API Conty",
+    "version": "0.1.0-beta",
+    "description": "API pública da Conty, em beta. Autentique com a chave de API da marca no cabeçalho Authorization: Bearer."
+  },
+  "servers": [
+    {
+      "url": "https://api.appconty.com/public/v1"
+    }
+  ],
+  "security": [
+    {
+      "apiKey": []
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "apiKey": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Chave de API da marca, no formato ck_live_<token>."
+      }
+    },
+    "schemas": {
+      "Me": {
+        "type": "object",
+        "properties": {
+          "enterprise": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Id da marca.",
+                "example": "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d"
+              },
+              "name": {
+                "type": "string",
+                "description": "Nome da marca.",
+                "example": "Marca Exemplo"
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "description": "Marca dona da chave."
+          },
+          "api_key": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Id da chave.",
+                "example": "7e6d5c4b-3a2f-4e1d-9c0b-8a7f6e5d4c3b"
+              },
+              "name": {
+                "type": "string",
+                "description": "Nome dado à chave.",
+                "example": "ERP"
+              },
+              "hint": {
+                "type": "string",
+                "description": "Últimos 4 caracteres da chave.",
+                "example": "a9Xk"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "hint"
+            ],
+            "description": "Chave usada nesta requisição."
+          }
+        },
+        "required": [
+          "enterprise",
+          "api_key"
+        ]
+      },
+      "ErrorEnvelope": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "invalid_api_key",
+                  "open_api_disabled",
+                  "plan_required",
+                  "coupons_disabled",
+                  "forbidden",
+                  "not_found",
+                  "coupon_exists",
+                  "coupon_code_taken",
+                  "coupon_canceled",
+                  "coupon_assigned",
+                  "coupon_campaign_mismatch",
+                  "validation_failed",
+                  "mission_closed",
+                  "rate_limited",
+                  "internal_error"
+                ],
+                "description": "Código estável do erro, para tratar no seu código."
+              },
+              "message": {
+                "type": "string",
+                "description": "Mensagem em português, para pessoas."
+              },
+              "details": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "description": "Campo que causou o erro, quando houver."
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "O que está errado no campo."
+                    },
+                    "coupon_id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "Cupom ativo que já existe, no erro coupon_exists."
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                },
+                "description": "Detalhes por campo ou por recurso."
+              },
+              "request_id": {
+                "type": "string",
+                "description": "Id da requisição, para falar com o suporte."
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "request_id"
+            ]
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "example": {
+          "error": {
+            "code": "validation_failed",
+            "message": "Os dados enviados são inválidos.",
+            "details": [
+              {
+                "path": "amount_cents",
+                "message": "Deve ser um inteiro positivo."
+              }
+            ],
+            "request_id": "req_01JABCDEF"
+          }
+        }
+      },
+      "Coupon": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Id do cupom.",
+            "example": "4f2c7a1e-9b3d-4c8a-a1f0-6d2e8b7c5a10"
+          },
+          "code": {
+            "type": "string",
+            "description": "Código do cupom.",
+            "example": "FULANA10"
+          },
+          "discount_description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Texto do desconto, quando informado.",
+            "example": "10% off na primeira compra"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CouponStatus"
+          },
+          "campaign": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Id da campanha avulsa ou do acordo.",
+                "example": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f"
+              },
+              "name": {
+                "type": "string",
+                "description": "Nome da campanha.",
+                "example": "Lançamento de verão"
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "description": "Campanha do cupom. No acordo, é o acordo inteiro."
+          },
+          "creator": {
+            "$ref": "#/components/schemas/CouponCreator"
+          },
+          "mission_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Missão do creator dono do cupom. Nula quando o cupom está disponível.",
+            "example": "2b9e4d7a-1c3f-4e5a-8b6d-9f0a1c2e3d4b"
+          },
+          "commission_rate_bps": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Taxa de comissão atual da campanha, em pontos-base (2500 = 25%). Nula quando a campanha não tem taxa. Zero é cupom só para rastreio, sem comissão.",
+            "example": 2500
+          },
+          "totals": {
+            "$ref": "#/components/schemas/CouponTotals"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data e hora em ISO 8601.",
+            "example": "2026-10-21T14:30:00.000Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data e hora em ISO 8601.",
+            "example": "2026-10-21T14:30:00.000Z"
+          },
+          "canceled_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Quando o cupom foi cancelado.",
+            "example": null
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "discount_description",
+          "status",
+          "campaign",
+          "creator",
+          "mission_id",
+          "commission_rate_bps",
+          "totals",
+          "created_at",
+          "updated_at",
+          "canceled_at"
+        ]
+      },
+      "CouponStatus": {
+        "type": "string",
+        "enum": [
+          "active",
+          "canceled"
+        ],
+        "description": "Situação do cupom. Cancelado é definitivo.",
+        "example": "active"
+      },
+      "CouponCreator": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Id do creator.",
+            "example": "9d3f1b7c-5e2a-4c8d-a6b1-2f3e4d5c6b7a"
+          },
+          "name": {
+            "type": "string",
+            "description": "Nome do creator.",
+            "example": "Fulana Souza"
+          },
+          "handle": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "@ do creator, quando houver.",
+            "example": "@fulana"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "handle"
+        ],
+        "description": "Creator dono do cupom. Nulo quando o cupom está disponível na campanha."
+      },
+      "CouponTotals": {
+        "type": "object",
+        "properties": {
+          "sales_count": {
+            "type": "integer",
+            "description": "Quantidade de vendas confirmadas.",
+            "example": 3
+          },
+          "revenue_cents": {
+            "type": "integer",
+            "description": "Soma das vendas confirmadas, em centavos.",
+            "example": 45000
+          },
+          "commission_cents": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Soma da comissão das vendas confirmadas, em centavos. Nulo quando nenhuma venda tem taxa.",
+            "example": 11250
+          }
+        },
+        "required": [
+          "sales_count",
+          "revenue_cents",
+          "commission_cents"
+        ]
+      },
+      "CreateCouponBody": {
+        "type": "object",
+        "properties": {
+          "mission_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Missão do creator na campanha, a mesma que chegou no webhook application.approved. Cria o cupom já com o creator. Informe este ou campaign_id.",
+            "example": "2b9e4d7a-1c3f-4e5a-8b6d-9f0a1c2e3d4b"
+          },
+          "campaign_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Campanha avulsa ou acordo. Cria o cupom disponível na campanha, para vincular a um creator depois. Informe este ou mission_id.",
+            "example": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f"
+          },
+          "code": {
+            "type": "string",
+            "pattern": "^[A-Z0-9_-]{3,40}$",
+            "description": "Código do cupom. Espaços nas pontas saem e as letras viram maiúsculas.",
+            "example": "FULANA10"
+          },
+          "discount_description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Texto livre do desconto que o cupom dá ao cliente final.",
+            "example": "10% off na primeira compra"
+          }
+        },
+        "required": [
+          "code"
+        ]
+      },
+      "CouponList": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Coupon"
+            },
+            "description": "Itens da página."
+          },
+          "has_more": {
+            "type": "boolean",
+            "description": "Se existe uma próxima página.",
+            "example": false
+          },
+          "next_cursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Cursor da próxima página, ou nulo na última.",
+            "example": null
+          }
+        },
+        "required": [
+          "data",
+          "has_more",
+          "next_cursor"
+        ]
+      },
+      "UpdateCouponBody": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^[A-Z0-9_-]{3,40}$",
+            "description": "Código do cupom. Espaços nas pontas saem e as letras viram maiúsculas.",
+            "example": "FULANA10"
+          },
+          "discount_description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Texto livre do desconto que o cupom dá ao cliente final.",
+            "example": "10% off na primeira compra"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "canceled"
+            ],
+            "description": "Envie canceled para desativar o cupom. Não tem volta."
+          }
+        },
+        "example": {
+          "status": "canceled"
+        }
+      },
+      "AssignCouponBody": {
+        "type": "object",
+        "properties": {
+          "mission_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Missão do creator que recebe o cupom, na mesma campanha do cupom.",
+            "example": "2b9e4d7a-1c3f-4e5a-8b6d-9f0a1c2e3d4b"
+          }
+        },
+        "required": [
+          "mission_id"
+        ]
+      },
+      "CouponSale": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Id da venda na Conty.",
+            "example": "8a1d3c5e-7f20-4b6a-9c8d-1e2f3a4b5c6d"
+          },
+          "external_id": {
+            "type": "string",
+            "description": "Id da venda no seu sistema.",
+            "example": "pedido-10293"
+          },
+          "amount_cents": {
+            "type": "integer",
+            "description": "Valor da venda, em centavos.",
+            "example": 15000
+          },
+          "status": {
+            "$ref": "#/components/schemas/CouponSaleStatus"
+          },
+          "creator": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CouponCreator"
+              },
+              {
+                "description": "Creator a quem a venda é atribuída: o dono do cupom no momento em que a venda foi criada. Não muda se o cupom trocar de dono. Nulo quando o cupom estava livre."
+              }
+            ]
+          },
+          "mission_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Missão do creator atribuído, no momento da venda.",
+            "example": "2b9e4d7a-1c3f-4e5a-8b6d-9f0a1c2e3d4b"
+          },
+          "commission_rate_bps": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Taxa da campanha no momento em que a venda foi criada, em pontos-base. Não muda depois. Zero é venda de cupom só para rastreio.",
+            "example": 2500
+          },
+          "commission_cents": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Comissão da venda, em centavos. Nula quando não há taxa.",
+            "example": 3750
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Quando a venda aconteceu.",
+            "example": "2026-10-21T14:30:00.000Z"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data e hora em ISO 8601.",
+            "example": "2026-10-21T14:30:00.000Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data e hora em ISO 8601.",
+            "example": "2026-10-21T14:30:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "external_id",
+          "amount_cents",
+          "status",
+          "creator",
+          "mission_id",
+          "commission_rate_bps",
+          "commission_cents",
+          "occurred_at",
+          "created_at",
+          "updated_at"
+        ]
+      },
+      "CouponSaleStatus": {
+        "type": "string",
+        "enum": [
+          "confirmed",
+          "canceled"
+        ],
+        "description": "Situação da venda. Só venda confirmada entra nos totais.",
+        "example": "confirmed"
+      },
+      "UpsertSaleBody": {
+        "type": "object",
+        "properties": {
+          "amount_cents": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 2147483647,
+            "description": "Valor da venda, em centavos.",
+            "example": 15000
+          },
+          "status": {
+            "$ref": "#/components/schemas/CouponSaleStatus"
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Quando a venda aconteceu.",
+            "example": "2026-10-21T14:30:00.000Z"
+          }
+        },
+        "required": [
+          "amount_cents",
+          "status",
+          "occurred_at"
+        ]
+      },
+      "CouponSaleList": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CouponSale"
+            },
+            "description": "Itens da página."
+          },
+          "has_more": {
+            "type": "boolean",
+            "description": "Se existe uma próxima página.",
+            "example": false
+          },
+          "next_cursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Cursor da próxima página, ou nulo na última.",
+            "example": null
+          }
+        },
+        "required": [
+          "data",
+          "has_more",
+          "next_cursor"
+        ]
+      },
+      "CampaignList": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Campaign"
+            },
+            "description": "Itens da página."
+          },
+          "has_more": {
+            "type": "boolean",
+            "description": "Se existe uma próxima página.",
+            "example": false
+          },
+          "next_cursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Cursor da próxima página, ou nulo na última.",
+            "example": null
+          }
+        },
+        "required": [
+          "data",
+          "has_more",
+          "next_cursor"
+        ]
+      },
+      "Campaign": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Id da campanha: o do acordo, ou o da avulsa. É o mesmo data.campaign.id dos webhooks e o campaign.id do cupom.",
+            "example": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/CampaignKind"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Nome da campanha.",
+            "example": "Verão 2027"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CampaignStatus"
+          },
+          "platforms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CampaignPlatform"
+            },
+            "description": "Formatos de entrega da campanha. No acordo, um por bloco.",
+            "example": [
+              "reels_collab",
+              "tiktok"
+            ]
+          },
+          "start_date": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "Início da campanha.",
+            "example": "2026-11-01"
+          },
+          "end_date": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "Fim da campanha. Nulo quando não tem fim.",
+            "example": "2027-01-31"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data e hora em ISO 8601.",
+            "example": "2026-10-21T14:30:00.000Z"
+          },
+          "payment": {
+            "$ref": "#/components/schemas/CampaignPayment"
+          },
+          "budget_cents": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Verba da campanha. Em centavos. Nulo quando money_visible é false.",
+            "example": 1000000
+          },
+          "spent_cents": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Gasto com entregas aprovadas. Em centavos. Nulo quando money_visible é false.",
+            "example": 250000
+          },
+          "money_visible": {
+            "type": "boolean",
+            "description": "false quando a marca é assistida e a agência não liberou ver preço. Aí todo campo _cents e _bps sai nulo.",
+            "example": true
+          },
+          "creators_limit": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Teto de creators. Nulo quando não há teto.",
+            "example": 20
+          },
+          "creators_count": {
+            "type": "integer",
+            "description": "Creators com missão na campanha, como na lista do painel.",
+            "example": 12
+          },
+          "panel_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Link da campanha no painel da marca.",
+            "example": "https://app.appconty.com/campanhas/6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "name",
+          "status",
+          "platforms",
+          "start_date",
+          "end_date",
+          "created_at",
+          "payment",
+          "budget_cents",
+          "spent_cents",
+          "money_visible",
+          "creators_limit",
+          "creators_count",
+          "panel_url"
+        ],
+        "additionalProperties": false
+      },
+      "CampaignKind": {
+        "type": "string",
+        "enum": [
+          "agreement",
+          "campaign"
+        ],
+        "description": "agreement é um acordo, com um bloco por plataforma. campaign é uma campanha avulsa, sem acordo.",
+        "example": "agreement"
+      },
+      "CampaignStatus": {
+        "type": "string",
+        "enum": [
+          "draft",
+          "review",
+          "approved",
+          "paused",
+          "completed",
+          "archived"
+        ],
+        "description": "Situação da campanha, a mesma do painel: draft (rascunho), review (em aprovação), approved (no ar), paused, completed ou archived.",
+        "example": "approved"
+      },
+      "CampaignPlatform": {
+        "type": "string",
+        "enum": [
+          "reels_collab",
+          "story_sequencia",
+          "tiktok",
+          "apenas_video",
+          "x_twitter",
+          "youtube_longo",
+          "youtube_shorts",
+          "feed",
+          "video_vertical",
+          "repost"
+        ],
+        "description": "Formato de entrega do bloco.",
+        "example": "reels_collab"
+      },
+      "CampaignPayment": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/PaymentType"
+          },
+          "amount_per_content_cents": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Valor por conteúdo. Nulo também em per_view e na permuta pura. Em centavos. Nulo quando money_visible é false.",
+            "example": 50000
+          },
+          "per_view": {
+            "$ref": "#/components/schemas/CampaignPerView"
+          },
+          "product": {
+            "$ref": "#/components/schemas/CampaignProduct"
+          },
+          "payment_terms_days": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Prazo de pagamento ao creator, em dias, depois da aprovação.",
+            "example": 30
+          }
+        },
+        "required": [
+          "type",
+          "amount_per_content_cents",
+          "per_view",
+          "product",
+          "payment_terms_days"
+        ],
+        "additionalProperties": false,
+        "description": "Como o creator é pago."
+      },
+      "PaymentType": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "enum": [
+          "per_view",
+          "per_video",
+          "permuta",
+          null
+        ],
+        "description": "per_video paga um valor fixo por conteúdo, per_view paga pelas visualizações e permuta paga só com produto.",
+        "example": "per_video"
+      },
+      "CampaignPerView": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "amount_per_1000_views_cents": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Quanto o creator ganha a cada 1.000 visualizações. Em centavos. Nulo quando money_visible é false.",
+            "example": 1500
+          },
+          "min_cents": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Valor mínimo por conteúdo. Em centavos. Nulo quando money_visible é false.",
+            "example": 20000
+          },
+          "max_cents": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Teto por conteúdo. Nulo também quando não há teto. Em centavos. Nulo quando money_visible é false.",
+            "example": 80000
+          },
+          "bonus_every_views": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "A cada quantas visualizações o bônus é pago.",
+            "example": 100000
+          },
+          "bonus_cap_cents": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Teto do bônus. Em centavos. Nulo quando money_visible é false.",
+            "example": 30000
+          }
+        },
+        "required": [
+          "amount_per_1000_views_cents",
+          "min_cents",
+          "max_cents",
+          "bonus_every_views",
+          "bonus_cap_cents"
+        ],
+        "additionalProperties": false,
+        "description": "Pagamento por visualização. Nulo fora de per_view."
+      },
+      "CampaignProduct": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "item": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Nome do produto.",
+            "example": "Kit verão"
+          },
+          "value_cents": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Valor de referência do produto. Em centavos. Nulo quando money_visible é false.",
+            "example": 25000
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Descrição do produto.",
+            "example": "Protetor solar, hidratante e bolsa térmica."
+          }
+        },
+        "required": [
+          "item",
+          "value_cents",
+          "description"
+        ],
+        "additionalProperties": false,
+        "description": "Produto da permuta. Nulo quando a campanha não oferece produto."
+      },
+      "CampaignDetail": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Id da campanha: o do acordo, ou o da avulsa. É o mesmo data.campaign.id dos webhooks e o campaign.id do cupom.",
+            "example": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/CampaignKind"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Nome da campanha.",
+            "example": "Verão 2027"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CampaignStatus"
+          },
+          "platforms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CampaignPlatform"
+            },
+            "description": "Formatos de entrega da campanha. No acordo, um por bloco.",
+            "example": [
+              "reels_collab",
+              "tiktok"
+            ]
+          },
+          "start_date": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "Início da campanha.",
+            "example": "2026-11-01"
+          },
+          "end_date": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "Fim da campanha. Nulo quando não tem fim.",
+            "example": "2027-01-31"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data e hora em ISO 8601.",
+            "example": "2026-10-21T14:30:00.000Z"
+          },
+          "payment": {
+            "$ref": "#/components/schemas/CampaignPayment"
+          },
+          "budget_cents": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Verba da campanha. Em centavos. Nulo quando money_visible é false.",
+            "example": 1000000
+          },
+          "spent_cents": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Gasto com entregas aprovadas. Em centavos. Nulo quando money_visible é false.",
+            "example": 250000
+          },
+          "money_visible": {
+            "type": "boolean",
+            "description": "false quando a marca é assistida e a agência não liberou ver preço. Aí todo campo _cents e _bps sai nulo.",
+            "example": true
+          },
+          "creators_limit": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Teto de creators. Nulo quando não há teto.",
+            "example": 20
+          },
+          "creators_count": {
+            "type": "integer",
+            "description": "Creators com missão na campanha, como na lista do painel.",
+            "example": 12
+          },
+          "panel_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Link da campanha no painel da marca.",
+            "example": "https://app.appconty.com/campanhas/6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Descrição da campanha.",
+            "example": "Lançamento da linha de protetores."
+          },
+          "objective": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Objetivo da campanha.",
+            "example": "awareness"
+          },
+          "review_chain": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "brand",
+                "agency",
+                "group",
+                "partner"
+              ]
+            },
+            "description": "Quem revisa cada entrega, na ordem. Com agência no meio, ela aprova antes da marca.",
+            "example": [
+              "agency",
+              "brand"
+            ]
+          },
+          "requires": {
+            "$ref": "#/components/schemas/CampaignRequires"
+          },
+          "blocks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CampaignBlock"
+            },
+            "description": "Blocos da campanha. A avulsa tem um bloco só, ela mesma."
+          },
+          "scope_options": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CampaignScopeOption"
+            },
+            "description": "Opções de escopo do acordo. Vazia na avulsa."
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "name",
+          "status",
+          "platforms",
+          "start_date",
+          "end_date",
+          "created_at",
+          "payment",
+          "budget_cents",
+          "spent_cents",
+          "money_visible",
+          "creators_limit",
+          "creators_count",
+          "panel_url",
+          "description",
+          "objective",
+          "review_chain",
+          "requires",
+          "blocks",
+          "scope_options"
+        ],
+        "additionalProperties": false
+      },
+      "CampaignRequires": {
+        "type": "object",
+        "properties": {
+          "script": {
+            "type": "boolean",
+            "description": "A marca aprova o roteiro antes do vídeo.",
+            "example": true
+          },
+          "cover": {
+            "type": "boolean",
+            "description": "A marca aprova a capa.",
+            "example": false
+          },
+          "caption": {
+            "type": "boolean",
+            "description": "A marca aprova a legenda.",
+            "example": true
+          },
+          "ad_code": {
+            "type": "boolean",
+            "description": "O creator informa o código de anúncio.",
+            "example": false
+          },
+          "product_shipping": {
+            "type": "boolean",
+            "description": "A marca envia produto ao creator.",
+            "example": false
+          }
+        },
+        "required": [
+          "script",
+          "cover",
+          "caption",
+          "ad_code",
+          "product_shipping"
+        ],
+        "additionalProperties": false,
+        "description": "O que a campanha exige do creator."
+      },
+      "CampaignBlock": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Id do bloco. Na avulsa, é o id da própria campanha.",
+            "example": "3e7a9c1d-2b4f-4d6e-8a0c-5f1b3d7e9a2c"
+          },
+          "platform": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CampaignPlatform"
+              },
+              {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            ]
+          },
+          "video_format": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Formato do vídeo pedido no bloco.",
+            "example": "vertical"
+          },
+          "quantity": {
+            "type": "integer",
+            "description": "Conteúdos que cada creator entrega neste bloco.",
+            "example": 2
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CampaignStatus"
+              },
+              {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            ]
+          },
+          "script_deadline": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Prazo do roteiro.",
+            "example": "2026-11-10T23:59:59.000Z"
+          },
+          "delivery_deadline": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Prazo da entrega do conteúdo.",
+            "example": "2026-11-20T23:59:59.000Z"
+          },
+          "posting_date": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Data marcada para postar, quando a campanha define uma.",
+            "example": null
+          }
+        },
+        "required": [
+          "id",
+          "platform",
+          "video_format",
+          "quantity",
+          "status",
+          "script_deadline",
+          "delivery_deadline",
+          "posting_date"
+        ],
+        "additionalProperties": false,
+        "description": "Bloco por plataforma, com os prazos que a marca configurou."
+      },
+      "CampaignScopeOption": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Id da opção de escopo.",
+            "example": "5b8d0f2a-4c6e-4a1b-8d3f-7e9a1c3b5d70"
+          },
+          "name": {
+            "type": "string",
+            "description": "Nome da opção.",
+            "example": "2 Reels + 1 TikTok"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "block_id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "Bloco da entrega.",
+                  "example": "3e7a9c1d-2b4f-4d6e-8a0c-5f1b3d7e9a2c"
+                },
+                "quantity": {
+                  "type": "integer",
+                  "description": "Quantos conteúdos deste bloco a opção pede.",
+                  "example": 2
+                }
+              },
+              "required": [
+                "block_id",
+                "quantity"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Entregas da opção, por bloco."
+          },
+          "amount_cents": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Valor pago ao creator por esta opção. Em centavos. Nulo quando money_visible é false.",
+            "example": 50000
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "items",
+          "amount_cents"
+        ],
+        "additionalProperties": false,
+        "description": "Pacote de entregas que um creator pode fechar no acordo."
+      },
+      "BoardStages": {
+        "type": "object",
+        "properties": {
+          "stages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BoardStage"
+            },
+            "description": "Etapas visíveis para a chave, na ordem do painel."
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BoardStageGroup"
+            },
+            "description": "Grupos de etapas."
+          },
+          "vacancies": {
+            "$ref": "#/components/schemas/BoardVacancies"
+          }
+        },
+        "required": [
+          "stages",
+          "groups",
+          "vacancies"
+        ],
+        "additionalProperties": false
+      },
+      "BoardStage": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/StageId"
+          },
+          "group": {
+            "type": "string",
+            "enum": [
+              "curation",
+              "deliveries",
+              "overview",
+              "results",
+              "progress"
+            ],
+            "description": "Grupo da etapa no quadro.",
+            "example": "deliveries"
+          },
+          "label": {
+            "type": "string",
+            "description": "Rótulo da etapa no painel.",
+            "example": "Aprovados"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "missions",
+              "applications"
+            ],
+            "description": "O que a etapa lista: missões ou candidaturas.",
+            "example": "missions"
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "missions",
+              "creators",
+              "applications"
+            ],
+            "description": "O que count conta. creators: pessoas distintas, cada uma com todas as entregas dela nos itens.",
+            "example": "missions"
+          },
+          "count": {
+            "type": "integer",
+            "description": "Quantidade na etapa, a mesma do painel, filtrada por q.",
+            "example": 7
+          },
+          "closed": {
+            "type": "boolean",
+            "description": "Etapa de desfecho: o que está aqui não anda mais.",
+            "example": false
+          },
+          "sorts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BoardStageSort"
+            },
+            "description": "Ordenações aceitas em sort nos itens desta etapa."
+          },
+          "filters": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "followers",
+                "sort",
+                "compatible",
+                "elsewhere"
+              ]
+            },
+            "description": "Grupos de filtro que a etapa oferece: followers (followers_min e followers_max), sort (sort e order), compatible (only_compatible) e elsewhere (elsewhere_*).",
+            "example": [
+              "followers",
+              "sort"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "group",
+          "label",
+          "kind",
+          "unit",
+          "count",
+          "closed",
+          "sorts",
+          "filters"
+        ],
+        "additionalProperties": false
+      },
+      "StageId": {
+        "type": "string",
+        "enum": [
+          "interested",
+          "preApproved",
+          "declinedByBrand",
+          "awaitingBriefing",
+          "invited",
+          "assetReview",
+          "inProgress",
+          "submitted",
+          "requestedChanges",
+          "approved",
+          "refused",
+          "expired",
+          "excluded",
+          "curationApproved",
+          "curationRejected",
+          "curationExpired",
+          "overview",
+          "script.awaiting",
+          "script.internal",
+          "script.brand",
+          "script.changeRequest",
+          "script.adjusting",
+          "script.approved",
+          "content.awaiting",
+          "content.internal",
+          "content.brand",
+          "content.changeRequest",
+          "content.adjusting",
+          "content.approved"
+        ],
+        "description": "Id da etapa do quadro, como /stages devolve.",
+        "example": "approved"
+      },
+      "BoardStageSort": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "description": "Valor para mandar em sort nos itens desta etapa.",
+            "example": "recent"
+          },
+          "label": {
+            "type": "string",
+            "description": "Rótulo da ordenação no painel.",
+            "example": "Mais recentes"
+          }
+        },
+        "required": [
+          "value",
+          "label"
+        ],
+        "additionalProperties": false
+      },
+      "BoardStageGroup": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "enum": [
+              "curation",
+              "deliveries",
+              "overview",
+              "results",
+              "progress"
+            ],
+            "description": "Id do grupo.",
+            "example": "deliveries"
+          },
+          "label": {
+            "type": "string",
+            "description": "Rótulo do grupo.",
+            "example": "Entregas"
+          },
+          "count": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Total do grupo, quando o painel mostra um.",
+            "example": 18
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "count"
+        ],
+        "additionalProperties": false
+      },
+      "BoardVacancies": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "filled": {
+            "type": "integer",
+            "description": "Vagas ocupadas.",
+            "example": 12
+          },
+          "total": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Total de vagas. Nulo quando não há teto.",
+            "example": 20
+          },
+          "open": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Vagas abertas. Nulo quando não há teto.",
+            "example": 8
+          },
+          "waiting": {
+            "type": "integer",
+            "description": "Creators esperando vaga.",
+            "example": 3
+          },
+          "limited_by": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "creators_limit",
+              "budget",
+              null
+            ],
+            "description": "O que limita as vagas: o teto de creators ou a verba.",
+            "example": "creators_limit"
+          },
+          "label": {
+            "type": "string",
+            "description": "Resumo das vagas, como o painel mostra.",
+            "example": "8 de 20 vagas abertas"
+          }
+        },
+        "required": [
+          "filled",
+          "total",
+          "open",
+          "waiting",
+          "limited_by",
+          "label"
+        ],
+        "additionalProperties": false,
+        "description": "Vagas da campanha. Nulo quando a campanha não tem vaga."
+      },
+      "BoardItemList": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BoardItem"
+            },
+            "description": "Itens da página."
+          },
+          "has_more": {
+            "type": "boolean",
+            "description": "Se existe uma próxima página.",
+            "example": true
+          },
+          "next_cursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Cursor da próxima página, ou nulo na última. Vale só com a mesma etapa, filtros e ordenação.",
+            "example": "eyJ2IjoxLCJzIjoiYXBwcm92ZWQiLCJoIjoiOWYyYyIsIm8iOjIwfQ"
+          },
+          "total": {
+            "type": "integer",
+            "description": "Total da etapa com os filtros aplicados, na unidade da etapa.",
+            "example": 45
+          },
+          "compatible_count": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Candidaturas compatíveis com os filtros aplicados. Nulo fora de etapa de candidatura.",
+            "example": null
+          }
+        },
+        "required": [
+          "data",
+          "has_more",
+          "next_cursor",
+          "total",
+          "compatible_count"
+        ],
+        "additionalProperties": false
+      },
+      "BoardItem": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/BoardMissionItem"
+          },
+          {
+            "$ref": "#/components/schemas/BoardApplicationItem"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "kind",
+          "mapping": {
+            "mission": "#/components/schemas/BoardMissionItem",
+            "application": "#/components/schemas/BoardApplicationItem"
+          }
+        },
+        "description": "Item do quadro: missão ou candidatura, pelo kind."
+      },
+      "BoardMissionItem": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "mission"
+            ],
+            "description": "Item de missão."
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Id da missão.",
+            "example": "2b9e4d7a-1c3f-4e5a-8b6d-9f0a1c2e3d4b"
+          },
+          "campaign_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Campanha raiz: o acordo, ou a avulsa.",
+            "example": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f"
+          },
+          "block": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Id do bloco.",
+                "example": "3e7a9c1d-2b4f-4d6e-8a0c-5f1b3d7e9a2c"
+              },
+              "platform": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CampaignPlatform"
+                  },
+                  {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "platform"
+            ],
+            "additionalProperties": false,
+            "description": "Bloco do acordo da missão. Nulo na avulsa."
+          },
+          "creator": {
+            "$ref": "#/components/schemas/CreatorRef"
+          },
+          "status": {
+            "$ref": "#/components/schemas/MissionStatus"
+          },
+          "status_label": {
+            "type": "string",
+            "description": "Status como o painel mostra.",
+            "example": "Aguardando sua revisão"
+          },
+          "status_tone": {
+            "$ref": "#/components/schemas/StatusTone"
+          },
+          "stage": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StageId"
+              },
+              {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Etapa do quadro em que a missão está."
+              }
+            ]
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MissionStep"
+            },
+            "description": "Entregas da missão, na ordem."
+          },
+          "post_urls": {
+            "$ref": "#/components/schemas/PostUrls"
+          },
+          "posted_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Quando o post foi publicado.",
+            "example": null
+          },
+          "metrics": {
+            "$ref": "#/components/schemas/MissionMetrics"
+          },
+          "dates": {
+            "$ref": "#/components/schemas/MissionDates"
+          },
+          "payment_amount_cents": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Valor que o creator recebe por esta missão. Em centavos. Nulo quando money_visible é false.",
+            "example": 50000
+          },
+          "coupon": {
+            "$ref": "#/components/schemas/MissionCoupon"
+          },
+          "is_compatible": {
+            "type": "boolean",
+            "description": "O creator atende ao perfil pedido pela campanha.",
+            "example": true
+          },
+          "match_tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Por que o creator é compatível, como o painel mostra.",
+            "example": [
+              "Nicho: beleza",
+              "SP"
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date",
+            "description": "Dia em que a missão foi criada.",
+            "example": "2026-11-01"
+          }
+        },
+        "required": [
+          "kind",
+          "id",
+          "campaign_id",
+          "block",
+          "creator",
+          "status",
+          "status_label",
+          "status_tone",
+          "stage",
+          "steps",
+          "post_urls",
+          "posted_at",
+          "metrics",
+          "dates",
+          "payment_amount_cents",
+          "coupon",
+          "is_compatible",
+          "match_tags",
+          "created_at"
+        ],
+        "additionalProperties": false
+      },
+      "CreatorRef": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Id do creator.",
+            "example": "9d3f1b7c-5e2a-4c8d-a6b1-2f3e4d5c6b7a"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Nome do creator.",
+            "example": "Ana Souza"
+          },
+          "handles": {
+            "$ref": "#/components/schemas/CreatorHandles"
+          },
+          "profile_image_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Foto do perfil.",
+            "example": "https://cdn.appconty.com/avatars/ana.jpg"
+          },
+          "instagram_followers": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Seguidores no Instagram.",
+            "example": 48200
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "handles",
+          "profile_image_url",
+          "instagram_followers"
+        ],
+        "additionalProperties": false,
+        "description": "Creator. Nunca traz e-mail, telefone, documento ou endereço."
+      },
+      "CreatorHandles": {
+        "type": "object",
+        "properties": {
+          "instagram": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "@ no Instagram.",
+            "example": "ana.souza"
+          },
+          "tiktok": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "@ no TikTok.",
+            "example": "anasouza"
+          },
+          "youtube": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Canal no YouTube.",
+            "example": null
+          }
+        },
+        "required": [
+          "instagram",
+          "tiktok",
+          "youtube"
+        ],
+        "additionalProperties": false
+      },
+      "MissionStatus": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "enum": [
+          "convidado",
+          "fazendo",
+          "em_analise",
+          "editado",
+          "aprovado",
+          "recusado",
+          "recusado_permanentemente",
+          "expirado",
+          null
+        ],
+        "description": "Status bruto da missão. Para exibir, use status_label e status_tone, que já vêm como o painel mostra.",
+        "example": "em_analise"
+      },
+      "StatusTone": {
+        "type": "string",
+        "enum": [
+          "success",
+          "muted",
+          "info",
+          "warning",
+          "destructive"
+        ],
+        "description": "Cor do status no painel.",
+        "example": "warning"
+      },
+      "MissionStep": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "enum": [
+              "cover",
+              "caption",
+              "script",
+              "delivery"
+            ],
+            "description": "Entrega da etapa: roteiro, capa, legenda ou o vídeo.",
+            "example": "script"
+          },
+          "label": {
+            "type": "string",
+            "description": "Rótulo no painel.",
+            "example": "Roteiro"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "rejected",
+              "review",
+              "awaiting",
+              "idle",
+              "locked"
+            ],
+            "description": "approved, rejected, review (esperando revisão), awaiting (esperando o creator), idle (ainda não começou) ou locked (a campanha não pede).",
+            "example": "review"
+          },
+          "waiting_on": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "De quem é a vez, como o painel mostra.",
+            "example": "Aguardando sua revisão"
+          },
+          "content_hidden": {
+            "type": "boolean",
+            "description": "true quando a cadeia de revisão ainda não liberou o conteúdo para a marca.",
+            "example": false
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "state",
+          "waiting_on",
+          "content_hidden"
+        ],
+        "additionalProperties": false
+      },
+      "PostUrls": {
+        "type": "object",
+        "properties": {
+          "instagram": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "https://www.instagram.com/p/C9xYz12AbCd/"
+          },
+          "tiktok": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": null
+          },
+          "youtube": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": null
+          },
+          "x": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": null
+          }
+        },
+        "required": [
+          "instagram",
+          "tiktok",
+          "youtube",
+          "x"
+        ],
+        "additionalProperties": false,
+        "description": "Link do post publicado, por rede."
+      },
+      "MissionMetrics": {
+        "type": "object",
+        "properties": {
+          "views": {
+            "type": "integer",
+            "description": "Visualizações do post.",
+            "example": 15320
+          },
+          "likes": {
+            "type": "integer",
+            "description": "Curtidas do post.",
+            "example": 1204
+          },
+          "comments": {
+            "type": "integer",
+            "description": "Comentários do post.",
+            "example": 87
+          }
+        },
+        "required": [
+          "views",
+          "likes",
+          "comments"
+        ],
+        "additionalProperties": false
+      },
+      "MissionDates": {
+        "type": "object",
+        "properties": {
+          "accepted_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Quando o creator aceitou.",
+            "example": "2026-11-02T13:05:00.000Z"
+          },
+          "sent_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Quando o briefing foi enviado ao creator.",
+            "example": "2026-11-01T18:00:00.000Z"
+          },
+          "first_submitted_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Primeira entrega do creator.",
+            "example": "2026-11-12T20:40:00.000Z"
+          },
+          "approved_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Quando a entrega foi aprovada.",
+            "example": null
+          },
+          "script_deadline_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Prazo do roteiro.",
+            "example": "2026-11-10T23:59:59.000Z"
+          },
+          "change_deadline_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Prazo da alteração pedida.",
+            "example": null
+          }
+        },
+        "required": [
+          "accepted_at",
+          "sent_at",
+          "first_submitted_at",
+          "approved_at",
+          "script_deadline_at",
+          "change_deadline_at"
+        ],
+        "additionalProperties": false
+      },
+      "MissionCoupon": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Id do cupom.",
+            "example": "4f2c7a1e-9b3d-4c8a-a1f0-6d2e8b7c5a10"
+          },
+          "code": {
+            "type": "string",
+            "description": "Código do cupom.",
+            "example": "ANA10"
+          },
+          "discount_description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Texto do desconto.",
+            "example": "10% off na primeira compra"
+          },
+          "commission_rate_bps": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Taxa de comissão em pontos-base. Nula quando money_visible é false ou a campanha não tem taxa.",
+            "example": 2500
+          },
+          "sales_count": {
+            "type": "integer",
+            "description": "Vendas confirmadas.",
+            "example": 3
+          },
+          "revenue_cents": {
+            "type": "integer",
+            "description": "Soma das vendas confirmadas, em centavos.",
+            "example": 45000
+          },
+          "commission_cents": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Comissão das vendas confirmadas, em centavos. Nula quando money_visible é false.",
+            "example": 11250
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "discount_description",
+          "commission_rate_bps",
+          "sales_count",
+          "revenue_cents",
+          "commission_cents"
+        ],
+        "additionalProperties": false,
+        "description": "Cupom ativo do creator nesta campanha. Nulo sem cupom."
+      },
+      "BoardApplicationItem": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "application"
+            ],
+            "description": "Item de candidatura."
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Id da candidatura.",
+            "example": "0f4b8d2c-6a1e-4c3f-9b5d-2e7a4c1f8b63"
+          },
+          "campaign_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Campanha raiz: o acordo, ou a avulsa.",
+            "example": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f"
+          },
+          "creator": {
+            "$ref": "#/components/schemas/CreatorRef"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ApplicationStatus"
+          },
+          "status_label": {
+            "type": "string",
+            "description": "Status como o painel mostra.",
+            "example": "Aguardando sua aprovação"
+          },
+          "status_tone": {
+            "$ref": "#/components/schemas/StatusTone"
+          },
+          "mission_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Missão aberta pela aprovação. Nula antes de aprovar.",
+            "example": null
+          },
+          "proposed_amount_cents": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Valor proposto ao creator. Em centavos. Nulo quando money_visible é false.",
+            "example": 50000
+          },
+          "is_compatible": {
+            "type": "boolean",
+            "description": "O creator atende ao perfil pedido pela campanha.",
+            "example": true
+          },
+          "match_tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Por que o creator é compatível, como o painel mostra.",
+            "example": [
+              "Nicho: beleza",
+              "SP"
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data e hora em ISO 8601.",
+            "example": "2026-10-21T14:30:00.000Z"
+          }
+        },
+        "required": [
+          "kind",
+          "id",
+          "campaign_id",
+          "creator",
+          "status",
+          "status_label",
+          "status_tone",
+          "mission_id",
+          "proposed_amount_cents",
+          "is_compatible",
+          "match_tags",
+          "created_at"
+        ],
+        "additionalProperties": false
+      },
+      "ApplicationStatus": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "approved",
+          "rejected",
+          "expired"
+        ],
+        "description": "Status bruto da candidatura.",
+        "example": "pending"
+      },
+      "Mission": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "mission"
+            ],
+            "description": "Item de missão."
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Id da missão.",
+            "example": "2b9e4d7a-1c3f-4e5a-8b6d-9f0a1c2e3d4b"
+          },
+          "campaign_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Campanha raiz: o acordo, ou a avulsa.",
+            "example": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f"
+          },
+          "block": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Id do bloco.",
+                "example": "3e7a9c1d-2b4f-4d6e-8a0c-5f1b3d7e9a2c"
+              },
+              "platform": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/CampaignPlatform"
+                  },
+                  {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "platform"
+            ],
+            "additionalProperties": false,
+            "description": "Bloco do acordo da missão. Nulo na avulsa."
+          },
+          "creator": {
+            "$ref": "#/components/schemas/CreatorRef"
+          },
+          "status": {
+            "$ref": "#/components/schemas/MissionStatus"
+          },
+          "status_label": {
+            "type": "string",
+            "description": "Status como o painel mostra.",
+            "example": "Aguardando sua revisão"
+          },
+          "status_tone": {
+            "$ref": "#/components/schemas/StatusTone"
+          },
+          "stage": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StageId"
+              },
+              {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Etapa do quadro em que a missão está."
+              }
+            ]
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MissionStep"
+            },
+            "description": "Entregas da missão, na ordem."
+          },
+          "post_urls": {
+            "$ref": "#/components/schemas/PostUrls"
+          },
+          "posted_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Quando o post foi publicado.",
+            "example": null
+          },
+          "metrics": {
+            "$ref": "#/components/schemas/MissionMetrics"
+          },
+          "dates": {
+            "$ref": "#/components/schemas/MissionDates"
+          },
+          "payment_amount_cents": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Valor que o creator recebe por esta missão. Em centavos. Nulo quando money_visible é false.",
+            "example": 50000
+          },
+          "coupon": {
+            "$ref": "#/components/schemas/MissionCoupon"
+          },
+          "is_compatible": {
+            "type": "boolean",
+            "description": "O creator atende ao perfil pedido pela campanha.",
+            "example": true
+          },
+          "match_tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Por que o creator é compatível, como o painel mostra.",
+            "example": [
+              "Nicho: beleza",
+              "SP"
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date",
+            "description": "Dia em que a missão foi criada.",
+            "example": "2026-11-01"
+          },
+          "campaign": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Id da campanha raiz.",
+                "example": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f"
+              },
+              "kind": {
+                "$ref": "#/components/schemas/CampaignKind"
+              },
+              "name": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Nome da campanha.",
+                "example": "Verão 2027"
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "name"
+            ],
+            "additionalProperties": false,
+            "description": "Campanha da missão: o acordo quando há."
+          },
+          "content": {
+            "$ref": "#/components/schemas/MissionContent"
+          }
+        },
+        "required": [
+          "kind",
+          "id",
+          "campaign_id",
+          "block",
+          "creator",
+          "status",
+          "status_label",
+          "status_tone",
+          "stage",
+          "steps",
+          "post_urls",
+          "posted_at",
+          "metrics",
+          "dates",
+          "payment_amount_cents",
+          "coupon",
+          "is_compatible",
+          "match_tags",
+          "created_at",
+          "campaign",
+          "content"
+        ],
+        "additionalProperties": false
+      },
+      "MissionContent": {
+        "type": "object",
+        "properties": {
+          "video_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Link para tocar o vídeo entregue.",
+            "example": "https://customer-abc.cloudflarestream.com/1a2b3c/watch"
+          },
+          "thumbnail_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Miniatura do vídeo.",
+            "example": "https://customer-abc.cloudflarestream.com/1a2b3c/thumbnails/thumbnail.jpg"
+          },
+          "cover_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Capa entregue.",
+            "example": null
+          },
+          "caption": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Legenda entregue.",
+            "example": "Verão chegou com proteção de verdade #publi"
+          },
+          "script": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Roteiro entregue.",
+            "example": null
+          }
+        },
+        "required": [
+          "video_url",
+          "thumbnail_url",
+          "cover_url",
+          "caption",
+          "script"
+        ],
+        "additionalProperties": false,
+        "description": "O que o creator entregou. Sai nulo o que a cadeia de revisão ainda não liberou para a marca."
+      }
+    },
+    "parameters": {}
+  },
+  "paths": {
+    "/me": {
+      "get": {
+        "tags": [
+          "Conta"
+        ],
+        "summary": "Identificar chave",
+        "description": "Devolve a marca dona da chave e a chave usada na requisição. Serve para testar a integração antes de qualquer outra chamada.",
+        "responses": {
+          "200": {
+            "description": "Marca e chave da requisição.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "invalid_api_key: Chave de API ausente, inválida ou revogada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "open_api_disabled: A API pública não está liberada para esta conta.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate_limited: Limite de requisições atingido. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal_error: Erro interno. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/coupons": {
+      "post": {
+        "tags": [
+          "Cupons"
+        ],
+        "summary": "Criar cupom",
+        "description": "Com mission_id, cria o cupom ativo do creator na campanha da missão, e o creator é avisado no app. Com campaign_id, cria o cupom disponível na campanha, para vincular a um creator depois. No acordo, o cupom vale para o acordo inteiro. O código é normalizado (sem espaços nas pontas, em maiúsculas).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCouponBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Cupom criado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Coupon"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "invalid_api_key: Chave de API ausente, inválida ou revogada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. coupons_disabled: O cupom por creator não está liberado para esta conta.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not_found: Recurso não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "coupon_exists: Este creator já tem um cupom ativo nesta campanha. coupon_code_taken: Este código já está em uso por outro cupom ativo da marca.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation_failed: Os dados enviados são inválidos. mission_closed: A missão deste creator já foi encerrada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate_limited: Limite de requisições atingido. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal_error: Erro interno. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Cupons"
+        ],
+        "summary": "Listar cupons",
+        "description": "Lista os cupons da marca, do mais novo para o mais antigo, com os totais das vendas confirmadas do cupom. Filtros e paginação por cursor; assigned=false lista os cupons disponíveis.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "description": "Quantos itens por página, de 1 a 100. Padrão 20.",
+              "example": 20
+            },
+            "required": false,
+            "description": "Quantos itens por página, de 1 a 100. Padrão 20.",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Cursor opaco devolvido em next_cursor pela página anterior."
+            },
+            "required": false,
+            "description": "Cursor opaco devolvido em next_cursor pela página anterior.",
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Filtra pela campanha ou pelo acordo do cupom."
+            },
+            "required": false,
+            "description": "Filtra pela campanha ou pelo acordo do cupom.",
+            "name": "campaign_id",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Filtra pela missão de origem."
+            },
+            "required": false,
+            "description": "Filtra pela missão de origem.",
+            "name": "mission_id",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Filtra pelo creator dono atual do cupom."
+            },
+            "required": false,
+            "description": "Filtra pelo creator dono atual do cupom.",
+            "name": "creator_id",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "true lista só cupons com creator; false, só os disponíveis da campanha."
+            },
+            "required": false,
+            "description": "true lista só cupons com creator; false, só os disponíveis da campanha.",
+            "name": "assigned",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "$ref": "#/components/schemas/CouponStatus"
+            },
+            "required": false,
+            "description": "Situação do cupom. Cancelado é definitivo.",
+            "name": "status",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Z0-9_-]{3,40}$",
+              "description": "Código do cupom. Espaços nas pontas saem e as letras viram maiúsculas.",
+              "example": "FULANA10"
+            },
+            "required": false,
+            "description": "Código do cupom. Espaços nas pontas saem e as letras viram maiúsculas.",
+            "name": "code",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Página de cupons.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CouponList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "invalid_api_key: Chave de API ausente, inválida ou revogada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. coupons_disabled: O cupom por creator não está liberado para esta conta.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation_failed: Os dados enviados são inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate_limited: Limite de requisições atingido. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal_error: Erro interno. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/coupons/{id}": {
+      "get": {
+        "tags": [
+          "Cupons"
+        ],
+        "summary": "Ver cupom",
+        "description": "Devolve o cupom com a taxa de comissão atual e os totais das vendas confirmadas. Taxa 0 é cupom só para rastreio.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Id do cupom.",
+              "example": "4f2c7a1e-9b3d-4c8a-a1f0-6d2e8b7c5a10"
+            },
+            "required": true,
+            "description": "Id do cupom.",
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cupom.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Coupon"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "invalid_api_key: Chave de API ausente, inválida ou revogada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. coupons_disabled: O cupom por creator não está liberado para esta conta.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not_found: Recurso não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation_failed: Os dados enviados são inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate_limited: Limite de requisições atingido. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal_error: Erro interno. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Cupons"
+        ],
+        "summary": "Editar cupom",
+        "description": "Troca o código ou o texto do desconto, ou cancela o cupom com status canceled. Cancelar é definitivo e não apaga as vendas. Trocar o código não avisa o creator de novo.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Id do cupom.",
+              "example": "4f2c7a1e-9b3d-4c8a-a1f0-6d2e8b7c5a10"
+            },
+            "required": true,
+            "description": "Id do cupom.",
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCouponBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cupom atualizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Coupon"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "invalid_api_key: Chave de API ausente, inválida ou revogada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. coupons_disabled: O cupom por creator não está liberado para esta conta.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not_found: Recurso não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "coupon_canceled: Cupom cancelado não pode ser alterado. coupon_code_taken: Este código já está em uso por outro cupom ativo da marca.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation_failed: Os dados enviados são inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate_limited: Limite de requisições atingido. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal_error: Erro interno. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/coupons/{id}/assign": {
+      "post": {
+        "tags": [
+          "Cupons"
+        ],
+        "summary": "Vincular cupom",
+        "description": "Vincula um cupom livre ao creator da missão, na mesma campanha do cupom. Se o creator já tinha cupom ativo nessa campanha, o antigo fica disponível (continua ativo, sem creator). Só cupom disponível é vinculável. Repetir com o mesmo creator não muda nada. O creator é avisado no app.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Id do cupom.",
+              "example": "4f2c7a1e-9b3d-4c8a-a1f0-6d2e8b7c5a10"
+            },
+            "required": true,
+            "description": "Id do cupom.",
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignCouponBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cupom vinculado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Coupon"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "invalid_api_key: Chave de API ausente, inválida ou revogada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. coupons_disabled: O cupom por creator não está liberado para esta conta.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not_found: Recurso não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "coupon_canceled: Cupom cancelado não pode ser alterado. coupon_assigned: Este cupom está vinculado a outro creator. Desvincule-o antes de vincular a outro.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation_failed: Os dados enviados são inválidos. mission_closed: A missão deste creator já foi encerrada. coupon_campaign_mismatch: A missão não é da campanha deste cupom.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate_limited: Limite de requisições atingido. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal_error: Erro interno. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/coupons/{id}/unassign": {
+      "post": {
+        "tags": [
+          "Cupons"
+        ],
+        "summary": "Desvincular cupom",
+        "description": "Tira o creator do cupom, que continua ativo e fica disponível na campanha. As vendas já registradas continuam atribuídas a quem era o dono na hora da venda. Ninguém é avisado.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Id do cupom.",
+              "example": "4f2c7a1e-9b3d-4c8a-a1f0-6d2e8b7c5a10"
+            },
+            "required": true,
+            "description": "Id do cupom.",
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cupom disponível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Coupon"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "invalid_api_key: Chave de API ausente, inválida ou revogada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. coupons_disabled: O cupom por creator não está liberado para esta conta.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not_found: Recurso não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "coupon_canceled: Cupom cancelado não pode ser alterado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation_failed: Os dados enviados são inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate_limited: Limite de requisições atingido. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal_error: Erro interno. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/coupons/{id}/sales/{external_id}": {
+      "put": {
+        "tags": [
+          "Vendas"
+        ],
+        "summary": "Registrar venda",
+        "description": "Cria ou atualiza a venda pelo id do seu sistema. Repetir a chamada não duplica a venda. A taxa de comissão da campanha e o creator dono do cupom ficam gravados na criação e não mudam depois, nem se o cupom trocar de dono. Com taxa 0 a venda é só rastreio e a comissão é 0. Venda em cupom cancelado ou livre é aceita; no cupom livre, a venda fica sem creator.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Id do cupom.",
+              "example": "4f2c7a1e-9b3d-4c8a-a1f0-6d2e8b7c5a10"
+            },
+            "required": true,
+            "description": "Id do cupom.",
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200,
+              "description": "Id da venda no seu sistema. Repetir o mesmo id atualiza a venda em vez de criar outra.",
+              "example": "pedido-10293"
+            },
+            "required": true,
+            "description": "Id da venda no seu sistema. Repetir o mesmo id atualiza a venda em vez de criar outra.",
+            "name": "external_id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertSaleBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Venda atualizada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CouponSale"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Venda criada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CouponSale"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "invalid_api_key: Chave de API ausente, inválida ou revogada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. coupons_disabled: O cupom por creator não está liberado para esta conta.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not_found: Recurso não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation_failed: Os dados enviados são inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate_limited: Limite de requisições atingido. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal_error: Erro interno. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/coupons/{id}/sales": {
+      "get": {
+        "tags": [
+          "Vendas"
+        ],
+        "summary": "Listar vendas",
+        "description": "Lista as vendas do cupom, da mais nova para a mais antiga, com paginação por cursor.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Id do cupom.",
+              "example": "4f2c7a1e-9b3d-4c8a-a1f0-6d2e8b7c5a10"
+            },
+            "required": true,
+            "description": "Id do cupom.",
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "description": "Quantos itens por página, de 1 a 100. Padrão 20.",
+              "example": 20
+            },
+            "required": false,
+            "description": "Quantos itens por página, de 1 a 100. Padrão 20.",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Cursor opaco devolvido em next_cursor pela página anterior."
+            },
+            "required": false,
+            "description": "Cursor opaco devolvido em next_cursor pela página anterior.",
+            "name": "cursor",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Página de vendas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CouponSaleList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "invalid_api_key: Chave de API ausente, inválida ou revogada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. coupons_disabled: O cupom por creator não está liberado para esta conta.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not_found: Recurso não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation_failed: Os dados enviados são inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate_limited: Limite de requisições atingido. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal_error: Erro interno. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/campaigns": {
+      "get": {
+        "tags": [
+          "Campanhas"
+        ],
+        "summary": "Listar campanhas",
+        "description": "Lista as campanhas da marca, da mais nova para a mais antiga. Campanha é o acordo (kind agreement, um bloco por plataforma) ou a campanha avulsa (kind campaign); bloco de acordo não aparece sozinho. Filtro por status e por nome no servidor, antes da paginação por cursor. Sem status, as arquivadas ficam de fora; status=archived lista só as arquivadas e não combina com outros status. Valores em centavos, nulos quando money_visible é false.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "description": "Quantos itens por página, de 1 a 100. Padrão 20.",
+              "example": 20
+            },
+            "required": false,
+            "description": "Quantos itens por página, de 1 a 100. Padrão 20.",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Cursor opaco devolvido em next_cursor pela página anterior."
+            },
+            "required": false,
+            "description": "Cursor opaco devolvido em next_cursor pela página anterior.",
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Um ou mais status separados por vírgula. Sem status, as arquivadas ficam de fora; archived lista só as arquivadas.",
+              "example": "approved,paused"
+            },
+            "required": false,
+            "description": "Um ou mais status separados por vírgula. Sem status, as arquivadas ficam de fora; archived lista só as arquivadas.",
+            "name": "status",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80,
+              "description": "Busca pelo nome da campanha.",
+              "example": "verão"
+            },
+            "required": false,
+            "description": "Busca pelo nome da campanha.",
+            "name": "q",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Página de campanhas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "invalid_api_key: Chave de API ausente, inválida ou revogada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation_failed: Os dados enviados são inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate_limited: Limite de requisições atingido. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal_error: Erro interno. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/campaigns/{id}": {
+      "get": {
+        "tags": [
+          "Campanhas"
+        ],
+        "summary": "Ver campanha",
+        "description": "Devolve a campanha com os blocos por plataforma (a avulsa tem um bloco só, ela mesma), as opções de escopo do acordo, o que a campanha exige do creator e a cadeia de revisão. Aceita o id do acordo ou da avulsa; id de bloco de acordo, de outra marca ou inexistente responde 404.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Id do acordo ou da campanha avulsa. Id de bloco de acordo responde 404.",
+              "example": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f"
+            },
+            "required": true,
+            "description": "Id do acordo ou da campanha avulsa. Id de bloco de acordo responde 404.",
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Campanha.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "invalid_api_key: Chave de API ausente, inválida ou revogada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not_found: Recurso não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation_failed: Os dados enviados são inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate_limited: Limite de requisições atingido. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal_error: Erro interno. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/campaigns/{id}/stages": {
+      "get": {
+        "tags": [
+          "Quadro"
+        ],
+        "summary": "Listar etapas",
+        "description": "Devolve as etapas do quadro da campanha que a chave enxerga, na ordem do painel, com o rótulo, a contagem e a unidade da contagem (unit). No acordo, etapa com unit creators conta pessoas, e cada creator traz todas as entregas dele nos itens. Cada etapa diz que ordenações (sorts) e que grupos de filtro (filters) valem em /items. q filtra a contagem como filtra a lista; a contagem com os outros filtros é o total de /items.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Id do acordo ou da campanha avulsa. Id de bloco de acordo responde 404.",
+              "example": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f"
+            },
+            "required": true,
+            "description": "Id do acordo ou da campanha avulsa. Id de bloco de acordo responde 404.",
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80,
+              "description": "Busca de creator (nome, @instagram, @tiktok). A contagem passa a contar só quem casa.",
+              "example": "ana"
+            },
+            "required": false,
+            "description": "Busca de creator (nome, @instagram, @tiktok). A contagem passa a contar só quem casa.",
+            "name": "q",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Etapas, grupos e vagas da campanha.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardStages"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "invalid_api_key: Chave de API ausente, inválida ou revogada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not_found: Recurso não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation_failed: Os dados enviados são inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate_limited: Limite de requisições atingido. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal_error: Erro interno. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/campaigns/{id}/items": {
+      "get": {
+        "tags": [
+          "Quadro"
+        ],
+        "summary": "Listar itens",
+        "description": "Lista as missões ou as candidaturas de uma etapa do quadro, com o status como o painel mostra. Aceita os filtros e as ordenações do quadro, aplicados no banco antes da paginação; total é a contagem da etapa com esses filtros, na unidade da etapa. O cursor guarda a posição e vale só com a mesma etapa, os mesmos filtros e a mesma ordenação; um item que entra ou sai da etapa entre duas páginas pode repetir ou pular uma posição, então para uma varredura completa releia /stages e confira a contagem. Nunca traz contato do creator, ações ou formulários.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Id do acordo ou da campanha avulsa. Id de bloco de acordo responde 404.",
+              "example": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f"
+            },
+            "required": true,
+            "description": "Id do acordo ou da campanha avulsa. Id de bloco de acordo responde 404.",
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "description": "Quantos itens por página, de 1 a 100. Padrão 20.",
+              "example": 20
+            },
+            "required": false,
+            "description": "Quantos itens por página, de 1 a 100. Padrão 20.",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Cursor opaco devolvido em next_cursor pela página anterior."
+            },
+            "required": false,
+            "description": "Cursor opaco devolvido em next_cursor pela página anterior.",
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/StageId"
+                },
+                {
+                  "description": "Etapa a listar, um id devolvido por /stages. Etapa que a chave não vê responde 422."
+                }
+              ]
+            },
+            "required": true,
+            "description": "Etapa a listar, um id devolvido por /stages. Etapa que a chave não vê responde 422.",
+            "name": "stage",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80,
+              "description": "Busca de creator: nome, @instagram ou @tiktok.",
+              "example": "ana"
+            },
+            "required": false,
+            "description": "Busca de creator: nome, @instagram ou @tiktok.",
+            "name": "q",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "match",
+                    "rating",
+                    "followers",
+                    "recent",
+                    "oldest"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "recent",
+                    "deadline",
+                    "started",
+                    "followers",
+                    "name",
+                    "rating",
+                    "views",
+                    "engagement"
+                  ]
+                }
+              ],
+              "description": "Ordenação, uma das sorts da etapa em /stages. match ordena pelos mais compatíveis.",
+              "example": "recent"
+            },
+            "required": false,
+            "description": "Ordenação, uma das sorts da etapa em /stages. match ordena pelos mais compatíveis.",
+            "name": "sort",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "description": "Direção da ordenação.",
+              "example": "desc"
+            },
+            "required": false,
+            "description": "Direção da ordenação.",
+            "name": "order",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "default": false,
+              "description": "true lista só candidaturas compatíveis com a campanha.",
+              "example": false
+            },
+            "required": false,
+            "description": "true lista só candidaturas compatíveis com a campanha.",
+            "name": "only_compatible",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "feminino",
+                "masculino",
+                "nao_binario"
+              ],
+              "description": "Gênero do creator.",
+              "example": "feminino"
+            },
+            "required": false,
+            "description": "Gênero do creator.",
+            "name": "gender",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "UF do creator.",
+              "example": "SP"
+            },
+            "required": false,
+            "description": "UF do creator.",
+            "name": "state",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ],
+              "description": "Cidades do creator, separadas por vírgula.",
+              "example": "São Paulo,Campinas"
+            },
+            "required": false,
+            "description": "Cidades do creator, separadas por vírgula.",
+            "name": "city",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ],
+              "description": "Locais no formato país:UF:cidade, separados por vírgula. UF e cidade são opcionais.",
+              "example": "BR:SP:São Paulo"
+            },
+            "required": false,
+            "description": "Locais no formato país:UF:cidade, separados por vírgula. UF e cidade são opcionais.",
+            "name": "location",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ],
+              "description": "Redes que o creator tem conectadas, separadas por vírgula.",
+              "example": "instagram,tiktok"
+            },
+            "required": false,
+            "description": "Redes que o creator tem conectadas, separadas por vírgula.",
+            "name": "networks",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 2147483647,
+              "description": "Mínimo de seguidores no Instagram.",
+              "example": 10000
+            },
+            "required": false,
+            "description": "Mínimo de seguidores no Instagram.",
+            "name": "followers_min",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 2147483647,
+              "description": "Máximo de seguidores no Instagram. Tem de ser maior ou igual a followers_min.",
+              "example": 100000
+            },
+            "required": false,
+            "description": "Máximo de seguidores no Instagram. Tem de ser maior ou igual a followers_min.",
+            "name": "followers_max",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Só creators desta opção de escopo do acordo.",
+              "example": "5b8d0f2a-4c6e-4a1b-8d3f-7e9a1c3b5d70"
+            },
+            "required": false,
+            "description": "Só creators desta opção de escopo do acordo.",
+            "name": "scope_option_id",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Só creators com este briefing do acordo.",
+              "example": "2d4f6a8c-0e1b-4c3d-9f5a-7b9c1d3e5f02"
+            },
+            "required": false,
+            "description": "Só creators com este briefing do acordo.",
+            "name": "briefing_id",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "default": false,
+              "description": "true tira quem está em outra campanha ativa da marca.",
+              "example": false
+            },
+            "required": false,
+            "description": "true tira quem está em outra campanha ativa da marca.",
+            "name": "exclude_in_other_campaigns",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "participating",
+                "rejected",
+                "approved"
+              ],
+              "description": "Situação do creator nas outras campanhas da marca, para o filtro elsewhere.",
+              "example": "participating"
+            },
+            "required": false,
+            "description": "Situação do creator nas outras campanhas da marca, para o filtro elsewhere.",
+            "name": "elsewhere_status",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "include",
+                "exclude"
+              ],
+              "description": "include mantém só quem bate o filtro elsewhere, exclude tira.",
+              "example": "include"
+            },
+            "required": false,
+            "description": "include mantém só quem bate o filtro elsewhere, exclude tira.",
+            "name": "elsewhere_mode",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ],
+              "description": "Campanhas consideradas no filtro elsewhere, separadas por vírgula.",
+              "example": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f"
+            },
+            "required": false,
+            "description": "Campanhas consideradas no filtro elsewhere, separadas por vírgula.",
+            "name": "elsewhere_campaigns",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 3,
+              "description": "Em quantas dessas campanhas, no mínimo, o creator precisa estar.",
+              "example": 1
+            },
+            "required": false,
+            "description": "Em quantas dessas campanhas, no mínimo, o creator precisa estar.",
+            "name": "elsewhere_min",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Página de itens da etapa.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardItemList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "invalid_api_key: Chave de API ausente, inválida ou revogada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not_found: Recurso não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation_failed: Os dados enviados são inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate_limited: Limite de requisições atingido. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal_error: Erro interno. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/missions/{id}": {
+      "get": {
+        "tags": [
+          "Missões"
+        ],
+        "summary": "Ver missão",
+        "description": "Devolve a missão como o painel da marca a apresenta: campanha raiz (o acordo quando há), bloco, creator, status, entregas, conteúdo enviado, link do post por rede, métricas, datas, valor e cupom. O conteúdo que a cadeia de revisão ainda não liberou para a marca sai nulo. Missão de outra marca, inexistente ou numa etapa que a chave não enxerga responde 404.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Id da missão.",
+              "example": "2b9e4d7a-1c3f-4e5a-8b6d-9f0a1c2e3d4b"
+            },
+            "required": true,
+            "description": "Id da missão.",
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Missão.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Mission"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "invalid_api_key: Chave de API ausente, inválida ou revogada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not_found: Recurso não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation_failed: Os dados enviados são inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate_limited: Limite de requisições atingido. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal_error: Erro interno. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "webhooks": {}
+}

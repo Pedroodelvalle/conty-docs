@@ -1,0 +1,35 @@
+---
+title: "IA na Conty"
+sidebarTitle: "Visão geral"
+description: "Opere a Conty a partir de agentes de IA: o servidor MCP para Claude, ChatGPT e Cursor, e as skills para agentes de código."
+icon: "sparkles"
+keywords:
+  - ia
+  - mcp
+  - skills
+  - agentes
+---
+
+Além da API REST, a Conty pode ser operada por **agentes de IA**. O agente conversa em linguagem natural com quem usa, e chama a Conty por baixo: busca creators, cria campanhas, tria candidaturas, revisa entregas e monta relatórios na conta da marca.
+
+São duas peças, que funcionam juntas:
+
+| Ferramenta | Para quem | O que entrega |
+|---|---|---|
+| **Servidor MCP** | Quem usa Claude, ChatGPT, Cursor, Codex ou outro cliente compatível com MCP remoto | As tools da Conty dentro do agente, com login OAuth na conta da marca |
+| **Skills** | Quem usa agentes de código (Claude Code, Cursor, Codex, Kimi Code e outros) | Fluxos prontos: quais tools chamar, em que ordem e o que fazer em cada erro |
+
+O MCP é o acesso; as skills são o roteiro. Sem MCP, a skill não tem o que chamar. Sem skill, o agente consegue usar as tools, mas precisa de mais instrução sua para cada fluxo.
+
+<Note>
+  O MCP e as skills usam o login da pessoa na Conty, não a chave de API. Para integrar sistemas sem pessoa no meio (loja, ERP, CRM), use a [API](/api/introducao) e os [webhooks](/api/webhooks/visao-geral).
+</Note>
+
+<CardGroup cols={2}>
+  <Card title="Servidor MCP" icon="plug" href="/api/ia/mcp">
+    Conecte a Conty ao Claude, ChatGPT, Cursor ou Codex em poucos minutos.
+  </Card>
+  <Card title="Skills" icon="book" href="/api/ia/skills">
+    Ensine o agente a executar os fluxos da marca de ponta a ponta.
+  </Card>
+</CardGroup>

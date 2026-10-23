@@ -1,0 +1,180 @@
+---
+title: "Cupons"
+description: "O cupom de desconto de cada creator na campanha, os cupons disponíveis, as vendas feitas com eles e a comissão calculada pela Conty."
+icon: "ticket"
+keywords:
+  - cupom
+  - vendas
+  - comissão
+  - cupons disponíveis
+---
+
+O cupom pertence a um creator numa campanha, ou fica disponível na campanha até você vincular a alguém. Você cria o cupom quando o creator é aprovado (ou cadastra antes os códigos da loja como cupons disponíveis), registra as vendas feitas com ele, e a Conty calcula a comissão do creator com a taxa da campanha. O passo a passo completo está no guia [Cupom por creator](/api/guias/cupom-por-creator).
+
+## Fluxo
+
+1. O webhook `application.approved` avisa que o creator foi aprovado, com `data.mission.id`.
+2. `POST /coupons` cria o cupom com esse `mission_id`. O creator é avisado no app.
+3. `PUT /coupons/{id}/sales/{external_id}` registra cada venda e cada estorno, de forma idempotente.
+4. `GET /coupons/{id}` e `GET /coupons/{id}/sales` mostram os totais e as vendas.
+5. `PATCH /coupons/{id}` troca o código ou cancela o cupom.
+
+### Com cupons disponíveis
+
+1. `POST /coupons` com `campaign_id` cadastra um cupom disponível, sem creator, na campanha. Ninguém é avisado.
+2. `GET /coupons?campaign_id=<id>&assigned=false&status=active` lista os cupons disponíveis.
+3. `POST /coupons/{id}/assign` com `mission_id` vincula o cupom livre ao creator da missão. O creator é avisado no app.
+4. `POST /coupons/{id}/unassign` desvincula o cupom do creator: continua ativo e fica disponível.
+
+## Regras
+
+- Um cupom **ativo** por creator em cada campanha. Em acordo, a campanha é o acordo.
+- O `code` é normalizado (sem espaço nas pontas, em maiúsculas) e aceita `A-Z`, `0-9`, `_` e `-`, de 3 a 40 caracteres. Não pode repetir entre os cupons ativos da marca.
+- Cancelar é definitivo. As vendas continuam, e a marca pode criar outro cupom para o mesmo creator.
+- A comissão da venda é `round(amount_cents * commission_rate_bps / 10000)`, com a taxa da campanha no momento em que a venda é criada, congelada na venda.
+- Taxa `0` é cupom só de rastreio: as vendas são registradas e a comissão é `0`.
+
+## Regras dos cupons disponíveis
+
+- `POST /coupons` recebe `mission_id` **ou** `campaign_id`, nunca os dois (`422 validation_failed`). Com `campaign_id`, o cupom nasce disponível: `creator` e `mission_id` nulos. O `campaign_id` pode ser a campanha avulsa, o acordo ou uma campanha do acordo; o cupom fica disponível no acordo.
+- Só cupom disponível é vinculável. Cupom vinculado a outro creator responde `409 coupon_assigned`: desvincule antes.
+- Vincular ao creator que já é o dono não muda nada e responde `200`, sem novo aviso.
+- **Trocar:** se o creator já tem cupom ativo na campanha, o `assign` deixa o antigo disponível (continua `active`, sem creator; não é cancelado) e vincula o novo.
+- A missão tem que ser da mesma campanha do cupom (`422 coupon_campaign_mismatch`) e não pode estar fechada (`422 mission_closed`).
+- Desvincular não avisa ninguém. Cupom cancelado não pode ser vinculado nem desvinculado (`409 coupon_canceled`).
+- `GET /coupons` filtra com `assigned=true` (só cupons com creator) ou `assigned=false` (só os disponíveis).
+
+## Atribuição da venda
+
+A venda guarda o creator dono do cupom **no momento em que ela é criada**, em `creator` e `mission_id`. Atualizar a venda depois não muda isso, como a taxa. Se o cupom trocar de dono, as vendas antigas continuam do dono anterior e só as novas vão para o novo dono. Venda em cupom livre é aceita e fica com `creator` nulo.
+
+Os `totals` do cupom somam todas as vendas confirmadas do cupom, de qualquer dono. Os totais por creator que a Conty mostra nas telas somam pela atribuição da venda.
+
+## O objeto Coupon
+
+```json
+{
+  "id": "6f1c2a8e-3b4d-4e5f-8a9b-0c1d2e3f4a5b",
+  "code": "FULANA10",
+  "discount_description": "10% off na primeira compra",
+  "status": "active",
+  "campaign": { "id": "2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5", "name": "Outubro" },
+  "creator": { "id": "8d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a", "name": "Fulana Souza", "handle": "@fulana" },
+  "mission_id": "c3a2b1d0-e9f8-4a7b-9c6d-5e4f3a2b1c0d",
+  "commission_rate_bps": 2500,
+  "totals": { "sales_count": 3, "revenue_cents": 45000, "commission_cents": 11250 },
+  "created_at": "2026-10-21T13:05:12Z",
+  "updated_at": "2026-10-21T13:05:12Z",
+  "canceled_at": null
+}
+```
+
+<ResponseField name="id" type="string" required>
+  Id do cupom.
+</ResponseField>
+
+<ResponseField name="code" type="string" required>
+  Código do cupom, em maiúsculas.
+</ResponseField>
+
+<ResponseField name="discount_description" type="string | null" required>
+  Texto curto do desconto, mostrado ao creator.
+</ResponseField>
+
+<ResponseField name="status" type="string" required>
+  `active` ou `canceled`.
+</ResponseField>
+
+<ResponseField name="campaign" type="object" required>
+  Campanha raiz: o acordo, quando a missão é de acordo; a campanha avulsa, quando não. Traz `id` e `name`.
+</ResponseField>
+
+<ResponseField name="creator" type="object | null" required>
+  O creator dono do cupom: `id`, `name` e `handle` (o @, ou `null`). `null` quando o cupom está disponível na campanha.
+</ResponseField>
+
+<ResponseField name="mission_id" type="string | null" required>
+  A missão do creator dono do cupom. `null` quando o cupom está livre.
+</ResponseField>
+
+<ResponseField name="commission_rate_bps" type="integer | null" required>
+  Taxa de comissão atual da campanha, em pontos-base (2500 = 25%). `null` quando a campanha não tem taxa; `0` quando o cupom é só de rastreio.
+</ResponseField>
+
+<ResponseField name="totals" type="object" required>
+  Somam só as vendas `confirmed` do cupom, de qualquer dono: `sales_count`, `revenue_cents` e `commission_cents` (`null` quando nenhuma venda tem taxa).
+</ResponseField>
+
+<ResponseField name="created_at" type="string" required>
+  Criação do cupom, ISO 8601 em UTC.
+</ResponseField>
+
+<ResponseField name="updated_at" type="string" required>
+  Última alteração.
+</ResponseField>
+
+<ResponseField name="canceled_at" type="string | null" required>
+  Quando o cupom foi cancelado, ou `null`.
+</ResponseField>
+
+## O objeto CouponSale
+
+```json
+{
+  "id": "9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d",
+  "external_id": "pedido-123",
+  "amount_cents": 15000,
+  "status": "confirmed",
+  "creator": { "id": "8d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a", "name": "Fulana Souza", "handle": "@fulana" },
+  "mission_id": "c3a2b1d0-e9f8-4a7b-9c6d-5e4f3a2b1c0d",
+  "commission_rate_bps": 2500,
+  "commission_cents": 3750,
+  "occurred_at": "2026-10-21T15:42:00Z",
+  "created_at": "2026-10-21T15:42:03Z",
+  "updated_at": "2026-10-21T15:42:03Z"
+}
+```
+
+<ResponseField name="id" type="string" required>
+  Id da venda na Conty.
+</ResponseField>
+
+<ResponseField name="external_id" type="string" required>
+  Id da venda no seu sistema, por exemplo o número do pedido. Único por cupom.
+</ResponseField>
+
+<ResponseField name="amount_cents" type="integer" required>
+  Valor da venda em centavos, maior que zero.
+</ResponseField>
+
+<ResponseField name="status" type="string" required>
+  `confirmed` ou `canceled` (estorno). Só `confirmed` entra nos totais.
+</ResponseField>
+
+<ResponseField name="creator" type="object | null" required>
+  Creator a quem a venda é atribuída: o dono do cupom no momento em que a venda foi criada (`id`, `name`, `handle`). Não muda se o cupom trocar de dono. `null` quando o cupom estava livre.
+</ResponseField>
+
+<ResponseField name="mission_id" type="string | null" required>
+  Missão do creator atribuído, no momento da venda. `null` quando o cupom estava livre.
+</ResponseField>
+
+<ResponseField name="commission_rate_bps" type="integer | null" required>
+  Taxa da campanha no momento em que a venda foi criada. Fica congelada.
+</ResponseField>
+
+<ResponseField name="commission_cents" type="integer | null" required>
+  Comissão do creator nesta venda. `null` quando a campanha não tinha taxa.
+</ResponseField>
+
+<ResponseField name="occurred_at" type="string" required>
+  Quando a venda aconteceu.
+</ResponseField>
+
+<ResponseField name="created_at" type="string" required>
+  Quando a venda foi registrada na Conty.
+</ResponseField>
+
+<ResponseField name="updated_at" type="string" required>
+  Última atualização da venda.
+</ResponseField>

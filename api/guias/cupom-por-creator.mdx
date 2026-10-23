@@ -1,0 +1,401 @@
+---
+title: "Cupom por creator"
+description: "Crie um cupom de desconto para cada creator aprovado, ou vincule um dos cupons disponíveis da campanha, registre as vendas e deixe a Conty calcular a comissão."
+icon: "ticket"
+keywords:
+  - cupom
+  - comissão
+  - vendas
+  - afiliados
+  - cupons disponíveis
+---
+
+Cada creator aprovado na campanha ganha um cupom próprio. O creator divulga o cupom, a sua loja registra as vendas na Conty e a Conty calcula a comissão do creator com a taxa da campanha. Marca e creator acompanham cupom, vendas e comissão nas telas da Conty.
+
+<Note>
+  A taxa de comissão é configurada na campanha (ou no acordo), no painel da Conty, em pontos-base: `2500` é 25%. Campanha sem taxa registra as vendas normalmente, com a comissão nula. Taxa `0` é cupom só de rastreio: a marca acompanha as vendas de cada creator sem pagar comissão, e a comissão vem `0`.
+</Note>
+
+## Regras do cupom
+
+- **Um cupom ativo por creator em cada campanha.** Em acordo, a campanha é o acordo: um creator com Reels e TikTok no mesmo acordo tem um cupom só.
+- O `code` é normalizado: sem espaço nas pontas e em maiúsculas. Aceita `A-Z`, `0-9`, `_` e `-`, de 3 a 40 caracteres. `fulana10` vira `FULANA10`.
+- O código não pode repetir entre os cupons ativos da sua marca.
+- Cancelar é definitivo. As vendas do cupom cancelado continuam lá, e você pode criar um cupom novo para o mesmo creator.
+
+## Fluxo ponta a ponta
+
+<Steps>
+  <Step title="Assine o application.approved">
+    No painel, em **Desenvolvedores → Webhooks**, marque o evento `application.approved` no seu endpoint. Ele sai quando a marca aprova a candidatura do creator, e traz o que você precisa:
+
+    ```json
+    {
+      "type": "application.approved",
+      "summary": "BeConfident: Fulana Souza foi aprovado(a) na campanha \"Outubro\".",
+      "data": {
+        "campaign": { "id": "2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5", "name": "Outubro", "url": "https://appconty.com/campaigns/2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5" },
+        "creator": { "id": "8d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a", "name": "Fulana Souza", "handle": "@fulana" },
+        "mission": { "id": "c3a2b1d0-e9f8-4a7b-9c6d-5e4f3a2b1c0d", "status": "fazendo", "platform": "instagram" }
+      }
+    }
+    ```
+
+    Veja o payload completo em [Candidaturas](/api/webhooks/eventos/candidaturas).
+  </Step>
+
+  <Step title="Crie o cupom com data.mission.id">
+    Crie o cupom na sua loja (Shopify, VTEX, Nuvemshop ou o seu sistema) e registre na Conty com `POST /coupons`, usando `data.mission.id` do evento como `mission_id`:
+
+    <CodeGroup>
+
+    ```bash cURL
+    curl -X POST https://api.appconty.com/public/v1/coupons \
+      -H "Authorization: Bearer $CONTY_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "mission_id": "c3a2b1d0-e9f8-4a7b-9c6d-5e4f3a2b1c0d",
+        "code": "fulana10",
+        "discount_description": "10% off na primeira compra"
+      }'
+    ```
+
+    ```javascript Node.js
+    async function createCouponForApproval(event) {
+      const handle = (event.data.creator.handle ?? event.data.creator.name)
+        .replace(/[^A-Za-z0-9]/g, "")
+        .slice(0, 30);
+
+      const response = await fetch("https://api.appconty.com/public/v1/coupons", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.CONTY_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          mission_id: event.data.mission.id,
+          code: `${handle}10`,
+          discount_description: "10% off na primeira compra",
+        }),
+      });
+
+      const body = await response.json();
+
+      if (response.status === 409 && body.error.code === "coupon_exists") {
+        return body.error.details[0].coupon_id;
+      }
+      if (!response.ok) {
+        throw new Error(`${body.error.code}: ${body.error.message}`);
+      }
+      return body.id;
+    }
+    ```
+
+    </CodeGroup>
+
+    Resposta `201`:
+
+    ```json
+    {
+      "id": "6f1c2a8e-3b4d-4e5f-8a9b-0c1d2e3f4a5b",
+      "code": "FULANA10",
+      "discount_description": "10% off na primeira compra",
+      "status": "active",
+      "campaign": { "id": "2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5", "name": "Outubro" },
+      "creator": { "id": "8d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a", "name": "Fulana Souza", "handle": "@fulana" },
+      "mission_id": "c3a2b1d0-e9f8-4a7b-9c6d-5e4f3a2b1c0d",
+      "commission_rate_bps": 2500,
+      "totals": { "sales_count": 0, "revenue_cents": 0, "commission_cents": null },
+      "created_at": "2026-10-21T13:05:12Z",
+      "updated_at": "2026-10-21T13:05:12Z",
+      "canceled_at": null
+    }
+    ```
+
+    Guarde o `id` do cupom junto do código na sua loja: é ele que vai nas vendas.
+  </Step>
+
+  <Step title="O creator é avisado">
+    Assim que o cupom é criado, o creator recebe no app a notificação **"Seu cupom chegou"**, com o código e o nome da campanha. O cupom aparece na tela da campanha, para ele divulgar. Trocar o código depois não manda outro aviso.
+  </Step>
+
+  <Step title="Registre cada venda e cada estorno">
+    A cada venda com o cupom, chame `PUT /coupons/{id}/sales/{external_id}`, usando o id do pedido no seu sistema como `external_id`. A chamada é idempotente: repetir não duplica a venda, então pode chamar de novo sempre que o pedido mudar.
+
+    <CodeGroup>
+
+    ```bash Venda
+    curl -X PUT https://api.appconty.com/public/v1/coupons/6f1c2a8e-3b4d-4e5f-8a9b-0c1d2e3f4a5b/sales/pedido-123 \
+      -H "Authorization: Bearer $CONTY_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{ "amount_cents": 15000, "status": "confirmed", "occurred_at": "2026-10-21T15:42:00Z" }'
+    ```
+
+    ```bash Estorno
+    curl -X PUT https://api.appconty.com/public/v1/coupons/6f1c2a8e-3b4d-4e5f-8a9b-0c1d2e3f4a5b/sales/pedido-123 \
+      -H "Authorization: Bearer $CONTY_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{ "amount_cents": 15000, "status": "canceled", "occurred_at": "2026-10-21T15:42:00Z" }'
+    ```
+
+    ```javascript Node.js
+    async function syncOrder(couponId, order) {
+      const response = await fetch(
+        `https://api.appconty.com/public/v1/coupons/${couponId}/sales/${encodeURIComponent(order.id)}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${process.env.CONTY_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            amount_cents: order.totalCents,
+            status: order.refunded ? "canceled" : "confirmed",
+            occurred_at: order.paidAt,
+          }),
+        },
+      );
+
+      const body = await response.json();
+      if (!response.ok) throw new Error(`${body.error.code}: ${body.error.message}`);
+      return body;
+    }
+    ```
+
+    </CodeGroup>
+
+    Responde `201` quando a venda é nova e `200` quando ela já existia e foi atualizada:
+
+    ```json
+    {
+      "id": "9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d",
+      "external_id": "pedido-123",
+      "amount_cents": 15000,
+      "status": "confirmed",
+      "creator": { "id": "8d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a", "name": "Fulana Souza", "handle": "@fulana" },
+      "mission_id": "c3a2b1d0-e9f8-4a7b-9c6d-5e4f3a2b1c0d",
+      "commission_rate_bps": 2500,
+      "commission_cents": 3750,
+      "occurred_at": "2026-10-21T15:42:00Z",
+      "created_at": "2026-10-21T15:42:03Z",
+      "updated_at": "2026-10-21T15:42:03Z"
+    }
+    ```
+
+    Venda num cupom já cancelado é aceita: a venda pode ter acontecido antes do cancelamento. A venda guarda o creator dono do cupom naquele momento, em `creator` e `mission_id`.
+  </Step>
+
+  <Step title="A Conty calcula a comissão">
+    A comissão de cada venda é:
+
+    ```text
+    commission_cents = round(amount_cents * commission_rate_bps / 10000)
+    ```
+
+    A `commission_rate_bps` é a taxa da campanha **no momento em que a venda é criada**, e fica congelada na venda. Se a marca mudar a taxa depois, as vendas antigas continuam com a taxa antiga, inclusive quando você atualiza o valor delas. Campanha sem taxa gera `commission_rate_bps` e `commission_cents` nulos.
+
+    Os `totals` do cupom somam só as vendas `confirmed`. Estorno (`canceled`) sai dos totais. Consulte a qualquer momento com `GET /coupons/{id}` e `GET /coupons/{id}/sales`.
+  </Step>
+</Steps>
+
+## Cupons disponíveis
+
+Se os códigos já existem na sua loja, você não precisa criar um por creator na hora da aprovação. Cadastre os códigos como cupons disponíveis da campanha e vincule um a cada creator aprovado. O resto do fluxo (vendas, comissão, cancelamento) é o mesmo.
+
+<Steps>
+  <Step title="Cadastre os códigos da loja como cupons disponíveis">
+    Para cada código, chame `POST /coupons` com `campaign_id` no lugar de `mission_id`. Use o id da campanha avulsa ou do acordo; com o id de uma campanha do acordo, o cupom fica disponível no acordo. Ninguém é avisado.
+
+    ```bash cURL
+    curl -X POST https://api.appconty.com/public/v1/coupons \
+      -H "Authorization: Bearer $CONTY_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "campaign_id": "2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5",
+        "code": "promo20",
+        "discount_description": "20% off no site"
+      }'
+    ```
+
+    Resposta `201`, com o cupom livre:
+
+    ```json
+    {
+      "id": "4e5f6a7b-8c9d-4e0f-a1b2-c3d4e5f6a7b8",
+      "code": "PROMO20",
+      "discount_description": "20% off no site",
+      "status": "active",
+      "campaign": { "id": "2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5", "name": "Outubro" },
+      "creator": null,
+      "mission_id": null,
+      "commission_rate_bps": 2500,
+      "totals": { "sales_count": 0, "revenue_cents": 0, "commission_cents": null },
+      "created_at": "2026-10-21T12:00:00Z",
+      "updated_at": "2026-10-21T12:00:00Z",
+      "canceled_at": null
+    }
+    ```
+
+    Mande `mission_id` ou `campaign_id`, só um dos dois: os dois juntos respondem `422 validation_failed`. Código que já está ativo na sua marca responde `409 coupon_code_taken`.
+  </Step>
+
+  <Step title="Vincule um cupom livre quando o creator for aprovado">
+    No `application.approved`, pegue um cupom livre da campanha e vincule ao creator com `POST /coupons/{id}/assign`, usando `data.mission.id` do evento:
+
+    ```javascript Node.js
+    async function assignFromPool(event) {
+      const headers = {
+        Authorization: `Bearer ${process.env.CONTY_API_KEY}`,
+        "Content-Type": "application/json",
+      };
+      const base = "https://api.appconty.com/public/v1";
+
+      const list = await fetch(
+        `${base}/coupons?campaign_id=${event.data.campaign.id}&assigned=false&status=active&limit=1`,
+        { headers },
+      );
+      const { data } = await list.json();
+      if (data.length === 0) throw new Error("Nenhum cupom disponível");
+
+      const response = await fetch(`${base}/coupons/${data[0].id}/assign`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ mission_id: event.data.mission.id }),
+      });
+
+      const body = await response.json();
+      if (!response.ok) throw new Error(`${body.error.code}: ${body.error.message}`);
+      return body;
+    }
+    ```
+
+    Resposta `200`, com o cupom já do creator:
+
+    ```json
+    {
+      "id": "4e5f6a7b-8c9d-4e0f-a1b2-c3d4e5f6a7b8",
+      "code": "PROMO20",
+      "discount_description": "20% off no site",
+      "status": "active",
+      "campaign": { "id": "2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5", "name": "Outubro" },
+      "creator": { "id": "8d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a", "name": "Fulana Souza", "handle": "@fulana" },
+      "mission_id": "c3a2b1d0-e9f8-4a7b-9c6d-5e4f3a2b1c0d",
+      "commission_rate_bps": 2500,
+      "totals": { "sales_count": 0, "revenue_cents": 0, "commission_cents": null },
+      "created_at": "2026-10-21T12:00:00Z",
+      "updated_at": "2026-10-21T13:05:12Z",
+      "canceled_at": null
+    }
+    ```
+
+    O creator recebe no app o aviso **"Seu cupom chegou"**, como na criação. Repetir o `assign` com a mesma missão não muda nada e não manda outro aviso. Se dois eventos chegarem juntos e pegarem o mesmo cupom, o segundo recebe `409 coupon_assigned`: liste de novo e tente o próximo livre.
+  </Step>
+
+  <Step title="Troque ou desvincule quando precisar">
+    Para trocar o cupom de um creator, vincule outro cupom livre a ele com `assign`. O cupom antigo fica disponível sozinho: continua `active`, com `creator` e `mission_id` nulos, pronto para outro creator. Ele não é cancelado.
+
+    Para tirar o cupom do creator sem dar outro, chame `POST /coupons/{id}/unassign`, sem corpo. O cupom fica disponível e ninguém é avisado:
+
+    ```bash cURL
+    curl -X POST https://api.appconty.com/public/v1/coupons/4e5f6a7b-8c9d-4e0f-a1b2-c3d4e5f6a7b8/unassign \
+      -H "Authorization: Bearer $CONTY_API_KEY"
+    ```
+
+    Só cupom disponível é vinculável. Para passar um cupom de um creator para outro, desvincule primeiro e depois vincule.
+  </Step>
+</Steps>
+
+### As vendas ficam com quem era o dono
+
+Cada venda guarda o creator dono do cupom no momento em que ela é criada, em `creator` e `mission_id`. Se o cupom trocar de dono, as vendas antigas continuam do dono anterior e só as novas vão para o novo dono. Atualizar uma venda antiga (um estorno, por exemplo) não muda a atribuição.
+
+Venda feita enquanto o cupom está livre é aceita e fica com `creator: null`:
+
+```json
+{
+  "id": "5d6e7f8a-9b0c-4d1e-8f2a-3b4c5d6e7f8a",
+  "external_id": "pedido-456",
+  "amount_cents": 8000,
+  "status": "confirmed",
+  "creator": null,
+  "mission_id": null,
+  "commission_rate_bps": 2500,
+  "commission_cents": 2000,
+  "occurred_at": "2026-10-22T10:15:00Z",
+  "created_at": "2026-10-22T10:15:02Z",
+  "updated_at": "2026-10-22T10:15:02Z"
+}
+```
+
+Os `totals` do cupom somam todas as vendas confirmadas dele, de qualquer dono. Para ver só os disponíveis, liste com `GET /coupons?assigned=false`; para ver só os cupons com creator, `assigned=true`.
+
+## Quando o creator sai da campanha
+
+Assine também os eventos de estado da missão para desativar, na sua loja, o cupom de quem saiu:
+
+| Evento | O que aconteceu | O que fazer |
+|---|---|---|
+| `mission.canceled` | A marca tirou o creator da campanha | Desative o cupom na loja e cancele na Conty |
+| `mission.rejected` | A missão foi recusada de vez, pela marca ou pelo creator (`data.mission.rejected_by`) | Desative o cupom na loja e cancele na Conty |
+| `mission.expired` | O prazo terminou sem entrega | Desative o cupom, ou mantenha se a campanha permitir reconvite |
+
+O evento traz `data.mission.id`. Para achar o cupom, liste com `GET /coupons?mission_id=<id>` e cancele com `PATCH /coupons/{id}` e `{"status": "canceled"}`:
+
+```javascript
+async function cancelCouponForMission(missionId) {
+  const headers = {
+    Authorization: `Bearer ${process.env.CONTY_API_KEY}`,
+    "Content-Type": "application/json",
+  };
+  const base = "https://api.appconty.com/public/v1";
+
+  const list = await fetch(`${base}/coupons?mission_id=${missionId}&status=active`, { headers });
+  const { data } = await list.json();
+
+  for (const coupon of data) {
+    await fetch(`${base}/coupons/${coupon.id}`, {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify({ status: "canceled" }),
+    });
+  }
+}
+```
+
+Os eventos de estado saem por missão e seja quem for que causou a mudança: marca, agência, backoffice ou expiração automática. As vendas já registradas continuam no cupom cancelado.
+
+Se o cupom veio dos cupons disponíveis e o código ainda vale na sua loja, você pode desvincular com `POST /coupons/{id}/unassign` em vez de cancelar. As vendas já registradas continuam atribuídas ao creator que saiu.
+
+<Note>
+  O filtro `mission_id` acha o cupom pela missão usada na criação. Num acordo com várias plataformas, use `creator_id` e `campaign_id` do evento para achar o cupom do creator no acordo.
+</Note>
+
+### Gatilho opcional: `mission.approved`
+
+Se você prefere liberar o cupom só depois que o conteúdo estiver aprovado, crie o cupom no `mission.approved` em vez do `application.approved`. O payload traz o mesmo `data.mission.id`.
+
+## Erros comuns
+
+<AccordionGroup>
+  <Accordion title="409 coupon_exists">
+    O creator já tem um cupom ativo nessa campanha. Acontece quando o mesmo `application.approved` chega duas vezes, ou num acordo com várias plataformas. Não é falha: use o cupom existente, cujo id vem em `error.details[0].coupon_id`. Para trocar o cupom, cancele o atual com `PATCH /coupons/{id}` e `{"status": "canceled"}` e crie outro, ou vincule um dos [cupons disponíveis](#cupons-disponíveis) com `assign`, que deixa o atual disponível.
+  </Accordion>
+  <Accordion title="409 coupon_code_taken">
+    Outro cupom ativo da sua marca já usa esse código. Gere outro, por exemplo acrescentando um sufixo (`FULANA10B`), ou cancele o cupom antigo que usa o código.
+  </Accordion>
+  <Accordion title="422 mission_closed">
+    A missão está expirada ou o creator foi recusado em definitivo. Não dá para criar nem vincular cupom para ela.
+  </Accordion>
+  <Accordion title="404 not_found">
+    A missão não existe, foi excluída ou é de uma campanha de outra marca. Confira se usou `data.mission.id` (e não `data.campaign.id`) e a chave da marca certa.
+  </Accordion>
+  <Accordion title="409 coupon_assigned">
+    O cupom que você tentou vincular está vinculado a outro creator. Só cupom disponível é vinculável: escolha outro disponível (`GET /coupons?assigned=false`) ou desvincule este com `POST /coupons/{id}/unassign` antes.
+  </Accordion>
+  <Accordion title="422 coupon_campaign_mismatch">
+    A missão do `assign` é de outra campanha que não a do cupom. Vincule um cupom disponível da campanha da missão.
+  </Accordion>
+  <Accordion title="409 coupon_canceled">
+    Você tentou editar, vincular ou desvincular um cupom cancelado. Cancelamento é definitivo: crie um cupom novo. O registro de vendas continua aceito no cupom cancelado.
+  </Accordion>
+</AccordionGroup>

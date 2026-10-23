@@ -1,0 +1,82 @@
+---
+title: "Skills"
+description: "Skills prontas para agentes de IA executarem os fluxos da marca na Conty via MCP."
+icon: "book"
+keywords:
+  - skills
+  - agentes
+  - claude code
+  - cursor
+  - codex
+---
+
+Skills são instruções empacotadas que ensinam um agente de IA a executar uma **tarefa da marca** de ponta a ponta na Conty: quais tools do [MCP](/api/ia/mcp) chamar, em que ordem, com quais parâmetros e o que fazer quando a API responde erro. A unidade é o fluxo de trabalho, não a tool.
+
+Funcionam com Claude Code, Cursor, Codex, Kimi Code e mais de 70 agentes compatíveis com o formato de skills.
+
+<Note>
+  **Pré-requisito:** o agente precisa estar conectado ao [servidor MCP da Conty](/api/ia/mcp) e autenticado. As skills de escrita só funcionam se a permissão de escrita foi marcada no login.
+</Note>
+
+## Skills disponíveis
+
+| Skill | O que faz | Escopo |
+|---|---|---|
+| `criar-campanha` | Cria e publica uma campanha, do briefing à ativação: orçamento, formato, pagamento e status | escrita |
+| `triagem-candidaturas` | Lista candidatos, aprova, rejeita e cancela convites pendentes | escrita |
+| `acompanhar-missoes` | Revisa entregas: pede alteração, recusa, recupera, reconvida e revisa capa, legenda e roteiro | escrita |
+| `reengajar-creators` | Reconvida quem expirou e manda mensagem para creators parados no meio da produção | escrita |
+| `buscar-creators` | Descobre creators por nicho, plataforma, seguidores e localização, e abre o perfil com métricas | leitura |
+| `relatorio-campanha` | Consolida contagens, missões por status, candidaturas, orçamento e métricas num resumo executivo | leitura |
+| `comparar-campanhas` | Compara funil, produção, orçamento e modelo de pagamento de várias campanhas lado a lado | leitura |
+
+## Instalar
+
+O caminho recomendado é o [skills CLI](https://skills.sh), que detecta as skills do repositório e instala direto no seu agente:
+
+<CodeGroup>
+
+```bash Escolher no prompt
+npx skills add Conty-App/conty-skills
+```
+
+```bash Todas, em todos os agentes
+npx skills add Conty-App/conty-skills --all
+```
+
+```bash Uma skill num agente
+npx skills add Conty-App/conty-skills --skill criar-campanha --agent claude-code
+```
+
+```bash Global
+npx skills add Conty-App/conty-skills -g
+```
+
+</CodeGroup>
+
+Para atualizar depois:
+
+```bash
+npx skills update
+```
+
+### Instalação manual
+
+Clone o repositório e copie as pastas das skills que quiser:
+
+```bash
+git clone https://github.com/Conty-App/conty-skills.git
+```
+
+- **Claude Code**: copie `skills/<nome>` para `.claude/skills/` (projeto) ou `~/.claude/skills/` (usuário).
+- **Kimi Code**: copie para `.agents/skills/` (projeto) ou `~/.kimi-code/skills/` (usuário).
+
+## Regras que valem para todas as skills
+
+- **Leitura e escrita**: as tools de escrita só existem na sessão se a escrita foi liberada no login do MCP. Se uma tool de escrita "não existe", o motivo é quase sempre esse.
+- **Empresa alvo**: o agente opera sempre a empresa do login. A skill confirma a marca antes de qualquer escrita e não assume contexto de conversas anteriores.
+- **Erros vêm crus**: o MCP devolve o corpo de erro original. Conflito de estado (por exemplo, 409 ao pausar campanha com missões em andamento) é informação, não falha.
+
+<Card title="Conty-App/conty-skills" icon="github" href="https://github.com/Conty-App/conty-skills">
+  Código-fonte, SKILL.md de cada skill e histórico de mudanças.
+</Card>
