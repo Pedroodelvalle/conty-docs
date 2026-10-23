@@ -1,0 +1,124 @@
+---
+title: "Webhooks"
+sidebarTitle: "Visão geral"
+description: "Receba no seu servidor, em tempo real, o que acontece nas campanhas da sua marca."
+icon: "webhook"
+keywords:
+  - webhooks
+  - eventos
+  - notificações
+---
+
+Webhook é a Conty avisando o seu sistema. Em vez de consultar a API de tempos em tempos para ver se algo mudou, você cadastra uma URL e a Conty manda um `POST` para ela sempre que um evento acontece: um creator foi aprovado, aceitou a campanha, enviou o vídeo, publicou o post.
+
+## Como funciona
+
+1. Você cadastra um endpoint no painel, com a URL e os eventos que quer receber.
+2. Algo acontece numa campanha da sua marca, por exemplo um creator envia o vídeo.
+3. A Conty monta o evento, assina com o segredo do endpoint e manda um `POST` para a sua URL.
+4. O seu servidor confere a assinatura, responde `2xx` e processa o evento.
+5. Se a resposta não for `2xx`, a Conty [tenta de novo](/api/webhooks/retentativas) com espera crescente.
+
+## Cadastrar um endpoint
+
+<Steps>
+  <Step title="Abra Desenvolvedores">
+    No painel, vá em **Menu → Desenvolvedores → Webhooks**. É preciso ter a permissão **Gerenciar chaves de API e webhooks**.
+  </Step>
+  <Step title="Adicione o endpoint">
+    Informe um nome, a URL HTTPS pública e os eventos. Se o seu receptor exige um cabeçalho de autenticação próprio (por exemplo `Authorization: Bearer …`), cadastre também: ele vai em toda entrega, junto com os cabeçalhos da Conty.
+  </Step>
+  <Step title="Guarde o segredo">
+    O segredo de assinatura (`whsec_…`) aparece uma vez só, ao salvar. Ele serve para [verificar a assinatura](/api/webhooks/assinatura). Se perder, gere um novo em **Girar segredo**.
+  </Step>
+  <Step title="Mande um teste">
+    Clique em **Enviar teste** e confira se chegou um evento `webhook.test` no seu servidor.
+  </Step>
+</Steps>
+
+Cada marca pode ter até 5 endpoints. Um endpoint pode ser pausado sem ser apagado: pausado, ele não recebe nada.
+
+## A requisição
+
+Toda entrega é um `POST` com corpo JSON e estes cabeçalhos:
+
+| Cabeçalho | O que é |
+|---|---|
+| `Content-Type` | `application/json` |
+| `User-Agent` | `Conty-Webhooks/1.0` |
+| `X-Conty-Event` | Tipo do evento, por exemplo `mission.video_submitted` |
+| `X-Conty-Event-Id` | Id do evento. É o mesmo em toda tentativa: use para [não processar duas vezes](/api/webhooks/retentativas) |
+| `X-Conty-Delivery` | Id desta entrega para este endpoint |
+| `X-Conty-Signature` | Assinatura no formato `t=<unix>,v1=<hex>`. Veja [Verificação e segurança](/api/webhooks/assinatura) |
+
+O corpo tem sempre o mesmo envelope:
+
+```json
+{
+  "id": "0b9e8f7a-6d5c-4b3a-9f8e-7d6c5b4a3f2e",
+  "type": "mission.video_submitted",
+  "created_at": "2026-10-21T14:30:05.123Z",
+  "tenant": "conty",
+  "summary": "BeConfident: Fulana Souza enviou o vídeo da campanha \"Outubro\" para aprovação.",
+  "data": {
+    "brand": { "id": "…", "name": "BeConfident" },
+    "campaign": { "id": "…", "name": "Outubro", "url": "https://…" },
+    "creator": { "id": "…", "name": "Fulana Souza", "handle": "@fulana" },
+    "mission": { "id": "…", "status": "em_analise", "platform": "instagram" }
+  }
+}
+```
+
+<ResponseField name="id" type="string" required>
+  Id do evento, igual ao cabeçalho `X-Conty-Event-Id`.
+</ResponseField>
+
+<ResponseField name="type" type="string" required>
+  Tipo do evento. Veja o [catálogo de eventos](#eventos).
+</ResponseField>
+
+<ResponseField name="created_at" type="string" required>
+  Hora do fato, ISO 8601 em UTC.
+</ResponseField>
+
+<ResponseField name="tenant" type="string" required>
+  Identificador do ambiente Conty que enviou o evento.
+</ResponseField>
+
+<ResponseField name="summary" type="string" required>
+  Frase pronta em português, com a marca, o creator, a ação e a campanha. Boa para repassar num canal do Slack ou num CRM sem montar texto.
+</ResponseField>
+
+<ResponseField name="data" type="object" required>
+  O contexto do evento: `brand`, `campaign`, `creator`, `mission` e, conforme o tipo, `submission` ou `post`.
+</ResponseField>
+
+O payload nunca traz e-mail, telefone, documento, endereço, valor do cachê nem o conteúdo enviado (texto do roteiro, legenda ou arquivo de mídia).
+
+## Eventos
+
+| Evento | Quando sai | Página |
+|---|---|---|
+| `application.created` | O creator se candidatou à campanha ou ao acordo | [Candidaturas](/api/webhooks/eventos/candidaturas) |
+| `application.approved` | A marca aprovou a candidatura do creator na campanha | [Candidaturas](/api/webhooks/eventos/candidaturas) |
+| `application.rejected` | A marca ou a agência recusou a candidatura | [Candidaturas](/api/webhooks/eventos/candidaturas) |
+| `mission.accepted` | O creator aceitou o convite ou começou a missão | [Missões](/api/webhooks/eventos/missoes) |
+| `mission.script_submitted` | O roteiro entrou na aprovação, inclusive o reenvio | [Missões](/api/webhooks/eventos/missoes) |
+| `mission.cover_submitted` | A capa foi enviada depois do vídeo | [Missões](/api/webhooks/eventos/missoes) |
+| `mission.caption_submitted` | A legenda foi enviada depois do vídeo | [Missões](/api/webhooks/eventos/missoes) |
+| `mission.video_submitted` | O vídeo (ou a entrega em outro formato) foi enviado ou reenviado | [Missões](/api/webhooks/eventos/missoes) |
+| `mission.post_link_added` | O link do post foi confirmado na missão | [Missões](/api/webhooks/eventos/missoes) |
+| `mission.changes_requested` | A marca ou a agência pediu para refazer parte do conteúdo | [Missões](/api/webhooks/eventos/missoes) |
+| `mission.approved` | A entrega foi aprovada e a missão está concluída | [Missões](/api/webhooks/eventos/missoes) |
+| `mission.rejected` | A missão foi recusada de vez, pela marca ou pelo creator | [Missões](/api/webhooks/eventos/missoes) |
+| `mission.expired` | A missão expirou | [Missões](/api/webhooks/eventos/missoes) |
+| `mission.canceled` | A marca tirou o creator da campanha e a missão foi excluída | [Missões](/api/webhooks/eventos/missoes) |
+| `webhook.test` | Você clicou em **Enviar teste** no painel | [Teste](/api/webhooks/eventos/teste) |
+
+## Boas práticas
+
+- **Verifique a assinatura** de todo evento antes de confiar nele.
+- **Responda `2xx` rápido**, em menos de 10 segundos, e processe depois numa fila.
+- **Seja idempotente**: o mesmo evento pode chegar mais de uma vez. Guarde o `X-Conty-Event-Id`.
+- **Não dependa da ordem**: eventos podem chegar fora de ordem. Use `created_at` para ordenar.
+- **Use HTTPS** e não responda com redirect: a Conty não segue redirect, e um `3xx` conta como falha.

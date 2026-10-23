@@ -1,0 +1,136 @@
+---
+title: "Servidor MCP"
+description: "Conecte o servidor MCP remoto da Conty ao seu cliente de IA: endereço, autenticação OAuth, tools e limites."
+icon: "plug"
+keywords:
+  - mcp
+  - model context protocol
+  - claude
+  - chatgpt
+  - cursor
+  - codex
+---
+
+A Conty publica um servidor MCP (Model Context Protocol) remoto. Qualquer cliente compatível com MCP remoto por HTTP passa a enxergar as tools da Conty e opera a conta da marca em nome da pessoa logada.
+
+<Card title="Guia para marcas" icon="book-open" href="/marcas/mcp">
+  Versão sem termos técnicos, para quem opera campanhas.
+</Card>
+
+## Servidor
+
+| | |
+|---|---|
+| Endereço | `https://mcp.appconty.com/mcp` |
+| Transporte | Streamable HTTP |
+| Autenticação | OAuth, com o login da Conty |
+| Quem conecta | Contas de marca com assinatura ativa. Contas de creator não conectam |
+
+<Warning>
+  **É preciso ter uma assinatura ativa da Conty.** Sem ela, o login não libera o acesso. Fale com o [time da Conty](/help-center/contact) para contratar.
+</Warning>
+
+## Conectar o cliente
+
+<Tabs>
+  <Tab title="Claude">
+    Em **Configurações → Conectores**, adicione um conector personalizado com o nome `Conty` e o endereço `https://mcp.appconty.com/mcp`. Ou instale com um clique:
+
+    <a className="conty-install-button" href="https://claude.ai/customize/connectors?modal=add-custom-connector&connectorName=Conty&connectorUrl=https%3A%2F%2Fmcp.appconty.com%2Fmcp" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+        <path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6 5.6 18.4" />
+      </svg>
+      Adicionar ao Claude
+    </a>
+  </Tab>
+  <Tab title="Claude Code">
+    ```bash
+    claude mcp add --transport http conty https://mcp.appconty.com/mcp
+    ```
+
+    Depois, rode `/mcp`, selecione **conty** e faça o login.
+  </Tab>
+  <Tab title="Codex">
+    ```bash
+    codex mcp add conty --url https://mcp.appconty.com/mcp
+    codex mcp login conty
+    ```
+
+    No app ou na extensão da IDE: **MCP servers → Add server**, tipo **Streamable HTTP**, endereço `https://mcp.appconty.com/mcp`.
+  </Tab>
+  <Tab title="Cursor">
+    Em `~/.cursor/mcp.json` (global) ou `.cursor/mcp.json` (projeto):
+
+    ```json
+    {
+      "mcpServers": {
+        "conty": { "url": "https://mcp.appconty.com/mcp" }
+      }
+    }
+    ```
+
+    Ou instale com um clique:
+
+    <a className="conty-install-button" href="https://cursor.com/install-mcp?name=Conty&config=eyJ1cmwiOiJodHRwczovL21jcC5hcHBjb250eS5jb20vbWNwIn0%3D" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" aria-hidden="true">
+        <path d="M12 2 3 7v10l9 5 9-5V7l-9-5Z" />
+        <path d="M3 7l9 5 9-5M12 12v10" />
+      </svg>
+      Adicionar ao Cursor
+    </a>
+  </Tab>
+  <Tab title="ChatGPT">
+    Nos planos pagos, na versão web:
+
+    1. Em **Configurações**, ative o **Modo desenvolvedor**.
+    2. Crie um app MCP com o nome `Conty`, o endereço `https://mcp.appconty.com/mcp` e autenticação **OAuth**.
+    3. Autorize com a conta da Conty e ative a Conty na conversa pelo menu de ferramentas.
+  </Tab>
+  <Tab title="Outros clientes">
+    Adicione um servidor MCP remoto (HTTP) com o endereço `https://mcp.appconty.com/mcp`. O cliente precisa suportar OAuth para MCP remoto: não existe chave de API para o MCP.
+  </Tab>
+</Tabs>
+
+## Autenticação
+
+A autenticação é OAuth, feita pelo próprio cliente na primeira conexão:
+
+<Steps>
+  <Step title="O cliente abre o login da Conty">
+    A pessoa entra com e-mail e senha e confirma o código enviado por e-mail.
+  </Step>
+  <Step title="A pessoa escolhe as permissões">
+    **Leitura** (`campaigns:read`) vem sempre. **Escrita** (`campaigns:write`) é opcional: só com ela o agente cria campanhas, envia convites, decide candidaturas e revisa entregas.
+  </Step>
+  <Step title="O cliente guarda o token">
+    O cliente renova o acesso sozinho. Para mudar as permissões, desconecte e conecte de novo.
+  </Step>
+</Steps>
+
+O agente opera sempre a empresa do login. Não há "empresa atual" guardada na sessão nem troca de empresa pela conversa.
+
+## Tools
+
+O catálogo de tools vem da Conty no momento da conexão, então tools novas aparecem sem reinstalar. Elas se dividem assim:
+
+| Área | Exemplos de tools | Escopo |
+|---|---|---|
+| Campanhas | `listar_campanhas`, `detalhar_campanha`, `contagens_campanha`, `criar_campanha`, `editar_campanha`, `mudar_status_campanha` | leitura e escrita |
+| Creators | `buscar_creators`, `ver_perfil_creator`, `convidar_creators_campanha`, `remover_creator_campanha` | leitura e escrita |
+| Candidaturas | `decidir_candidatura`, `cancelar_convite` | escrita |
+| Missões e entregas | `listar_missoes`, `aprovar_video`, `pedir_alteracao_video`, `recusar_video`, `recuperar_video`, `revisar_asset_missao`, `reconvidar_creator` | leitura e escrita |
+| Conversas | `abrir_conversa`, `enviar_mensagem` | escrita |
+| Comunidades | `detalhar_comunidade`, `analytics_comunidade`, `compartilhar_campanha_comunidade` | leitura e escrita |
+
+Sessão sem a permissão de escrita só recebe as tools de leitura: se uma tool de escrita "não existe" no cliente, quase sempre é isso.
+
+## Limites e comportamento
+
+- **Confirmação**: o agente pede confirmação antes de ações de escrita.
+- **Erros crus**: a tool devolve o corpo de erro original da Conty. Um conflito de estado (por exemplo, pausar campanha com missões em andamento) é informação para o agente corrigir a chamada, não falha da tool.
+- **Escopo da marca**: tudo o que o agente vê e faz está limitado à empresa do login e ao que o cargo da pessoa permite na Conty.
+- **Dados sensíveis**: o MCP segue as mesmas regras de visibilidade do painel; o que a pessoa não vê no painel, o agente também não vê.
+
+## Próximo passo
+
+Com o MCP conectado, instale as [skills](/api/ia/skills) para o agente executar os fluxos completos com menos instrução.

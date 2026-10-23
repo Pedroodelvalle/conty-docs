@@ -1,0 +1,1677 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "API Conty",
+    "version": "0.1.0-beta",
+    "description": "API pública da Conty, em beta. Autentique com a chave de API da marca no cabeçalho Authorization: Bearer."
+  },
+  "servers": [
+    {
+      "url": "https://api.appconty.com/public/v1"
+    }
+  ],
+  "security": [
+    {
+      "apiKey": []
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "apiKey": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Chave de API da marca, no formato ck_live_<token>."
+      }
+    },
+    "schemas": {
+      "Me": {
+        "type": "object",
+        "properties": {
+          "enterprise": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Id da marca.",
+                "example": "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d"
+              },
+              "name": {
+                "type": "string",
+                "description": "Nome da marca.",
+                "example": "Marca Exemplo"
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "description": "Marca dona da chave."
+          },
+          "api_key": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Id da chave.",
+                "example": "7e6d5c4b-3a2f-4e1d-9c0b-8a7f6e5d4c3b"
+              },
+              "name": {
+                "type": "string",
+                "description": "Nome dado à chave.",
+                "example": "ERP"
+              },
+              "hint": {
+                "type": "string",
+                "description": "Últimos 4 caracteres da chave.",
+                "example": "a9Xk"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "hint"
+            ],
+            "description": "Chave usada nesta requisição."
+          }
+        },
+        "required": [
+          "enterprise",
+          "api_key"
+        ]
+      },
+      "ErrorEnvelope": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "invalid_api_key",
+                  "open_api_disabled",
+                  "plan_required",
+                  "not_found",
+                  "coupon_exists",
+                  "coupon_code_taken",
+                  "coupon_canceled",
+                  "coupon_assigned",
+                  "coupon_campaign_mismatch",
+                  "validation_failed",
+                  "mission_closed",
+                  "rate_limited",
+                  "internal_error"
+                ],
+                "description": "Código estável do erro, para tratar no seu código."
+              },
+              "message": {
+                "type": "string",
+                "description": "Mensagem em português, para pessoas."
+              },
+              "details": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "description": "Campo que causou o erro, quando houver."
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "O que está errado no campo."
+                    },
+                    "coupon_id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "Cupom ativo que já existe, no erro coupon_exists."
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ]
+                },
+                "description": "Detalhes por campo ou por recurso."
+              },
+              "request_id": {
+                "type": "string",
+                "description": "Id da requisição, para falar com o suporte."
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "request_id"
+            ]
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "example": {
+          "error": {
+            "code": "validation_failed",
+            "message": "Os dados enviados são inválidos.",
+            "details": [
+              {
+                "path": "amount_cents",
+                "message": "Deve ser um inteiro positivo."
+              }
+            ],
+            "request_id": "req_01JABCDEF"
+          }
+        }
+      },
+      "Coupon": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Id do cupom.",
+            "example": "4f2c7a1e-9b3d-4c8a-a1f0-6d2e8b7c5a10"
+          },
+          "code": {
+            "type": "string",
+            "description": "Código do cupom.",
+            "example": "FULANA10"
+          },
+          "discount_description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Texto do desconto, quando informado.",
+            "example": "10% off na primeira compra"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CouponStatus"
+          },
+          "campaign": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Id da campanha avulsa ou do acordo.",
+                "example": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f"
+              },
+              "name": {
+                "type": "string",
+                "description": "Nome da campanha.",
+                "example": "Lançamento de verão"
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "description": "Campanha do cupom. No acordo, é o acordo inteiro."
+          },
+          "creator": {
+            "$ref": "#/components/schemas/CouponCreator"
+          },
+          "mission_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Missão do creator dono do cupom. Nula quando o cupom está disponível.",
+            "example": "2b9e4d7a-1c3f-4e5a-8b6d-9f0a1c2e3d4b"
+          },
+          "commission_rate_bps": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Taxa de comissão atual da campanha, em pontos-base (2500 = 25%). Nula quando a campanha não tem taxa. Zero é cupom só para rastreio, sem comissão.",
+            "example": 2500
+          },
+          "totals": {
+            "$ref": "#/components/schemas/CouponTotals"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data e hora em ISO 8601.",
+            "example": "2026-10-21T14:30:00.000Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data e hora em ISO 8601.",
+            "example": "2026-10-21T14:30:00.000Z"
+          },
+          "canceled_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Quando o cupom foi cancelado.",
+            "example": null
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "discount_description",
+          "status",
+          "campaign",
+          "creator",
+          "mission_id",
+          "commission_rate_bps",
+          "totals",
+          "created_at",
+          "updated_at",
+          "canceled_at"
+        ]
+      },
+      "CouponStatus": {
+        "type": "string",
+        "enum": [
+          "active",
+          "canceled"
+        ],
+        "description": "Situação do cupom. Cancelado é definitivo.",
+        "example": "active"
+      },
+      "CouponCreator": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Id do creator.",
+            "example": "9d3f1b7c-5e2a-4c8d-a6b1-2f3e4d5c6b7a"
+          },
+          "name": {
+            "type": "string",
+            "description": "Nome do creator.",
+            "example": "Fulana Souza"
+          },
+          "handle": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "@ do creator, quando houver.",
+            "example": "@fulana"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "handle"
+        ],
+        "description": "Creator dono do cupom. Nulo quando o cupom está disponível na campanha."
+      },
+      "CouponTotals": {
+        "type": "object",
+        "properties": {
+          "sales_count": {
+            "type": "integer",
+            "description": "Quantidade de vendas confirmadas.",
+            "example": 3
+          },
+          "revenue_cents": {
+            "type": "integer",
+            "description": "Soma das vendas confirmadas, em centavos.",
+            "example": 45000
+          },
+          "commission_cents": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Soma da comissão das vendas confirmadas, em centavos. Nulo quando nenhuma venda tem taxa.",
+            "example": 11250
+          },
+          "commission_reserved_cents": {
+            "type": "integer",
+            "description": "Comissão das vendas reservada na verba e ainda não paga, em centavos.",
+            "example": 4000
+          },
+          "commission_paid_cents": {
+            "type": "integer",
+            "description": "Comissão já paga ao creator, em centavos.",
+            "example": 6000
+          },
+          "commission_awaiting_cents": {
+            "type": "integer",
+            "description": "Comissão das vendas que aguardam verba da marca, em centavos.",
+            "example": 1250
+          }
+        },
+        "required": [
+          "sales_count",
+          "revenue_cents",
+          "commission_cents",
+          "commission_reserved_cents",
+          "commission_paid_cents",
+          "commission_awaiting_cents"
+        ]
+      },
+      "CreateCouponBody": {
+        "type": "object",
+        "properties": {
+          "mission_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Missão do creator na campanha, a mesma que chegou no webhook application.approved. Cria o cupom já com o creator. Informe este ou campaign_id.",
+            "example": "2b9e4d7a-1c3f-4e5a-8b6d-9f0a1c2e3d4b"
+          },
+          "campaign_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Campanha avulsa ou acordo. Cria o cupom disponível na campanha, para vincular a um creator depois. Informe este ou mission_id.",
+            "example": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f"
+          },
+          "code": {
+            "type": "string",
+            "pattern": "^[A-Z0-9_-]{3,40}$",
+            "description": "Código do cupom. Espaços nas pontas saem e as letras viram maiúsculas.",
+            "example": "FULANA10"
+          },
+          "discount_description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Texto livre do desconto que o cupom dá ao cliente final.",
+            "example": "10% off na primeira compra"
+          }
+        },
+        "required": [
+          "code"
+        ]
+      },
+      "CouponList": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Coupon"
+            },
+            "description": "Itens da página."
+          },
+          "has_more": {
+            "type": "boolean",
+            "description": "Se existe uma próxima página.",
+            "example": false
+          },
+          "next_cursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Cursor da próxima página, ou nulo na última.",
+            "example": null
+          }
+        },
+        "required": [
+          "data",
+          "has_more",
+          "next_cursor"
+        ]
+      },
+      "UpdateCouponBody": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^[A-Z0-9_-]{3,40}$",
+            "description": "Código do cupom. Espaços nas pontas saem e as letras viram maiúsculas.",
+            "example": "FULANA10"
+          },
+          "discount_description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Texto livre do desconto que o cupom dá ao cliente final.",
+            "example": "10% off na primeira compra"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "canceled"
+            ],
+            "description": "Envie canceled para desativar o cupom. Não tem volta."
+          }
+        },
+        "example": {
+          "status": "canceled"
+        }
+      },
+      "AssignCouponBody": {
+        "type": "object",
+        "properties": {
+          "mission_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Missão do creator que recebe o cupom, na mesma campanha do cupom.",
+            "example": "2b9e4d7a-1c3f-4e5a-8b6d-9f0a1c2e3d4b"
+          }
+        },
+        "required": [
+          "mission_id"
+        ]
+      },
+      "CouponSale": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Id da venda na Conty.",
+            "example": "8a1d3c5e-7f20-4b6a-9c8d-1e2f3a4b5c6d"
+          },
+          "external_id": {
+            "type": "string",
+            "description": "Id da venda no seu sistema.",
+            "example": "pedido-10293"
+          },
+          "amount_cents": {
+            "type": "integer",
+            "description": "Valor da venda, em centavos.",
+            "example": 15000
+          },
+          "status": {
+            "$ref": "#/components/schemas/CouponSaleStatus"
+          },
+          "creator": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CouponCreator"
+              },
+              {
+                "description": "Creator a quem a venda é atribuída: o dono do cupom no momento em que a venda foi criada. Não muda se o cupom trocar de dono. Nulo quando o cupom estava livre."
+              }
+            ]
+          },
+          "mission_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Missão do creator atribuído, no momento da venda.",
+            "example": "2b9e4d7a-1c3f-4e5a-8b6d-9f0a1c2e3d4b"
+          },
+          "commission_rate_bps": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Taxa da campanha no momento em que a venda foi criada, em pontos-base. Não muda depois. Zero é venda de cupom só para rastreio.",
+            "example": 2500
+          },
+          "commission_cents": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Comissão da venda, em centavos. Nula quando não há taxa.",
+            "example": 3750
+          },
+          "commission_status": {
+            "$ref": "#/components/schemas/CouponCommissionStatus"
+          },
+          "commission_due_on": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "Prazo da comissão: dia do pagamento quando reservada, ou o último dia para a marca adicionar verba quando aguarda verba. Nulo nos demais estados.",
+            "example": "2026-11-17"
+          },
+          "commission_paid_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Quando a comissão foi paga ao creator.",
+            "example": null
+          },
+          "commission_reversed_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Quando a comissão paga foi estornada pelo cancelamento da venda.",
+            "example": null
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Quando a venda aconteceu.",
+            "example": "2026-10-21T14:30:00.000Z"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data e hora em ISO 8601.",
+            "example": "2026-10-21T14:30:00.000Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data e hora em ISO 8601.",
+            "example": "2026-10-21T14:30:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "external_id",
+          "amount_cents",
+          "status",
+          "creator",
+          "mission_id",
+          "commission_rate_bps",
+          "commission_cents",
+          "commission_status",
+          "commission_due_on",
+          "commission_paid_at",
+          "commission_reversed_at",
+          "occurred_at",
+          "created_at",
+          "updated_at"
+        ]
+      },
+      "CouponSaleStatus": {
+        "type": "string",
+        "enum": [
+          "confirmed",
+          "canceled"
+        ],
+        "description": "Situação da venda. Só venda confirmada entra nos totais.",
+        "example": "confirmed"
+      },
+      "CouponCommissionStatus": {
+        "type": "string",
+        "enum": [
+          "none",
+          "reserved",
+          "awaiting_budget",
+          "no_commission",
+          "after_campaign_end",
+          "released",
+          "paid",
+          "reversed"
+        ],
+        "description": "Pagamento da comissão da venda. none: sem lançamento (cupom sem comissão paga ou venda cancelada antes). reserved: comissão reservada na verba, paga no prazo. awaiting_budget: a verba acabou e a comissão só entra se a marca adicionar verba até o prazo. no_commission: o prazo passou sem verba. after_campaign_end: venda depois do fim da campanha, sem comissão. released: reservada e devolvida à verba (venda cancelada antes do pagamento). paid: paga ao creator. reversed: paga e estornada pelo cancelamento da venda.",
+        "example": "reserved"
+      },
+      "UpsertSaleBody": {
+        "type": "object",
+        "properties": {
+          "amount_cents": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 2147483647,
+            "description": "Valor da venda, em centavos.",
+            "example": 15000
+          },
+          "status": {
+            "$ref": "#/components/schemas/CouponSaleStatus"
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Quando a venda aconteceu.",
+            "example": "2026-10-21T14:30:00.000Z"
+          }
+        },
+        "required": [
+          "amount_cents",
+          "status",
+          "occurred_at"
+        ]
+      },
+      "CouponSaleList": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CouponSale"
+            },
+            "description": "Itens da página."
+          },
+          "has_more": {
+            "type": "boolean",
+            "description": "Se existe uma próxima página.",
+            "example": false
+          },
+          "next_cursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Cursor da próxima página, ou nulo na última.",
+            "example": null
+          }
+        },
+        "required": [
+          "data",
+          "has_more",
+          "next_cursor"
+        ]
+      }
+    },
+    "parameters": {}
+  },
+  "paths": {
+    "/me": {
+      "get": {
+        "tags": [
+          "Conta"
+        ],
+        "summary": "Identificar a chave",
+        "description": "Devolve a marca dona da chave e a chave usada na requisição. Serve para testar a integração antes de qualquer outra chamada.",
+        "responses": {
+          "200": {
+            "description": "Marca e chave da requisição.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Me"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "invalid_api_key: Chave de API ausente, inválida ou revogada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "open_api_disabled: A API pública não está liberada para esta conta.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate_limited: Limite de requisições atingido. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal_error: Erro interno. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/coupons": {
+      "post": {
+        "tags": [
+          "Cupons"
+        ],
+        "summary": "Criar cupom",
+        "description": "Com mission_id, cria o cupom ativo do creator na campanha da missão, e o creator é avisado no app. Com campaign_id, cria o cupom disponível na campanha, para vincular a um creator depois. No acordo, o cupom vale para o acordo inteiro. O código é normalizado (sem espaços nas pontas, em maiúsculas).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCouponBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Cupom criado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Coupon"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "invalid_api_key: Chave de API ausente, inválida ou revogada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "open_api_disabled: A API pública não está liberada para esta conta.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not_found: Recurso não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "coupon_exists: Este creator já tem um cupom ativo nesta campanha. coupon_code_taken: Este código já está em uso por outro cupom ativo da marca.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation_failed: Os dados enviados são inválidos. mission_closed: A missão deste creator já foi encerrada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate_limited: Limite de requisições atingido. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal_error: Erro interno. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Cupons"
+        ],
+        "summary": "Listar cupons",
+        "description": "Lista os cupons da marca, do mais novo para o mais antigo, com os totais das vendas confirmadas do cupom. Filtros e paginação por cursor; assigned=false lista os cupons disponíveis.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "description": "Quantos itens por página, de 1 a 100. Padrão 20.",
+              "example": 20
+            },
+            "required": false,
+            "description": "Quantos itens por página, de 1 a 100. Padrão 20.",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Cursor opaco devolvido em next_cursor pela página anterior."
+            },
+            "required": false,
+            "description": "Cursor opaco devolvido em next_cursor pela página anterior.",
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Filtra pela campanha ou pelo acordo do cupom."
+            },
+            "required": false,
+            "description": "Filtra pela campanha ou pelo acordo do cupom.",
+            "name": "campaign_id",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Filtra pela missão de origem."
+            },
+            "required": false,
+            "description": "Filtra pela missão de origem.",
+            "name": "mission_id",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Filtra pelo creator dono atual do cupom."
+            },
+            "required": false,
+            "description": "Filtra pelo creator dono atual do cupom.",
+            "name": "creator_id",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "true lista só cupons com creator; false, só os disponíveis da campanha."
+            },
+            "required": false,
+            "description": "true lista só cupons com creator; false, só os disponíveis da campanha.",
+            "name": "assigned",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "$ref": "#/components/schemas/CouponStatus"
+            },
+            "required": false,
+            "description": "Situação do cupom. Cancelado é definitivo.",
+            "name": "status",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Z0-9_-]{3,40}$",
+              "description": "Código do cupom. Espaços nas pontas saem e as letras viram maiúsculas.",
+              "example": "FULANA10"
+            },
+            "required": false,
+            "description": "Código do cupom. Espaços nas pontas saem e as letras viram maiúsculas.",
+            "name": "code",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Página de cupons.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CouponList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "invalid_api_key: Chave de API ausente, inválida ou revogada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "open_api_disabled: A API pública não está liberada para esta conta.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation_failed: Os dados enviados são inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate_limited: Limite de requisições atingido. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal_error: Erro interno. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/coupons/{id}": {
+      "get": {
+        "tags": [
+          "Cupons"
+        ],
+        "summary": "Ver cupom",
+        "description": "Devolve o cupom com a taxa de comissão atual e os totais das vendas confirmadas. Taxa 0 é cupom só para rastreio.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Id do cupom.",
+              "example": "4f2c7a1e-9b3d-4c8a-a1f0-6d2e8b7c5a10"
+            },
+            "required": true,
+            "description": "Id do cupom.",
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cupom.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Coupon"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "invalid_api_key: Chave de API ausente, inválida ou revogada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "open_api_disabled: A API pública não está liberada para esta conta.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not_found: Recurso não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation_failed: Os dados enviados são inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate_limited: Limite de requisições atingido. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal_error: Erro interno. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Cupons"
+        ],
+        "summary": "Editar ou desativar cupom",
+        "description": "Troca o código ou o texto do desconto, ou cancela o cupom com status canceled. Cancelar é definitivo e não apaga as vendas. Trocar o código não avisa o creator de novo.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Id do cupom.",
+              "example": "4f2c7a1e-9b3d-4c8a-a1f0-6d2e8b7c5a10"
+            },
+            "required": true,
+            "description": "Id do cupom.",
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCouponBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cupom atualizado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Coupon"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "invalid_api_key: Chave de API ausente, inválida ou revogada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "open_api_disabled: A API pública não está liberada para esta conta.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not_found: Recurso não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "coupon_canceled: Cupom cancelado não pode ser alterado. coupon_code_taken: Este código já está em uso por outro cupom ativo da marca.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation_failed: Os dados enviados são inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate_limited: Limite de requisições atingido. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal_error: Erro interno. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/coupons/{id}/assign": {
+      "post": {
+        "tags": [
+          "Cupons"
+        ],
+        "summary": "Vincular cupom ao creator",
+        "description": "Vincula um cupom livre ao creator da missão, na mesma campanha do cupom. Se o creator já tinha cupom ativo nessa campanha, o antigo fica disponível (continua ativo, sem creator). Só cupom disponível é vinculável. Repetir com o mesmo creator não muda nada. O creator é avisado no app.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Id do cupom.",
+              "example": "4f2c7a1e-9b3d-4c8a-a1f0-6d2e8b7c5a10"
+            },
+            "required": true,
+            "description": "Id do cupom.",
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignCouponBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cupom vinculado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Coupon"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "invalid_api_key: Chave de API ausente, inválida ou revogada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "open_api_disabled: A API pública não está liberada para esta conta.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not_found: Recurso não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "coupon_canceled: Cupom cancelado não pode ser alterado. coupon_assigned: Este cupom está vinculado a outro creator. Desvincule-o antes de vincular a outro.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation_failed: Os dados enviados são inválidos. mission_closed: A missão deste creator já foi encerrada. coupon_campaign_mismatch: A missão não é da campanha deste cupom.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate_limited: Limite de requisições atingido. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal_error: Erro interno. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/coupons/{id}/unassign": {
+      "post": {
+        "tags": [
+          "Cupons"
+        ],
+        "summary": "Desvincular cupom do creator",
+        "description": "Tira o creator do cupom, que continua ativo e fica disponível na campanha. As vendas já registradas continuam atribuídas a quem era o dono na hora da venda. Ninguém é avisado.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Id do cupom.",
+              "example": "4f2c7a1e-9b3d-4c8a-a1f0-6d2e8b7c5a10"
+            },
+            "required": true,
+            "description": "Id do cupom.",
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cupom disponível.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Coupon"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "invalid_api_key: Chave de API ausente, inválida ou revogada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "open_api_disabled: A API pública não está liberada para esta conta.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not_found: Recurso não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "coupon_canceled: Cupom cancelado não pode ser alterado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation_failed: Os dados enviados são inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate_limited: Limite de requisições atingido. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal_error: Erro interno. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/coupons/{id}/sales/{external_id}": {
+      "put": {
+        "tags": [
+          "Vendas"
+        ],
+        "summary": "Registrar venda",
+        "description": "Cria ou atualiza a venda pelo id do seu sistema. Repetir a chamada não duplica a venda. A taxa de comissão da campanha e o creator dono do cupom ficam gravados na criação e não mudam depois, nem se o cupom trocar de dono. Com taxa 0 a venda é só rastreio e a comissão é 0. Venda em cupom cancelado ou livre é aceita; no cupom livre, a venda fica sem creator.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Id do cupom.",
+              "example": "4f2c7a1e-9b3d-4c8a-a1f0-6d2e8b7c5a10"
+            },
+            "required": true,
+            "description": "Id do cupom.",
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200,
+              "description": "Id da venda no seu sistema. Repetir o mesmo id atualiza a venda em vez de criar outra.",
+              "example": "pedido-10293"
+            },
+            "required": true,
+            "description": "Id da venda no seu sistema. Repetir o mesmo id atualiza a venda em vez de criar outra.",
+            "name": "external_id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertSaleBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Venda atualizada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CouponSale"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Venda criada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CouponSale"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "invalid_api_key: Chave de API ausente, inválida ou revogada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "open_api_disabled: A API pública não está liberada para esta conta.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not_found: Recurso não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation_failed: Os dados enviados são inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate_limited: Limite de requisições atingido. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal_error: Erro interno. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/coupons/{id}/sales": {
+      "get": {
+        "tags": [
+          "Vendas"
+        ],
+        "summary": "Listar vendas do cupom",
+        "description": "Lista as vendas do cupom, da mais nova para a mais antiga, com paginação por cursor.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Id do cupom.",
+              "example": "4f2c7a1e-9b3d-4c8a-a1f0-6d2e8b7c5a10"
+            },
+            "required": true,
+            "description": "Id do cupom.",
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "description": "Quantos itens por página, de 1 a 100. Padrão 20.",
+              "example": 20
+            },
+            "required": false,
+            "description": "Quantos itens por página, de 1 a 100. Padrão 20.",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Cursor opaco devolvido em next_cursor pela página anterior."
+            },
+            "required": false,
+            "description": "Cursor opaco devolvido em next_cursor pela página anterior.",
+            "name": "cursor",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Página de vendas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CouponSaleList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "invalid_api_key: Chave de API ausente, inválida ou revogada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "open_api_disabled: A API pública não está liberada para esta conta.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not_found: Recurso não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation_failed: Os dados enviados são inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate_limited: Limite de requisições atingido. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal_error: Erro interno. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "webhooks": {}
+}

@@ -1,0 +1,91 @@
+---
+title: "Quickstart"
+description: "Da chave de API ao primeiro webhook recebido, em quatro passos."
+icon: "rocket"
+keywords:
+  - api
+  - quickstart
+  - primeiros passos
+---
+
+Ao fim desta página você terá uma chave de API funcionando, uma chamada autenticada feita e um webhook de teste recebido no seu servidor.
+
+<Steps>
+  <Step title="Crie a chave de API">
+    No painel da Conty, abra **Menu → Desenvolvedores** e clique em **Criar chave**. Dê um nome que diga onde ela vai ser usada, por exemplo `Integração loja`.
+
+    A chave aparece **uma vez só**, no formato `ck_live_…`. Copie e guarde no gerenciador de segredos do seu servidor.
+
+    <Note>
+      Para ver a página Desenvolvedores, o seu cargo precisa da permissão **Gerenciar chaves de API e webhooks**. Se ela não aparece, peça ao dono da conta.
+    </Note>
+  </Step>
+
+  <Step title="Faça a primeira chamada">
+    Chame `GET /me` com a chave no cabeçalho `Authorization`:
+
+    ```bash
+    curl https://api.appconty.com/public/v1/me \
+      -H "Authorization: Bearer $CONTY_API_KEY"
+    ```
+
+    A resposta traz a marca dona da chave:
+
+    ```json
+    {
+      "enterprise": { "id": "5e4d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c1b", "name": "BeConfident" },
+      "api_key": { "id": "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d", "name": "Integração loja", "hint": "0MmY" }
+    }
+    ```
+
+    Recebeu `401 invalid_api_key`? Confira se a chave foi copiada inteira e se ela não foi revogada.
+  </Step>
+
+  <Step title="Cadastre um webhook">
+    Ainda em **Desenvolvedores**, abra **Webhooks** e clique em **Adicionar endpoint**:
+
+    - **URL**: o endereço HTTPS público que vai receber os eventos;
+    - **Eventos**: marque os que interessam, por exemplo `application.approved`.
+
+    Ao salvar, o painel mostra o **segredo de assinatura** (`whsec_…`) uma vez só. Guarde junto da chave: ele serve para [verificar a assinatura](/api/webhooks/assinatura).
+
+    Um receptor mínimo em Node, para testar:
+
+    ```javascript server.js
+    import express from "express";
+
+    const app = express();
+
+    app.post("/webhooks/conty", express.raw({ type: "application/json" }), (req, res) => {
+      const event = JSON.parse(req.body.toString("utf8"));
+      console.log(event.type, event.summary);
+      res.sendStatus(200);
+    });
+
+    app.listen(3000, () => console.log("Ouvindo na porta 3000"));
+    ```
+  </Step>
+
+  <Step title="Receba o webhook.test">
+    No endpoint cadastrado, clique em **Enviar teste**. A Conty manda um evento `webhook.test` assinado para a sua URL, e o painel mostra o status da resposta.
+
+    No log do seu servidor deve aparecer:
+
+    ```text
+    webhook.test Teste do webhook da Conty: se esta mensagem chegou, o endpoint está configurado.
+    ```
+
+    Pronto: chave e webhook funcionando. Antes de ir para produção, [verifique a assinatura](/api/webhooks/assinatura) de cada evento.
+  </Step>
+</Steps>
+
+## Próximos passos
+
+<CardGroup cols={2}>
+  <Card title="Eventos" icon="list" href="/api/webhooks/eventos/candidaturas">
+    O que cada evento traz, com payload de exemplo.
+  </Card>
+  <Card title="Cupom por creator" icon="ticket" href="/api/guias/cupom-por-creator">
+    Crie o cupom quando o creator é aprovado e registre as vendas.
+  </Card>
+</CardGroup>

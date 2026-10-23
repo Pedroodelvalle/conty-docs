@@ -1,0 +1,98 @@
+---
+title: "Retentativas e reenvio"
+description: "O que a Conty faz quando o seu servidor não responde, e como não processar o mesmo evento duas vezes."
+icon: "arrows-rotate"
+keywords:
+  - webhooks
+  - retentativas
+  - idempotência
+  - reenvio
+---
+
+A Conty considera entregue o evento que recebe resposta `2xx`. Qualquer outra coisa conta como falha e gera nova tentativa.
+
+## O que conta como falha
+
+| Situação | Resultado |
+|---|---|
+| Resposta `2xx` | Entregue |
+| Resposta `3xx` | Falha. A Conty não segue redirect |
+| Resposta `4xx` ou `5xx` | Falha |
+| Sem resposta em 10 segundos | Falha por timeout |
+| Erro de rede, DNS ou TLS | Falha |
+
+## Política de retentativa
+
+São até **8 tentativas**, por cerca de 11 horas. Depois de cada falha, a próxima tentativa espera:
+
+| Tentativa | Espera antes dela |
+|---|---|
+| 1ª | imediata |
+| 2ª | 30 segundos |
+| 3ª | 2 minutos |
+| 4ª | 10 minutos |
+| 5ª | 30 minutos |
+| 6ª | 1 hora |
+| 7ª | 3 horas |
+| 8ª | 6 horas |
+
+Se a oitava falhar, a entrega fica como **falhou** no painel, com o último código HTTP e o último erro. Se o endpoint for pausado ou apagado enquanto a entrega espera, as tentativas seguintes não saem.
+
+## Idempotência
+
+O mesmo evento pode chegar mais de uma vez: numa retentativa depois de um timeout em que o seu servidor chegou a processar, num reenvio manual pelo painel, ou por uma falha de rede no caminho da resposta.
+
+Todas as tentativas e reenvios de um evento levam o mesmo `X-Conty-Event-Id` (igual ao `id` do corpo). Guarde esse id e ignore o que já foi processado:
+
+```javascript
+import express from "express";
+import pg from "pg";
+
+const db = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+const app = express();
+
+// CREATE TABLE conty_events (event_id uuid PRIMARY KEY, received_at timestamptz DEFAULT now());
+
+app.post("/webhooks/conty", express.raw({ type: "application/json" }), async (req, res) => {
+  // verifique a assinatura antes, veja "Verificação e segurança"
+  const eventId = req.get("X-Conty-Event-Id");
+
+  const { rowCount } = await db.query(
+    "INSERT INTO conty_events (event_id) VALUES ($1) ON CONFLICT DO NOTHING",
+    [eventId],
+  );
+
+  if (rowCount === 0) return res.sendStatus(200);
+
+  const event = JSON.parse(req.body.toString("utf8"));
+  await enqueue(event);
+  res.sendStatus(200);
+});
+
+async function enqueue(event) {
+  console.log("Para processar:", event.type, event.id);
+}
+
+app.listen(3000);
+```
+
+Já processado? Responda `2xx` mesmo assim. Se responder erro, a Conty vai continuar tentando.
+
+## Responda rápido
+
+O tempo limite é de **10 segundos**. Não faça trabalho pesado dentro da requisição do webhook (chamar outras APIs, gerar arquivo, mandar e-mail):
+
+1. verifique a assinatura;
+2. grave o evento ou ponha numa fila;
+3. responda `2xx`;
+4. processe depois, fora da requisição.
+
+## Ordem dos eventos
+
+A entrega não garante ordem. Um `mission.video_submitted` pode chegar antes do `mission.accepted` da mesma missão se a primeira tentativa do aceite falhou. Use `created_at` do corpo para saber o que aconteceu primeiro.
+
+## Reenviar pelo painel
+
+Em **Desenvolvedores → Webhooks**, abra o endpoint para ver o histórico de entregas: status, número de tentativas, último código HTTP e último erro. Em qualquer entrega, clique em **Reenviar** para mandar o mesmo evento de novo, com o mesmo `X-Conty-Event-Id`. Útil depois de corrigir um bug no receptor.
+
+O histórico guarda as entregas dos **últimos 30 dias**.

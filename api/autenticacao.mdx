@@ -1,0 +1,96 @@
+---
+title: "Autenticação"
+description: "Como criar, usar e revogar a chave de API da Conty."
+icon: "key"
+keywords:
+  - api key
+  - chave de api
+  - bearer
+  - autenticação
+---
+
+Toda chamada à API leva uma chave de API no cabeçalho `Authorization`, no esquema Bearer. A chave já identifica a sua marca; não há cabeçalho extra.
+
+## Formato da chave
+
+```text
+ck_live_Y29udHkuN2YzYzE5ZDQ4YjJhNGU5ZjgxYzBkZTZhOWI1ZTM0MmY
+```
+
+A chave começa com `ck_live_`. Trate a chave inteira como uma senha.
+
+## Usando a chave
+
+<CodeGroup>
+
+```bash cURL
+curl https://api.appconty.com/public/v1/me \
+  -H "Authorization: Bearer $CONTY_API_KEY"
+```
+
+```javascript Node.js
+const response = await fetch("https://api.appconty.com/public/v1/me", {
+  headers: { Authorization: `Bearer ${process.env.CONTY_API_KEY}` },
+});
+
+if (!response.ok) {
+  const { error } = await response.json();
+  throw new Error(`${error.code}: ${error.message} (${error.request_id})`);
+}
+
+console.log(await response.json());
+```
+
+```python Python
+import os
+
+import requests
+
+response = requests.get(
+    "https://api.appconty.com/public/v1/me",
+    headers={"Authorization": f"Bearer {os.environ['CONTY_API_KEY']}"},
+    timeout=10,
+)
+response.raise_for_status()
+print(response.json())
+```
+
+</CodeGroup>
+
+Chave ausente, malformada, revogada ou desconhecida responde sempre igual:
+
+```json 401
+{
+  "error": {
+    "code": "invalid_api_key",
+    "message": "Chave de API inválida.",
+    "request_id": "req_01JC8Z3K9W2Q4R6T8V0X2Z4B6D"
+  }
+}
+```
+
+## Criar uma chave
+
+1. No painel, abra **Menu → Desenvolvedores**.
+2. Clique em **Criar chave** e dê um nome.
+3. Copie a chave na hora.
+
+<Warning>
+  **A chave aparece uma vez só.** A Conty guarda apenas um hash dela e não consegue mostrar de novo. Se perder, revogue e crie outra.
+</Warning>
+
+Para gerenciar chaves, o seu cargo precisa da permissão **Gerenciar chaves de API e webhooks**. Cada marca pode ter até 10 chaves ativas.
+
+## Revogar uma chave
+
+Em **Desenvolvedores**, clique em **Revogar** na chave. A revogação vale na hora: a próxima chamada com ela já recebe `401 invalid_api_key`.
+
+A lista mostra quando cada chave foi usada pela última vez. Use isso para achar chave esquecida antes de revogar.
+
+## Boas práticas
+
+- **Nunca use a chave no front-end**, em app mobile ou em qualquer código que roda no aparelho do usuário. A chave dá acesso à API inteira da sua marca. Chame a Conty só a partir do seu servidor.
+- Guarde a chave num gerenciador de segredos ou em variável de ambiente, nunca no repositório.
+- Crie uma chave por integração. Assim você revoga uma sem derrubar as outras.
+- Para trocar uma chave, crie a nova, publique no seu sistema e só então revogue a antiga.
+- Suspeita de vazamento? Revogue na hora e crie outra.

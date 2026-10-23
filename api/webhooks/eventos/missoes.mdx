@@ -1,0 +1,356 @@
+---
+title: "Eventos de missão"
+sidebarTitle: "Missões"
+description: "Eventos dos envios do creator e das decisões e mudanças de estado da missão."
+icon: "clapperboard"
+keywords:
+  - webhooks
+  - mission.accepted
+  - mission.video_submitted
+  - mission.post_link_added
+  - mission.approved
+  - mission.changes_requested
+  - mission.rejected
+---
+
+Todo evento usa o [envelope comum](/api/webhooks/visao-geral). O que muda de um para outro é o `type`, o `summary` e os blocos extras dentro de `data`.
+
+| Evento | Quando sai |
+|---|---|
+| `mission.accepted` | O creator aceitou o convite ou começou a missão |
+| `mission.script_submitted` | O roteiro entrou na aprovação, inclusive o reenvio |
+| `mission.cover_submitted` | A capa foi enviada depois do vídeo |
+| `mission.caption_submitted` | A legenda foi enviada depois do vídeo |
+| `mission.video_submitted` | O vídeo (ou a entrega em outro formato) foi enviado ou reenviado |
+| `mission.post_link_added` | O link do post foi confirmado na missão |
+| `mission.changes_requested` | A marca ou a agência pediu para refazer o roteiro, o vídeo, a capa ou a legenda |
+| `mission.approved` | A entrega foi aprovada e a missão está concluída |
+| `mission.rejected` | A missão foi recusada de vez, pela marca ou pelo creator |
+| `mission.expired` | A missão expirou |
+| `mission.canceled` | A marca tirou o creator da campanha e a missão foi excluída |
+
+## Campos comuns de `data`
+
+<ResponseField name="data.brand" type="object" required>
+  A marca dona da campanha: `id` e `name`.
+</ResponseField>
+
+<ResponseField name="data.campaign" type="object" required>
+  A campanha: `id`, `name` e `url` (link da campanha no painel, ou `null`). Em campanha de acordo, `id` e `name` são os do acordo.
+</ResponseField>
+
+<ResponseField name="data.creator" type="object" required>
+  O creator: `id`, `name` e `handle` (o @ na rede da missão, ou `null`).
+</ResponseField>
+
+<ResponseField name="data.mission" type="object" required>
+  A missão: `id`, `status` e `platform` (`instagram`, `tiktok`, `youtube`, `x` ou `null`). Em `mission.rejected`, também `rejected_by`.
+</ResponseField>
+
+## Envios do creator
+
+Eventos que nascem de uma ação do creator na missão.
+
+### mission.accepted
+
+O creator aceitou o convite ou começou a missão numa campanha aberta. No acordo, o aceite do pacote gera um evento só, com o acordo em `data.campaign`.
+
+```json
+{
+  "id": "7a6b5c4d-3e2f-4a1b-9c8d-7e6f5a4b3c2d",
+  "type": "mission.accepted",
+  "created_at": "2026-10-21T13:12:08.031Z",
+  "tenant": "conty",
+  "summary": "BeConfident: Fulana Souza aceitou a campanha \"Outubro\".",
+  "data": {
+    "brand": { "id": "5e4d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c1b", "name": "BeConfident" },
+    "campaign": {
+      "id": "2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5",
+      "name": "Outubro",
+      "url": "https://appconty.com/campaigns/2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5"
+    },
+    "creator": { "id": "8d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a", "name": "Fulana Souza", "handle": "@fulana" },
+    "mission": { "id": "c3a2b1d0-e9f8-4a7b-9c6d-5e4f3a2b1c0d", "status": "fazendo", "platform": "instagram" }
+  }
+}
+```
+
+### mission.script_submitted
+
+O roteiro entrou na fila de aprovação da marca. Sai também no reenvio, com `resubmission: true`.
+
+<ResponseField name="data.submission" type="object" required>
+  `items`: o que entrou na aprovação nesta ação. `resubmission`: `true` quando a missão já tinha uma versão anterior desse conteúdo.
+</ResponseField>
+
+```json
+{
+  "id": "1e2d3c4b-5a6f-4e7d-8c9b-0a1f2e3d4c5b",
+  "type": "mission.script_submitted",
+  "created_at": "2026-10-22T10:03:44.870Z",
+  "tenant": "conty",
+  "summary": "BeConfident: Fulana Souza enviou o roteiro da campanha \"Outubro\" para aprovação.",
+  "data": {
+    "brand": { "id": "5e4d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c1b", "name": "BeConfident" },
+    "campaign": {
+      "id": "2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5",
+      "name": "Outubro",
+      "url": "https://appconty.com/campaigns/2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5"
+    },
+    "creator": { "id": "8d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a", "name": "Fulana Souza", "handle": "@fulana" },
+    "mission": { "id": "c3a2b1d0-e9f8-4a7b-9c6d-5e4f3a2b1c0d", "status": "fazendo", "platform": "instagram" },
+    "submission": { "items": ["script"], "resubmission": false }
+  }
+}
+```
+
+### mission.cover_submitted
+
+A capa foi enviada **depois** da entrega. A capa que vai junto com o vídeo, ou que foi guardada antes dele, chega dentro do `mission.video_submitted` e não gera este evento.
+
+```json
+{
+  "id": "2f3e4d5c-6b7a-4f8e-9d0c-1b2a3f4e5d6c",
+  "type": "mission.cover_submitted",
+  "created_at": "2026-10-24T09:15:22.402Z",
+  "tenant": "conty",
+  "summary": "BeConfident: Fulana Souza reenviou a capa da campanha \"Outubro\" com ajustes.",
+  "data": {
+    "brand": { "id": "5e4d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c1b", "name": "BeConfident" },
+    "campaign": {
+      "id": "2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5",
+      "name": "Outubro",
+      "url": "https://appconty.com/campaigns/2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5"
+    },
+    "creator": { "id": "8d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a", "name": "Fulana Souza", "handle": "@fulana" },
+    "mission": { "id": "c3a2b1d0-e9f8-4a7b-9c6d-5e4f3a2b1c0d", "status": "em_analise", "platform": "instagram" },
+    "submission": { "items": ["cover"], "resubmission": true }
+  }
+}
+```
+
+### mission.caption_submitted
+
+A legenda foi enviada **depois** da entrega. Como na capa, a legenda que vai junto com o vídeo chega dentro do `mission.video_submitted`. O texto da legenda não vem no payload.
+
+```json
+{
+  "id": "3a4b5c6d-7e8f-4a9b-8c0d-1e2f3a4b5c6d",
+  "type": "mission.caption_submitted",
+  "created_at": "2026-10-24T09:20:57.118Z",
+  "tenant": "conty",
+  "summary": "BeConfident: Fulana Souza enviou a legenda da campanha \"Outubro\" para aprovação.",
+  "data": {
+    "brand": { "id": "5e4d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c1b", "name": "BeConfident" },
+    "campaign": {
+      "id": "2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5",
+      "name": "Outubro",
+      "url": "https://appconty.com/campaigns/2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5"
+    },
+    "creator": { "id": "8d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a", "name": "Fulana Souza", "handle": "@fulana" },
+    "mission": { "id": "c3a2b1d0-e9f8-4a7b-9c6d-5e4f3a2b1c0d", "status": "em_analise", "platform": "instagram" },
+    "submission": { "items": ["caption"], "resubmission": false }
+  }
+}
+```
+
+### mission.video_submitted
+
+A entrega foi enviada ou reenviada com ajustes. `"video"` em `items` é a entrega em qualquer formato; o formato real vem em `format`. A capa e a legenda que entraram na aprovação junto com a entrega vêm em `items`.
+
+<ResponseField name="data.submission.format" type="string" required>
+  Formato da entrega: `video`, `image`, `text` ou `link`.
+</ResponseField>
+
+```json
+{
+  "id": "0b9e8f7a-6d5c-4b3a-9f8e-7d6c5b4a3f2e",
+  "type": "mission.video_submitted",
+  "created_at": "2026-10-23T18:47:31.660Z",
+  "tenant": "conty",
+  "summary": "BeConfident: Fulana Souza enviou o vídeo, a capa e a legenda da campanha \"Outubro\" para aprovação.",
+  "data": {
+    "brand": { "id": "5e4d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c1b", "name": "BeConfident" },
+    "campaign": {
+      "id": "2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5",
+      "name": "Outubro",
+      "url": "https://appconty.com/campaigns/2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5"
+    },
+    "creator": { "id": "8d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a", "name": "Fulana Souza", "handle": "@fulana" },
+    "mission": { "id": "c3a2b1d0-e9f8-4a7b-9c6d-5e4f3a2b1c0d", "status": "em_analise", "platform": "instagram" },
+    "submission": { "items": ["video", "cover", "caption"], "resubmission": false, "format": "video" }
+  }
+}
+```
+
+### mission.post_link_added
+
+O link do post ficou confirmado na missão. Link recusado (post inacessível, de outro perfil ou de perfil privado) não gera evento.
+
+<ResponseField name="data.post" type="object" required>
+  `url` do post, `platform` da rede e `by`: quem informou o link (`creator`, `agency` ou `brand`).
+</ResponseField>
+
+```json
+{
+  "id": "5d6e7f8a-9b0c-4d1e-8f2a-3b4c5d6e7f8a",
+  "type": "mission.post_link_added",
+  "created_at": "2026-10-27T20:02:13.249Z",
+  "tenant": "conty",
+  "summary": "BeConfident: Fulana Souza adicionou o link do post da campanha \"Outubro\": https://www.instagram.com/reel/DAbC123xYz/",
+  "data": {
+    "brand": { "id": "5e4d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c1b", "name": "BeConfident" },
+    "campaign": {
+      "id": "2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5",
+      "name": "Outubro",
+      "url": "https://appconty.com/campaigns/2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5"
+    },
+    "creator": { "id": "8d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a", "name": "Fulana Souza", "handle": "@fulana" },
+    "mission": { "id": "c3a2b1d0-e9f8-4a7b-9c6d-5e4f3a2b1c0d", "status": "aprovado", "platform": "instagram" },
+    "post": { "url": "https://www.instagram.com/reel/DAbC123xYz/", "platform": "instagram", "by": "creator" }
+  }
+}
+```
+
+## Decisões e estado da missão
+
+Eventos de decisão sobre o conteúdo e de mudança de estado da missão. Eles saem **seja quem for que causou** a mudança: a marca, a agência, o backoffice da Conty ou a expiração automática. Saem por missão, também em campanha de acordo.
+
+### mission.changes_requested
+
+A marca ou a agência pediu alteração. `data.request.items` diz o que o creator precisa refazer: `script`, `video`, `cover` ou `caption`.
+
+<ResponseField name="data.request.items" type="string[]" required>
+  O que foi pedido para refazer.
+</ResponseField>
+
+<Warning>
+  O texto do pedido de alteração **nunca** vem no payload. Para ler o pedido, abra a missão no painel.
+</Warning>
+
+```json
+{
+  "id": "b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e",
+  "type": "mission.changes_requested",
+  "created_at": "2026-10-24T11:40:18.090Z",
+  "tenant": "conty",
+  "summary": "BeConfident: foi pedida alteração, Fulana Souza precisa refazer o vídeo e a legenda da campanha \"Outubro\".",
+  "data": {
+    "brand": { "id": "5e4d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c1b", "name": "BeConfident" },
+    "campaign": {
+      "id": "2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5",
+      "name": "Outubro",
+      "url": "https://appconty.com/campaigns/2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5"
+    },
+    "creator": { "id": "8d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a", "name": "Fulana Souza", "handle": "@fulana" },
+    "mission": { "id": "c3a2b1d0-e9f8-4a7b-9c6d-5e4f3a2b1c0d", "status": "recusado", "platform": "instagram" },
+    "request": { "items": ["video", "caption"] }
+  }
+}
+```
+
+### mission.approved
+
+A entrega foi aprovada e a missão está concluída, inclusive na aprovação automática da comunidade. Aprovar só o roteiro, a capa ou a legenda não gera este evento.
+
+```json
+{
+  "id": "c3d4e5f6-a7b8-4c9d-8e0f-2a3b4c5d6e7f",
+  "type": "mission.approved",
+  "created_at": "2026-10-25T16:05:44.213Z",
+  "tenant": "conty",
+  "summary": "BeConfident: o conteúdo de Fulana Souza da campanha \"Outubro\" foi aprovado.",
+  "data": {
+    "brand": { "id": "5e4d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c1b", "name": "BeConfident" },
+    "campaign": {
+      "id": "2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5",
+      "name": "Outubro",
+      "url": "https://appconty.com/campaigns/2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5"
+    },
+    "creator": { "id": "8d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a", "name": "Fulana Souza", "handle": "@fulana" },
+    "mission": { "id": "c3a2b1d0-e9f8-4a7b-9c6d-5e4f3a2b1c0d", "status": "aprovado", "platform": "instagram" }
+  }
+}
+```
+
+### mission.rejected
+
+A missão foi recusada de vez e está encerrada. `data.mission.rejected_by` diz quem recusou.
+
+<ResponseField name="data.mission.rejected_by" type="string" required>
+  `brand`, quando a marca ou a agência recusou o conteúdo; `creator`, quando o próprio creator recusou a campanha.
+</ResponseField>
+
+Quando é o creator, o `summary` muda para `BeConfident: Fulana Souza recusou a campanha "Outubro".`
+
+```json
+{
+  "id": "d4e5f6a7-b8c9-4d0e-9f1a-3b4c5d6e7f8a",
+  "type": "mission.rejected",
+  "created_at": "2026-10-25T09:12:30.556Z",
+  "tenant": "conty",
+  "summary": "BeConfident: o conteúdo de Fulana Souza da campanha \"Outubro\" foi recusado.",
+  "data": {
+    "brand": { "id": "5e4d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c1b", "name": "BeConfident" },
+    "campaign": {
+      "id": "2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5",
+      "name": "Outubro",
+      "url": "https://appconty.com/campaigns/2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5"
+    },
+    "creator": { "id": "8d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a", "name": "Fulana Souza", "handle": "@fulana" },
+    "mission": { "id": "c3a2b1d0-e9f8-4a7b-9c6d-5e4f3a2b1c0d", "status": "recusado_permanentemente", "rejected_by": "brand", "platform": "instagram" }
+  }
+}
+```
+
+### mission.expired
+
+A missão expirou: o prazo da entrega, do roteiro ou da alteração terminou, ou a marca encerrou a campanha antes da entrega.
+
+```json
+{
+  "id": "e5f6a7b8-c9d0-4e1f-8a2b-4c5d6e7f8a9b",
+  "type": "mission.expired",
+  "created_at": "2026-10-31T03:00:02.017Z",
+  "tenant": "conty",
+  "summary": "BeConfident: a missão de Fulana Souza da campanha \"Outubro\" expirou.",
+  "data": {
+    "brand": { "id": "5e4d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c1b", "name": "BeConfident" },
+    "campaign": {
+      "id": "2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5",
+      "name": "Outubro",
+      "url": "https://appconty.com/campaigns/2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5"
+    },
+    "creator": { "id": "8d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a", "name": "Fulana Souza", "handle": "@fulana" },
+    "mission": { "id": "c3a2b1d0-e9f8-4a7b-9c6d-5e4f3a2b1c0d", "status": "expirado", "platform": "instagram" }
+  }
+}
+```
+
+### mission.canceled
+
+A marca tirou o creator da campanha e a missão foi excluída.
+
+```json
+{
+  "id": "f6a7b8c9-d0e1-4f2a-9b3c-5d6e7f8a9b0c",
+  "type": "mission.canceled",
+  "created_at": "2026-10-22T14:48:51.730Z",
+  "tenant": "conty",
+  "summary": "BeConfident: a participação de Fulana Souza da campanha \"Outubro\" foi encerrada.",
+  "data": {
+    "brand": { "id": "5e4d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c1b", "name": "BeConfident" },
+    "campaign": {
+      "id": "2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5",
+      "name": "Outubro",
+      "url": "https://appconty.com/campaigns/2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5"
+    },
+    "creator": { "id": "8d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a", "name": "Fulana Souza", "handle": "@fulana" },
+    "mission": { "id": "c3a2b1d0-e9f8-4a7b-9c6d-5e4f3a2b1c0d", "status": "fazendo", "platform": "instagram" }
+  }
+}
+```
+
+<Note>
+  Continuam sem evento: troca de vídeo pelo backoffice, extensão de prazo e reconvite. Novos eventos entram neste catálogo e no [changelog](/api/changelog).
+</Note>

@@ -1,0 +1,42 @@
+---
+title: "Changelog"
+description: "Mudanças na API pública e nos webhooks da Conty."
+icon: "clock-rotate-left"
+keywords:
+  - changelog
+  - versões
+  - mudanças
+---
+
+Toda mudança no contrato da API aparece aqui antes de entrar no ar. Enquanto a API estiver em beta, mudanças que quebram compatibilidade são possíveis, sempre anunciadas nesta página com o que muda e o que fazer.
+
+<Update label="0.2.0-beta" description="22 de outubro de 2026">
+  Pagamento da comissão do cupom.
+
+  **API**
+  - `CouponSale` traz `commission_status` (`none`, `reserved`, `awaiting_budget`, `no_commission`, `after_campaign_end`, `released`, `paid`, `reversed`), `commission_due_on`, `commission_paid_at` e `commission_reversed_at`.
+  - `Coupon.totals` traz `commission_reserved_cents`, `commission_paid_cents` e `commission_awaiting_cents`.
+  - A Conty paga a comissão 7 dias depois da venda, com a verba que a marca separa na campanha; o creator saca 30 dias depois do pagamento. Reembolso pelo `PUT` com `canceled`: até o 7º dia a comissão sai, até o 37º é estornada, depois fica com o creator. Ver [Pagamento da comissão](/api/referencia/cupons#pagamento-da-comissão).
+  - Campos aditivos: nada muda para quem já integra.
+</Update>
+
+<Update label="0.1.0-beta" description="21 de outubro de 2026">
+  Primeira versão pública, em beta.
+
+  **API**
+  - Autenticação por chave de API (`ck_live_…`), criada e revogada pela marca em **Desenvolvedores**.
+  - `GET /me` para conferir a chave.
+  - Cupom por creator: `POST /coupons`, `GET /coupons`, `GET /coupons/{id}` e `PATCH /coupons/{id}`.
+  - Vendas do cupom: `PUT /coupons/{id}/sales/{external_id}` (idempotente) e `GET /coupons/{id}/sales`, com a comissão calculada pela taxa da campanha. Taxa `0` é cupom só de rastreio.
+  - Cupons disponíveis da campanha: `POST /coupons` aceita `campaign_id` no lugar de `mission_id` e cria o cupom livre, sem creator. `POST /coupons/{id}/assign` vincula o cupom livre ao creator de uma missão (o cupom que ele já tinha fica disponível) e `POST /coupons/{id}/unassign` desvincula o cupom do creator. Novos erros `409 coupon_assigned` e `422 coupon_campaign_mismatch`.
+  - `Coupon.creator` e `Coupon.mission_id` podem ser `null` (cupom livre). `CouponSale` traz `creator` e `mission_id`: o dono do cupom no momento da venda, que não muda se o cupom trocar de dono. Venda em cupom livre é aceita, com `creator` nulo.
+  - Filtro `assigned=true|false` em `GET /coupons`, para separar os cupons com creator dos disponíveis.
+  - Paginação por cursor, envelope de erro único e limite de 120 requisições por minuto por chave.
+
+  **Webhooks**
+  - Cadastro de endpoints pela própria marca, com envio de teste, giro de segredo, histórico e reenvio de entregas.
+  - Eventos de candidatura: `application.created`, `application.approved` e `application.rejected`.
+  - Envios do creator: `mission.accepted`, `mission.script_submitted`, `mission.cover_submitted`, `mission.caption_submitted`, `mission.video_submitted` e `mission.post_link_added`.
+  - Decisões e estado da missão: `mission.changes_requested`, `mission.approved`, `mission.rejected`, `mission.expired` e `mission.canceled`.
+  - Evento `webhook.test`, enviado pelo botão **Enviar teste**.
+</Update>

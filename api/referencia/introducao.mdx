@@ -1,0 +1,227 @@
+---
+title: "Introdução à referência"
+sidebarTitle: "Introdução"
+description: "Base URL, autenticação, formato de resposta, status HTTP, paginação, limites e erros da API da Conty."
+icon: "book-open"
+keywords:
+  - referência
+  - erros
+  - paginação
+  - rate limit
+---
+
+Esta é a referência da API pública da Conty. Aqui ficam as regras que valem para todos os endpoints; os endpoints de cada recurso estão nos grupos abaixo, na barra lateral.
+
+## Base URL
+
+```text
+https://api.appconty.com/public/v1
+```
+
+Chamadas de servidor para servidor, sempre por HTTPS. Toda resposta traz o cabeçalho `X-Conty-Api-Stage: beta`.
+
+## Autenticação
+
+Mande a sua chave de API no cabeçalho `Authorization`, no esquema Bearer:
+
+```bash
+curl https://api.appconty.com/public/v1/me \
+  -H "Authorization: Bearer $CONTY_API_KEY"
+```
+
+A chave já identifica a sua marca; não há cabeçalho extra. Para criar, guardar e revogar a chave, veja [Autenticação](/api/autenticacao).
+
+## Formato de resposta
+
+- Sucesso devolve o recurso direto, por exemplo `{ "id": "…", "code": "FULANA10", … }`.
+- Lista devolve `{ "data": [...], "has_more": true, "next_cursor": "…" }`.
+- Erro devolve sempre o mesmo envelope, descrito em [Erros](#erros).
+
+| O quê | Como | Exemplo |
+|---|---|---|
+| Nome de campo | `snake_case` | `discount_description` |
+| Dinheiro | inteiro em centavos, sufixo `_cents` | `amount_cents: 15000` é R$ 150,00 |
+| Taxa | inteiro em pontos-base, sufixo `_bps` | `commission_rate_bps: 2500` é 25% |
+| Data e hora | ISO 8601 em UTC | `2026-10-21T15:42:00Z` |
+
+## Códigos de status HTTP
+
+| Status | Significado |
+|---|---|
+| `200` | Deu certo |
+| `201` | Recurso criado (por exemplo, cupom ou venda nova) |
+| `401` | Chave ausente, malformada, revogada ou desconhecida |
+| `403` | A API pública não está liberada para a sua conta, ou a marca está sem plano ativo |
+| `404` | Rota inexistente, ou recurso que não existe ou é de outra marca |
+| `409` | Conflito com o estado atual (cupom já existe, código em uso, cupom cancelado, cupom de outro creator) |
+| `422` | Entrada inválida, ou a operação não é permitida para o recurso |
+| `429` | Limite de requisições atingido |
+| `500` | Erro inesperado do nosso lado |
+
+## Paginação por cursor
+
+Toda lista pagina por cursor, do mais novo para o mais antigo. Os filtros valem antes da paginação: cada página só traz o que bate com o filtro.
+
+<ParamField query="limit" type="integer" default="20">
+  Itens por página, de 1 a 100.
+</ParamField>
+
+<ParamField query="cursor" type="string">
+  O `next_cursor` da página anterior. Omita na primeira página. É um valor opaco: não monte nem altere. Cursor inválido responde `422 validation_failed`.
+</ParamField>
+
+<ResponseField name="data" type="array" required>
+  Os itens da página.
+</ResponseField>
+
+<ResponseField name="has_more" type="boolean" required>
+  `true` quando há mais itens depois desta página.
+</ResponseField>
+
+<ResponseField name="next_cursor" type="string | null" required>
+  Cursor da próxima página, ou `null` na última.
+</ResponseField>
+
+Percorrendo todas as páginas, em Node 18 ou mais novo:
+
+```javascript list-coupons.mjs
+const BASE_URL = "https://api.appconty.com/public/v1";
+
+async function* listActiveCoupons() {
+  let cursor = null;
+
+  do {
+    const params = new URLSearchParams({ status: "active", limit: "100" });
+    if (cursor) params.set("cursor", cursor);
+
+    const response = await fetch(`${BASE_URL}/coupons?${params}`, {
+      headers: { Authorization: `Bearer ${process.env.CONTY_API_KEY}` },
+    });
+
+    if (!response.ok) {
+      const { error } = await response.json();
+      throw new Error(`${error.code}: ${error.message}`);
+    }
+
+    const page = await response.json();
+    yield* page.data;
+    cursor = page.has_more ? page.next_cursor : null;
+  } while (cursor);
+}
+
+for await (const coupon of listActiveCoupons()) {
+  console.log(coupon.code, coupon.totals.sales_count);
+}
+```
+
+Mantenha os mesmos filtros em todas as páginas de uma varredura. Para mudar o filtro, comece de novo sem `cursor`.
+
+## Limites
+
+Cada chave pode fazer **120 requisições por minuto**. O limite é por chave, não por marca. Acima dele, a API responde `429 rate_limited` com o cabeçalho `Retry-After` em segundos:
+
+```http
+HTTP/1.1 429 Too Many Requests
+Retry-After: 60
+Content-Type: application/json
+
+{
+  "error": {
+    "code": "rate_limited",
+    "message": "Limite de requisições atingido. Tente de novo em 60 segundos.",
+    "request_id": "req_01JC8Z3K9W2Q4R6T8V0X2Z4B6D"
+  }
+}
+```
+
+```javascript
+async function fetchWithRetry(url, init, attempts = 3) {
+  for (let attempt = 1; ; attempt++) {
+    const response = await fetch(url, init);
+    if (response.status !== 429 || attempt === attempts) return response;
+
+    const seconds = Number(response.headers.get("Retry-After") ?? 60);
+    await new Promise((resolve) => setTimeout(resolve, seconds * 1000));
+  }
+}
+```
+
+<Note>
+  O limite é contado por região da nossa rede, então é aproximado: em rajadas vindas de lugares diferentes, ele pode deixar passar um pouco mais ou cortar um pouco antes. Planeje a integração para ficar abaixo de 120 por minuto. Use `limit=100` nas listas e os [webhooks](/api/webhooks/visao-geral) em vez de consultar a API em intervalos.
+</Note>
+
+## Erros
+
+Todo erro tem o mesmo envelope:
+
+```json
+{
+  "error": {
+    "code": "validation_failed",
+    "message": "Alguns campos são inválidos.",
+    "details": [
+      { "path": "amount_cents", "message": "Deve ser maior que zero." }
+    ],
+    "request_id": "req_01JC8Z3K9W2Q4R6T8V0X2Z4B6D"
+  }
+}
+```
+
+<ResponseField name="error.code" type="string" required>
+  Código estável do erro. É ele que o seu código deve tratar.
+</ResponseField>
+
+<ResponseField name="error.message" type="string" required>
+  Mensagem em português, para leitura humana. Pode mudar de texto: não compare com ela.
+</ResponseField>
+
+<ResponseField name="error.details" type="array">
+  Detalhes, quando existem. Em `validation_failed`, um item por campo com `path` e `message`. Em `coupon_exists`, o `coupon_id` do cupom ativo.
+</ResponseField>
+
+<ResponseField name="error.request_id" type="string" required>
+  Id da requisição. Mande junto quando falar com o suporte.
+</ResponseField>
+
+### Erros mais comuns
+
+| Status | `code` | Quando acontece | O que fazer |
+|---|---|---|---|
+| 401 | `invalid_api_key` | Chave ausente, malformada, revogada ou desconhecida | Confira a chave e o cabeçalho `Authorization` |
+| 403 | `open_api_disabled` | A API pública não está liberada para a sua conta | Fale com o time da Conty |
+| 403 | `plan_required` | A marca e a agência que a gere estão sem plano ativo | Regularize o plano no painel ou fale com o time da Conty |
+| 404 | `not_found` | Rota inexistente, ou recurso que não existe ou é de outra marca | Confira o id e a chave usada |
+| 409 | `coupon_exists` | O creator já tem um cupom ativo nessa campanha | Use o cupom de `details[0].coupon_id`, ou cancele antes de criar outro |
+| 409 | `coupon_code_taken` | Outro cupom ativo da sua marca já usa esse código | Escolha outro código |
+| 409 | `coupon_canceled` | Tentativa de editar um cupom cancelado | Crie um cupom novo |
+| 409 | `coupon_assigned` | O cupom está vinculado a outro creator; só cupom disponível é vinculável | Desvincule o cupom com `POST /coupons/{id}/unassign` antes, ou escolha um cupom disponível |
+| 422 | `validation_failed` | Corpo, query ou cursor inválido | Corrija os campos de `details` |
+| 422 | `mission_closed` | A missão está expirada ou recusada em definitivo | Não crie nem vincule cupom para essa missão |
+| 422 | `coupon_campaign_mismatch` | A missão é de outra campanha que não a do cupom | Use um cupom disponível da campanha da missão |
+| 429 | `rate_limited` | Mais de 120 requisições por minuto na chave | Espere o `Retry-After` e tente de novo |
+| 500 | `internal_error` | Erro inesperado do nosso lado | Tente de novo com espera; se persistir, mande o `request_id` |
+
+Erros `4xx` não melhoram se você repetir a mesma chamada, exceto o `429`. Erros `5xx` e falha de rede podem ser repetidos com espera crescente: o registro de venda, por exemplo, é idempotente pelo `external_id`.
+
+```javascript
+async function conty(path, init = {}) {
+  const response = await fetch(`https://api.appconty.com/public/v1${path}`, {
+    ...init,
+    headers: {
+      Authorization: `Bearer ${process.env.CONTY_API_KEY}`,
+      "Content-Type": "application/json",
+      ...init.headers,
+    },
+  });
+
+  if (response.ok) return response.json();
+
+  const { error } = await response.json();
+  const failure = new Error(`${error.code}: ${error.message}`);
+  failure.status = response.status;
+  failure.code = error.code;
+  failure.details = error.details;
+  failure.requestId = error.request_id;
+  throw failure;
+}
+```
