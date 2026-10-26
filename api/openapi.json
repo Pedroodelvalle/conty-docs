@@ -101,6 +101,7 @@
                   "coupon_canceled",
                   "coupon_assigned",
                   "coupon_campaign_mismatch",
+                  "sale_occurred_at_out_of_range",
                   "validation_failed",
                   "mission_closed",
                   "rate_limited",
@@ -334,12 +335,30 @@
             ],
             "description": "Soma da comissão das vendas confirmadas, em centavos. Nulo quando nenhuma venda tem taxa.",
             "example": 11250
+          },
+          "commission_reserved_cents": {
+            "type": "integer",
+            "description": "Comissão das vendas reservada na verba e ainda não paga, em centavos.",
+            "example": 4000
+          },
+          "commission_paid_cents": {
+            "type": "integer",
+            "description": "Comissão já paga ao creator, em centavos.",
+            "example": 6000
+          },
+          "commission_awaiting_cents": {
+            "type": "integer",
+            "description": "Comissão das vendas que aguardam verba da marca, em centavos.",
+            "example": 1250
           }
         },
         "required": [
           "sales_count",
           "revenue_cents",
-          "commission_cents"
+          "commission_cents",
+          "commission_reserved_cents",
+          "commission_paid_cents",
+          "commission_awaiting_cents"
         ]
       },
       "CreateCouponBody": {
@@ -466,7 +485,7 @@
           },
           "amount_cents": {
             "type": "integer",
-            "description": "Valor da venda, em centavos.",
+            "description": "Valor pago pelo cliente nos produtos, em centavos, já com o desconto do cupom, sem frete e sem impostos destacados. A comissão é calculada sobre esse valor.",
             "example": 15000
           },
           "status": {
@@ -507,6 +526,36 @@
             "description": "Comissão da venda, em centavos. Nula quando não há taxa.",
             "example": 3750
           },
+          "commission_status": {
+            "$ref": "#/components/schemas/CouponCommissionStatus"
+          },
+          "commission_due_on": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date",
+            "description": "Prazo da comissão: dia do pagamento quando reservada, ou o último dia para a marca adicionar verba quando aguarda verba. Nulo nos demais estados.",
+            "example": "2026-11-17"
+          },
+          "commission_paid_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Quando a comissão foi paga ao creator.",
+            "example": null
+          },
+          "commission_reversed_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Quando a comissão paga foi estornada pelo cancelamento da venda.",
+            "example": null
+          },
           "occurred_at": {
             "type": "string",
             "format": "date-time",
@@ -535,6 +584,10 @@
           "mission_id",
           "commission_rate_bps",
           "commission_cents",
+          "commission_status",
+          "commission_due_on",
+          "commission_paid_at",
+          "commission_reversed_at",
           "occurred_at",
           "created_at",
           "updated_at"
@@ -549,6 +602,25 @@
         "description": "Situação da venda. Só venda confirmada entra nos totais.",
         "example": "confirmed"
       },
+      "CouponCommissionStatus": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "enum": [
+          "none",
+          "reserved",
+          "awaiting_budget",
+          "no_commission",
+          "after_campaign_end",
+          "released",
+          "paid",
+          "reversed",
+          null
+        ],
+        "description": "Pagamento da comissão da venda. Nulo quando a comissão do cupom não está liberada para a marca.",
+        "example": "reserved"
+      },
       "UpsertSaleBody": {
         "type": "object",
         "properties": {
@@ -556,7 +628,7 @@
             "type": "integer",
             "exclusiveMinimum": 0,
             "maximum": 2147483647,
-            "description": "Valor da venda, em centavos.",
+            "description": "Valor pago pelo cliente nos produtos, em centavos, já com o desconto do cupom, sem frete e sem impostos destacados. A comissão é calculada sobre esse valor.",
             "example": 15000
           },
           "status": {
@@ -2955,7 +3027,7 @@
           "Cupons"
         ],
         "summary": "Editar cupom",
-        "description": "Troca o código ou o texto do desconto, ou cancela o cupom com status canceled. Cancelar é definitivo e não apaga as vendas. Trocar o código não avisa o creator de novo.",
+        "description": "Troca o código ou o texto do desconto, ou cancela o cupom com status canceled. Cancelar é definitivo e não apaga as vendas. O creator dono é avisado no app quando o código ou o desconto mudam e quando o cupom é cancelado.",
         "parameters": [
           {
             "schema": {
@@ -3185,7 +3257,7 @@
           "Cupons"
         ],
         "summary": "Desvincular cupom",
-        "description": "Tira o creator do cupom, que continua ativo e fica disponível na campanha. As vendas já registradas continuam atribuídas a quem era o dono na hora da venda. Ninguém é avisado.",
+        "description": "Tira o creator do cupom, que continua ativo e fica disponível na campanha. As vendas já registradas continuam atribuídas a quem era o dono na hora da venda. O creator que era o dono é avisado no app.",
         "parameters": [
           {
             "schema": {
@@ -3290,7 +3362,7 @@
           "Vendas"
         ],
         "summary": "Registrar venda",
-        "description": "Cria ou atualiza a venda pelo id do seu sistema. Repetir a chamada não duplica a venda. A taxa de comissão da campanha e o creator dono do cupom ficam gravados na criação e não mudam depois, nem se o cupom trocar de dono. Com taxa 0 a venda é só rastreio e a comissão é 0. Venda em cupom cancelado ou livre é aceita; no cupom livre, a venda fica sem creator.",
+        "description": "Cria ou atualiza a venda pelo id do seu sistema. Repetir a chamada não duplica a venda. A data da venda, a taxa de comissão da campanha e o creator dono do cupom ficam gravados na criação e não mudam depois, nem se o cupom trocar de dono. A data precisa ficar entre a criação do cupom e agora. Com taxa 0 a venda é só rastreio e a comissão é 0. Venda em cupom cancelado ou livre é aceita; no cupom livre, a venda fica sem creator.",
         "parameters": [
           {
             "schema": {
@@ -3380,7 +3452,7 @@
             }
           },
           "422": {
-            "description": "validation_failed: Os dados enviados são inválidos.",
+            "description": "validation_failed: Os dados enviados são inválidos. sale_occurred_at_out_of_range: A data da venda precisa ficar entre a criação do cupom e agora.",
             "content": {
               "application/json": {
                 "schema": {

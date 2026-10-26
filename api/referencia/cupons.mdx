@@ -17,20 +17,21 @@ O cupom pertence a um creator numa campanha, ou fica disponível na campanha at�
 2. `POST /coupons` cria o cupom com esse `mission_id`. O creator é avisado no app.
 3. `PUT /coupons/{id}/sales/{external_id}` registra cada venda e cada estorno, de forma idempotente.
 4. `GET /coupons/{id}` e `GET /coupons/{id}/sales` mostram os totais e as vendas.
-5. `PATCH /coupons/{id}` troca o código ou cancela o cupom.
+5. `PATCH /coupons/{id}` troca o código ou o desconto, ou cancela o cupom. O creator dono é avisado no app.
 
 ### Com cupons disponíveis
 
 1. `POST /coupons` com `campaign_id` cadastra um cupom disponível, sem creator, na campanha. Ninguém é avisado.
 2. `GET /coupons?campaign_id=<id>&assigned=false&status=active` lista os cupons disponíveis.
 3. `POST /coupons/{id}/assign` com `mission_id` vincula o cupom livre ao creator da missão. O creator é avisado no app.
-4. `POST /coupons/{id}/unassign` desvincula o cupom do creator: continua ativo e fica disponível.
+4. `POST /coupons/{id}/unassign` desvincula o cupom do creator: continua ativo e fica disponível. O creator que era o dono é avisado no app.
 
 ## Regras
 
 - Um cupom **ativo** por creator em cada campanha. Em acordo, a campanha é o acordo.
 - O `code` é normalizado (sem espaço nas pontas, em maiúsculas) e aceita `A-Z`, `0-9`, `_` e `-`, de 3 a 40 caracteres. Não pode repetir entre os cupons ativos da marca.
 - Cancelar é definitivo. As vendas continuam, e a marca pode criar outro cupom para o mesmo creator.
+- `amount_cents` é o valor pago pelo cliente nos produtos, já com o desconto do cupom, sem frete e sem impostos destacados.
 - A comissão da venda é `round(amount_cents * commission_rate_bps / 10000)`, com a taxa da campanha no momento em que a venda é criada, congelada na venda.
 - Taxa `0` é cupom só de rastreio: as vendas são registradas e a comissão é `0`.
 
@@ -41,7 +42,7 @@ O cupom pertence a um creator numa campanha, ou fica disponível na campanha at�
 - Vincular ao creator que já é o dono não muda nada e responde `200`, sem novo aviso.
 - **Trocar:** se o creator já tem cupom ativo na campanha, o `assign` deixa o antigo disponível (continua `active`, sem creator; não é cancelado) e vincula o novo.
 - A missão tem que ser da mesma campanha do cupom (`422 coupon_campaign_mismatch`) e não pode estar fechada (`422 mission_closed`).
-- Desvincular não avisa ninguém. Cupom cancelado não pode ser vinculado nem desvinculado (`409 coupon_canceled`).
+- Desvincular avisa no app o creator que era o dono. Cupom cancelado não pode ser vinculado nem desvinculado (`409 coupon_canceled`).
 - `GET /coupons` filtra com `assigned=true` (só cupons com creator) ou `assigned=false` (só os disponíveis).
 
 ## Atribuição da venda
@@ -49,6 +50,15 @@ O cupom pertence a um creator numa campanha, ou fica disponível na campanha at�
 A venda guarda o creator dono do cupom **no momento em que ela é criada**, em `creator` e `mission_id`. Atualizar a venda depois não muda isso, como a taxa. Se o cupom trocar de dono, as vendas antigas continuam do dono anterior e só as novas vão para o novo dono. Venda em cupom livre é aceita e fica com `creator` nulo.
 
 Os `totals` do cupom somam todas as vendas confirmadas do cupom, de qualquer dono. Os totais por creator que a Conty mostra nas telas somam pela atribuição da venda.
+
+## Pagamento da comissão
+
+Com taxa maior que zero, a marca separa uma verba de comissão na campanha, no painel da Conty. Cada venda confirmada reserva a comissão dela nessa verba, e a Conty paga o creator sozinha. Você só registra as vendas e os estornos.
+
+- A comissão é paga ao creator **7 dias depois da venda** (`commission_due_on`). O creator pode sacar **30 dias depois do pagamento**.
+- Se a verba acabou, a venda fica `awaiting_budget` até `commission_due_on`. Se a marca adicionar verba até lá, a comissão é reservada; senão a venda fica `no_commission`.
+- Venda com `occurred_at` depois do fim da campanha fica `after_campaign_end`, sem comissão.
+- **Reembolso:** mande `PUT /coupons/{id}/sales/{external_id}` com `"status": "canceled"`. Até o 7º dia, antes do pagamento, a comissão sai (`released`). Do pagamento até o 37º dia, enquanto o creator não pode sacar, a comissão é estornada (`reversed`, com `commission_reversed_at`). Depois disso a comissão fica com o creator e a venda segue `paid`.
 
 ## O objeto Coupon
 
@@ -62,7 +72,14 @@ Os `totals` do cupom somam todas as vendas confirmadas do cupom, de qualquer don
   "creator": { "id": "8d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a", "name": "Fulana Souza", "handle": "@fulana" },
   "mission_id": "c3a2b1d0-e9f8-4a7b-9c6d-5e4f3a2b1c0d",
   "commission_rate_bps": 2500,
-  "totals": { "sales_count": 3, "revenue_cents": 45000, "commission_cents": 11250 },
+  "totals": {
+    "sales_count": 3,
+    "revenue_cents": 45000,
+    "commission_cents": 11250,
+    "commission_reserved_cents": 3750,
+    "commission_paid_cents": 7500,
+    "commission_awaiting_cents": 0
+  },
   "created_at": "2026-10-21T13:05:12Z",
   "updated_at": "2026-10-21T13:05:12Z",
   "canceled_at": null
@@ -102,7 +119,7 @@ Os `totals` do cupom somam todas as vendas confirmadas do cupom, de qualquer don
 </ResponseField>
 
 <ResponseField name="totals" type="object" required>
-  Somam só as vendas `confirmed` do cupom, de qualquer dono: `sales_count`, `revenue_cents` e `commission_cents` (`null` quando nenhuma venda tem taxa).
+  Somam só as vendas `confirmed` do cupom, de qualquer dono: `sales_count`, `revenue_cents` e `commission_cents` (`null` quando nenhuma venda tem taxa). E o [pagamento da comissão](#pagamento-da-comissão), em centavos: `commission_reserved_cents` (reservada na verba e ainda não paga), `commission_paid_cents` (já paga ao creator) e `commission_awaiting_cents` (aguardando verba da marca).
 </ResponseField>
 
 <ResponseField name="created_at" type="string" required>
@@ -129,6 +146,10 @@ Os `totals` do cupom somam todas as vendas confirmadas do cupom, de qualquer don
   "mission_id": "c3a2b1d0-e9f8-4a7b-9c6d-5e4f3a2b1c0d",
   "commission_rate_bps": 2500,
   "commission_cents": 3750,
+  "commission_status": "reserved",
+  "commission_due_on": "2026-10-28",
+  "commission_paid_at": null,
+  "commission_reversed_at": null,
   "occurred_at": "2026-10-21T15:42:00Z",
   "created_at": "2026-10-21T15:42:03Z",
   "updated_at": "2026-10-21T15:42:03Z"
@@ -144,7 +165,7 @@ Os `totals` do cupom somam todas as vendas confirmadas do cupom, de qualquer don
 </ResponseField>
 
 <ResponseField name="amount_cents" type="integer" required>
-  Valor da venda em centavos, maior que zero.
+  Valor pago pelo cliente nos produtos, em centavos, maior que zero: já com o desconto do cupom, sem frete e sem impostos destacados. A comissão é calculada sobre esse valor.
 </ResponseField>
 
 <ResponseField name="status" type="string" required>
@@ -167,8 +188,33 @@ Os `totals` do cupom somam todas as vendas confirmadas do cupom, de qualquer don
   Comissão do creator nesta venda. `null` quando a campanha não tinha taxa.
 </ResponseField>
 
+<ResponseField name="commission_status" type="string | null" required>
+  Pagamento da comissão da venda (ver [Pagamento da comissão](#pagamento-da-comissão)). `null` quando a comissão do cupom não está liberada para a sua marca.
+
+  - `none`: sem pagamento (cupom sem comissão paga, ou venda cancelada antes).
+  - `reserved`: reservada na verba, paga em `commission_due_on`.
+  - `awaiting_budget`: a verba acabou; a comissão só entra se a marca adicionar verba até `commission_due_on`.
+  - `no_commission`: o prazo passou sem verba.
+  - `after_campaign_end`: venda depois do fim da campanha, sem comissão.
+  - `released`: reservada e devolvida à verba, porque a venda foi cancelada antes do pagamento.
+  - `paid`: paga ao creator.
+  - `reversed`: paga e estornada pelo cancelamento da venda.
+</ResponseField>
+
+<ResponseField name="commission_due_on" type="string | null" required>
+  Data (`AAAA-MM-DD`): o dia do pagamento quando `reserved`, ou o último dia para a marca adicionar verba quando `awaiting_budget`. `null` nos demais estados.
+</ResponseField>
+
+<ResponseField name="commission_paid_at" type="string | null" required>
+  Quando a comissão foi paga ao creator, ou `null`.
+</ResponseField>
+
+<ResponseField name="commission_reversed_at" type="string | null" required>
+  Quando a comissão paga foi estornada pelo cancelamento da venda, ou `null`.
+</ResponseField>
+
 <ResponseField name="occurred_at" type="string" required>
-  Quando a venda aconteceu.
+  Quando a venda aconteceu. É esta data que decide se a venda foi antes ou depois do fim da campanha.
 </ResponseField>
 
 <ResponseField name="created_at" type="string" required>

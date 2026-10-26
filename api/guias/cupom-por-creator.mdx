@@ -116,11 +116,13 @@ Cada creator aprovado na campanha ganha um cupom próprio. O creator divulga o c
   </Step>
 
   <Step title="O creator é avisado">
-    Assim que o cupom é criado, o creator recebe no app a notificação **"Seu cupom chegou"**, com o código e o nome da campanha. O cupom aparece na tela da campanha, para ele divulgar. Trocar o código depois não manda outro aviso.
+    Assim que o cupom é criado, o creator recebe no app a notificação **"Você recebeu um cupom"**, com o código e o nome da campanha. O cupom aparece na tela da campanha, para ele divulgar. Se você trocar o código ou o desconto com `PATCH /coupons/{id}`, ou cancelar o cupom, ele é avisado de novo.
   </Step>
 
   <Step title="Registre cada venda e cada estorno">
     A cada venda com o cupom, chame `PUT /coupons/{id}/sales/{external_id}`, usando o id do pedido no seu sistema como `external_id`. A chamada é idempotente: repetir não duplica a venda, então pode chamar de novo sempre que o pedido mudar.
+
+    Em `amount_cents`, mande o valor pago pelo cliente nos produtos, já com o desconto do cupom, sem frete e sem impostos destacados. É sobre esse valor que a comissão é calculada.
 
     <CodeGroup>
 
@@ -149,7 +151,7 @@ Cada creator aprovado na campanha ganha um cupom próprio. O creator divulga o c
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            amount_cents: order.totalCents,
+            amount_cents: order.productsTotalCents,
             status: order.refunded ? "canceled" : "confirmed",
             occurred_at: order.paidAt,
           }),
@@ -197,6 +199,29 @@ Cada creator aprovado na campanha ganha um cupom próprio. O creator divulga o c
     Os `totals` do cupom somam só as vendas `confirmed`. Estorno (`canceled`) sai dos totais. Consulte a qualquer momento com `GET /coupons/{id}` e `GET /coupons/{id}/sales`.
   </Step>
 </Steps>
+
+## Pagamento da comissão
+
+Com taxa maior que zero, a marca separa uma verba de comissão na campanha, no painel da Conty, e a Conty paga o creator com ela. A sua integração não paga nada: ela registra as vendas e os estornos, e acompanha o pagamento pelos campos da venda.
+
+- Cada venda confirmada reserva a comissão na verba e é paga ao creator **7 dias depois da venda**. O creator pode sacar **30 dias depois do pagamento**.
+- `commission_status` diz onde a comissão está (`reserved`, `paid`, `awaiting_budget` e os demais estados da [referência](/api/referencia/cupons#pagamento-da-comissão)), com `commission_due_on`, `commission_paid_at` e `commission_reversed_at`.
+- Nos `totals` do cupom, `commission_reserved_cents`, `commission_paid_cents` e `commission_awaiting_cents` somam a comissão reservada, paga e aguardando verba.
+- Venda com `occurred_at` depois do fim da campanha não tem comissão (`after_campaign_end`). Mande a data real da venda, não a data do envio.
+
+### Reembolso
+
+O reembolso é o mesmo `PUT` da venda com `"status": "canceled"`. O que acontece com a comissão depende de quando ele chega:
+
+| Quando o reembolso chega | Comissão |
+|---|---|
+| Até o 7º dia, antes do pagamento | Sai e volta para a verba (`released`) |
+| Do pagamento até o 37º dia | É estornada do creator (`reversed`) |
+| Depois do 37º dia | Fica com o creator; a venda segue `paid` |
+
+<Note>
+  Informe o reembolso assim que ele acontecer na sua loja. Depois que o creator pode sacar, a Conty não estorna mais a comissão.
+</Note>
 
 ## Cupons disponíveis
 
@@ -288,13 +313,13 @@ Se os códigos já existem na sua loja, você não precisa criar um por creator 
     }
     ```
 
-    O creator recebe no app o aviso **"Seu cupom chegou"**, como na criação. Repetir o `assign` com a mesma missão não muda nada e não manda outro aviso. Se dois eventos chegarem juntos e pegarem o mesmo cupom, o segundo recebe `409 coupon_assigned`: liste de novo e tente o próximo livre.
+    O creator recebe no app o aviso **"Você recebeu um cupom"**, como na criação. Repetir o `assign` com a mesma missão não muda nada e não manda outro aviso. Se dois eventos chegarem juntos e pegarem o mesmo cupom, o segundo recebe `409 coupon_assigned`: liste de novo e tente o próximo livre.
   </Step>
 
   <Step title="Troque ou desvincule quando precisar">
     Para trocar o cupom de um creator, vincule outro cupom livre a ele com `assign`. O cupom antigo fica disponível sozinho: continua `active`, com `creator` e `mission_id` nulos, pronto para outro creator. Ele não é cancelado.
 
-    Para tirar o cupom do creator sem dar outro, chame `POST /coupons/{id}/unassign`, sem corpo. O cupom fica disponível e ninguém é avisado:
+    Para tirar o cupom do creator sem dar outro, chame `POST /coupons/{id}/unassign`, sem corpo. O cupom fica disponível e o creator que era o dono é avisado no app:
 
     ```bash cURL
     curl -X POST https://api.appconty.com/public/v1/coupons/4e5f6a7b-8c9d-4e0f-a1b2-c3d4e5f6a7b8/unassign \
