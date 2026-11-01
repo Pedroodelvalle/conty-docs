@@ -11,7 +11,7 @@ keywords:
   - validação
 ---
 
-A Conty usa uma carteira pré-paga. A marca adiciona saldo, a campanha reserva esse valor e o criador recebe depois da aprovação do conteúdo. O saque é via Pix.
+A Conty usa uma carteira pré-paga. A marca adiciona saldo, a campanha reserva esse valor e o criador recebe depois da aprovação do conteúdo. O criador vê sempre o valor cheio que a marca pagou e saca quando quiser, por Pix, pelo app.
 
 <div className="conty-option-cards">
 <CardGroup cols={2}>
@@ -28,7 +28,7 @@ A Conty usa uma carteira pré-paga. A marca adiciona saldo, a campanha reserva e
 
 <Steps>
   <Step title="A marca adiciona saldo">
-    É preciso ter um [plano](/marcas/planos) ativo. O depósito mínimo é de R\$ 150, por Pix, boleto ou cartão de crédito. Pix cai na hora; boleto e cartão levam até 1 dia útil. A taxa é a do plano e já sai do valor depositado.
+    É preciso ter um [plano](/marcas/planos) ativo e verificar os dados da empresa. O depósito fica no saldo da própria marca. O mínimo é de R\$ 150, por Pix, boleto ou cartão de crédito. Pix cai na hora; boleto e cartão levam até 1 dia útil. A taxa de recarga é a do plano, aparece antes do pagamento, já sai do valor depositado e não é reembolsável.
   </Step>
   <Step title="A campanha reserva o valor">
     A campanha só pode ser criada se o saldo **disponível** cobrir os custos da campanha e dos conteúdos. Assim que ela é criada, o valor fica reservado para ela.
@@ -37,7 +37,7 @@ A Conty usa uma carteira pré-paga. A marca adiciona saldo, a campanha reserva e
     Sem aprovação final, não há pagamento. Recusar um vídeo não gera custo.
   </Step>
   <Step title="O criador recebe e saca">
-    O valor entra na carteira do criador já com a taxa descontada e fica disponível para saque **30 dias** depois da aprovação do conteúdo, na chave Pix cadastrada.
+    O valor cheio pago pela marca entra na carteira do criador e fica disponível para saque depois do prazo de pagamento da campanha, de no mínimo **30 dias** da aprovação. O criador saca quando quiser, pelo app, e a taxa de 5% da Conty sai no saque.
   </Step>
 </Steps>
 
@@ -45,10 +45,10 @@ A Conty usa uma carteira pré-paga. A marca adiciona saldo, a campanha reserva e
 
 | Quem | Pendente | Disponível |
 | --- | --- | --- |
-| Marca | Depósito com pagamento ainda não confirmado | Pagamento confirmado (Pix na hora; boleto e cartão em até 1 dia útil). Pode ser usado para criar campanhas |
-| Criador | Valor aprovado aguardando os 30 dias. Ainda não dá para sacar | Pode sacar via Pix |
+| Marca | Depósito com pagamento ainda não confirmado | Pagamento confirmado (Pix na hora; boleto e cartão em até 1 dia útil). Pode ser usado para criar campanhas, e o saldo livre pode ser sacado |
+| Criador | Valor aprovado aguardando o prazo de pagamento da campanha. Ainda não dá para sacar | Pode sacar via Pix, pelo app |
 
-Para o criador, o valor fica disponível para saque **30 dias** depois da aprovação, independente do método de pagamento da marca. Em alguns casos, pode levar mais de 30 dias: o prazo exato está sempre escrito na campanha.
+Para o criador, o valor fica disponível para saque depois do prazo de pagamento da campanha, que é de no mínimo **30 dias** contados da aprovação, independente do método de pagamento da marca. O prazo exato aparece na campanha antes de o criador aceitar.
 
 ## Formatos de pagamento da campanha
 
@@ -57,7 +57,7 @@ Para o criador, o valor fica disponível para saque **30 dias** depois da aprova
 - **Fixo + por views:** um valor fixo mais um adicional por visualização.
 - **Permuta:** não há pagamento em dinheiro. A marca descreve o item e o criador vê **PERMUTA**.
 
-A taxa da plataforma para o criador é de **5%**, descontada quando a campanha é concluída: o valor já entra na carteira líquido. Não há taxa no saque. Campanhas de permuta não têm desconto nem saque.
+A taxa da plataforma para o criador é de **5%** e sai **no saque**. Até sacar, o criador vê o valor cheio que a marca pagou. Na hora de sacar, o app mostra a conta antes de confirmar: em um saque de R\$ 100, sai R\$ 5 de taxa e o criador recebe R\$ 95. A tarifa do Pix é por conta da Conty. Campanhas de permuta não têm taxa nem saque.
 
 <Info>
   A aprovação da candidatura só libera a produção. O pagamento acontece na aprovação final da entrega.
