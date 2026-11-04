@@ -38,7 +38,7 @@ Toda mudança no contrato da API aparece aqui antes de entrar no ar. Enquanto a 
   Leitura das campanhas e do quadro pela chave, com os mesmos status, rótulos e contagens do painel. Só leitura.
 
   **API**
-  - `GET /campaigns` e `GET /campaigns/{id}`: campanha é o acordo (`kind: "agreement"`) ou a avulsa (`kind: "campaign"`), com um id só, o mesmo `data.campaign.id` dos webhooks. Filtro por `status` (vários, separados por vírgula) e `q`, paginação por cursor. Id de bloco de acordo responde `404 not_found`.
+  - `GET /campaigns` e `GET /campaigns/{id}`: a campanha tem `kind` `agreement` (vários blocos, um por plataforma) ou `campaign` (um bloco só), com um id só, o mesmo `data.campaign.id` dos webhooks. Filtro por `status` (vários, separados por vírgula) e `q`, paginação por cursor. Id de um bloco de campanha com `kind: "agreement"` responde `404 not_found`.
   - `GET /campaigns/{id}/stages`: as etapas do quadro com `count`, a unidade da contagem (`unit`: `missions`, `creators` ou `applications`) e as `sorts` e `filters` que valem em cada etapa.
   - `GET /campaigns/{id}/items`: os itens de uma etapa, com todos os filtros e ordenações do quadro (inclusive `sort=match`), `total` filtrado e `compatible_count`. Cursor de posição, amarrado à etapa, aos filtros e à ordenação.
   - `GET /missions/{id}`: a missão com entregas, conteúdo enviado, link do post por rede, métricas, datas, valor e cupom.

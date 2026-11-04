@@ -28,7 +28,7 @@ O cupom pertence a um creator numa campanha, ou fica disponível na campanha at�
 
 ## Regras
 
-- Um cupom **ativo** por creator em cada campanha. Em acordo, a campanha é o acordo.
+- Um cupom **ativo** por creator em cada campanha, mesmo quando a campanha tem várias plataformas.
 - O `code` é normalizado (sem espaço nas pontas, em maiúsculas) e aceita `A-Z`, `0-9`, `_` e `-`, de 3 a 40 caracteres. Não pode repetir entre os cupons ativos da marca.
 - Cancelar é definitivo. As vendas continuam, e a marca pode criar outro cupom para o mesmo creator.
 - `amount_cents` é o valor pago pelo cliente nos produtos, já com o desconto do cupom, sem frete e sem impostos destacados.
@@ -37,7 +37,7 @@ O cupom pertence a um creator numa campanha, ou fica disponível na campanha at�
 
 ## Regras dos cupons disponíveis
 
-- `POST /coupons` recebe `mission_id` **ou** `campaign_id`, nunca os dois (`422 validation_failed`). Com `campaign_id`, o cupom nasce disponível: `creator` e `mission_id` nulos. O `campaign_id` pode ser a campanha avulsa, o acordo ou uma campanha do acordo; o cupom fica disponível no acordo.
+- `POST /coupons` recebe `mission_id` **ou** `campaign_id`, nunca os dois (`422 validation_failed`). Com `campaign_id`, o cupom nasce disponível: `creator` e `mission_id` nulos. O `campaign_id` é o id da campanha, o mesmo de `GET /campaigns/{id}`.
 - Só cupom disponível é vinculável. Cupom vinculado a outro creator responde `409 coupon_assigned`: desvincule antes.
 - Vincular ao creator que já é o dono não muda nada e responde `200`, sem novo aviso.
 - **Trocar:** se o creator já tem cupom ativo na campanha, o `assign` deixa o antigo disponível (continua `active`, sem creator; não é cancelado) e vincula o novo.
@@ -103,7 +103,7 @@ Com taxa maior que zero, a marca separa uma verba de comissão na campanha, no p
 </ResponseField>
 
 <ResponseField name="campaign" type="object" required>
-  Campanha raiz: o acordo, quando a missão é de acordo; a campanha avulsa, quando não. Traz `id` e `name`.
+  Campanha da missão, o mesmo id de `GET /campaigns/{id}`. Traz `id` e `name`.
 </ResponseField>
 
 <ResponseField name="creator" type="object | null" required>

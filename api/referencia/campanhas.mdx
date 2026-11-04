@@ -5,7 +5,6 @@ description: "As campanhas da marca, as etapas do quadro com a contagem do paine
 icon: "megaphone"
 keywords:
   - campanhas
-  - acordo
   - quadro
   - etapas
   - candidaturas
@@ -22,18 +21,18 @@ A chave lê as campanhas da marca como o painel mostra para o dono da marca: os 
 4. `GET /campaigns/{id}/items?stage=<id>` lista as missões ou as candidaturas de uma etapa.
 5. `GET /missions/{id}` abre uma missão (veja [Missões](/api/referencia/missoes)).
 
-## Campanha é o acordo ou a avulsa
+## Formato da campanha
 
-Para a API, campanha é uma de duas coisas, e cada uma tem um id só:
+`kind` diz o formato da campanha. O id e as rotas são os mesmos nos dois:
 
-| `kind` | O que é | `id` |
-|---|---|---|
-| `agreement` | O acordo, com um bloco por plataforma | O id do acordo |
-| `campaign` | A campanha avulsa, sem acordo | O id da campanha |
+| `kind` | O que é |
+|---|---|
+| `agreement` | Campanha com vários blocos, um por plataforma |
+| `campaign` | Campanha de um bloco só |
 
-- O bloco de plataforma de um acordo não aparece na lista e não é aceito como `{id}`: responde `404 not_found`. Ele aparece em `blocks[]` no detalhe do acordo.
-- A avulsa também tem `blocks[]`, com um bloco só: ela mesma.
-- O `id` é o mesmo `data.campaign.id` que os [webhooks](/api/webhooks/visao-geral) mandam e o mesmo `campaign.id` do [cupom](/api/referencia/cupons). Um acordo com Reels e TikTok conta como uma campanha.
+- O bloco não aparece na lista e não é aceito como `{id}`: id de um bloco de campanha com `kind: "agreement"` responde `404 not_found`. Os blocos aparecem em `blocks[]` no detalhe da campanha.
+- Com `kind: "campaign"`, `blocks[]` traz um bloco só: a própria campanha.
+- O `id` é o mesmo `data.campaign.id` que os [webhooks](/api/webhooks/visao-geral) mandam e o mesmo `campaign.id` do [cupom](/api/referencia/cupons). Uma campanha com Reels e TikTok conta como uma campanha só.
 - Campanha de outra marca ou inexistente responde `404 not_found`, igual nos dois casos.
 
 ## Filtros da lista
@@ -91,7 +90,7 @@ Quando a marca é assistida por uma agência que não liberou ver preço, `money
 ```
 
 <ResponseField name="kind" type="string" required>
-  `agreement` (acordo) ou `campaign` (avulsa).
+  Formato da campanha: `agreement` reúne vários blocos, um por plataforma; `campaign` é uma campanha de um bloco só. O id e as rotas são os mesmos nos dois.
 </ResponseField>
 
 <ResponseField name="status" type="string" required>
@@ -99,7 +98,7 @@ Quando a marca é assistida por uma agência que não liberou ver preço, `money
 </ResponseField>
 
 <ResponseField name="platforms" type="string[]" required>
-  Formatos de entrega. No acordo, um por bloco.
+  Formatos de entrega, um por bloco.
 </ResponseField>
 
 <ResponseField name="payment" type="object" required>
@@ -107,7 +106,7 @@ Quando a marca é assistida por uma agência que não liberou ver preço, `money
 </ResponseField>
 
 <ResponseField name="creators_limit" type="integer | null" required>
-  Teto de creators. `null` quando não há teto; na avulsa é sempre `null`. As vagas calculadas (abertas, em espera, o que limita) saem só em `vacancies`, no `/stages`.
+  Teto de creators. `null` quando não há teto; com `kind: "campaign"` é sempre `null`. As vagas calculadas (abertas, em espera, o que limita) saem só em `vacancies`, no `/stages`.
 </ResponseField>
 
 <ResponseField name="creators_count" type="integer" required>
@@ -118,7 +117,7 @@ Quando a marca é assistida por uma agência que não liberou ver preço, `money
   Link da campanha no painel da marca.
 </ResponseField>
 
-O detalhe (`GET /campaigns/{id}`) soma `description`, `objective`, `review_chain` (quem revisa cada entrega, na ordem: `["brand"]` ou `["agency", "brand"]`), `requires` (`script`, `cover`, `caption`, `ad_code`, `product_shipping`), `blocks[]` (`id`, `platform`, `video_format`, `quantity`, `status`, `script_deadline`, `delivery_deadline`, `posting_date`) e `scope_options[]` (`id`, `name`, `items[]` com `block_id` e `quantity`, e `amount_cents`). Na avulsa, `scope_options` vem vazia.
+O detalhe (`GET /campaigns/{id}`) soma `description`, `objective`, `review_chain` (quem revisa cada entrega, na ordem: `["brand"]` ou `["agency", "brand"]`), `requires` (`script`, `cover`, `caption`, `ad_code`, `product_shipping`), `blocks[]` (`id`, `platform`, `video_format`, `quantity`, `status`, `script_deadline`, `delivery_deadline`, `posting_date`) e `scope_options[]` (`id`, `name`, `items[]` com `block_id` e `quantity`, e `amount_cents`). Com `kind: "campaign"`, `scope_options` vem vazia.
 
 ## Etapas do quadro
 
@@ -184,7 +183,7 @@ O detalhe (`GET /campaigns/{id}`) soma `description`, `objective`, `review_chain
 | `unit` | O que `count` conta |
 |---|---|
 | `missions` | Missões |
-| `creators` | Creators distintos. No acordo, o quadro conta pessoas: cada creator vem nos itens com todas as entregas dele naquela etapa |
+| `creators` | Creators distintos. O quadro conta pessoas: cada creator vem nos itens com todas as entregas dele naquela etapa |
 | `applications` | Candidaturas |
 
 `kind` diz o que a etapa lista: `missions` ou `applications`.
@@ -218,8 +217,8 @@ Os mesmos do quadro do painel, aplicados no banco antes da paginação.
 | `location` | Locais no formato `país:UF:cidade`, separados por vírgula. UF e cidade são opcionais: `BR:SP:São Paulo`. |
 | `networks` | Redes que o creator tem conectadas, separadas por vírgula: `instagram,tiktok`. |
 | `followers_min` / `followers_max` | Faixa de seguidores no Instagram. `followers_max` tem de ser maior ou igual a `followers_min`. |
-| `scope_option_id` | Só creators desta opção de escopo do acordo. |
-| `briefing_id` | Só creators com este briefing do acordo. |
+| `scope_option_id` | Só creators desta opção de escopo da campanha. |
+| `briefing_id` | Só creators com este briefing da campanha. |
 | `exclude_in_other_campaigns` | `true` tira quem está em outra campanha ativa da marca. |
 | `elsewhere_status` | Situação do creator nas outras campanhas da marca: `participating`, `rejected` ou `approved`. |
 | `elsewhere_mode` | `include` mantém só quem bate o filtro, `exclude` tira. |
@@ -274,5 +273,5 @@ A projeção é uma lista fechada de campos. Campo novo no painel só aparece na
 |---|---|---|
 | 403 | `forbidden` | A chave não tem acesso a campanhas, ou é de uma conta que não é de marca |
 | 403 | `plan_required` | A marca está sem plano ativo |
-| 404 | `not_found` | Campanha de outra marca, inexistente, ou id de bloco de acordo |
+| 404 | `not_found` | Campanha de outra marca, inexistente, ou id de um bloco da campanha |
 | 422 | `validation_failed` | Parâmetro inválido, `archived` junto com outro status (`path: "status"`), `stage` desconhecida (`path: "stage"`) ou cursor de outra consulta (`path: "cursor"`) |

@@ -13,12 +13,12 @@ keywords:
 Cada creator aprovado na campanha ganha um cupom próprio. O creator divulga o cupom, a sua loja registra as vendas na Conty e a Conty calcula a comissão do creator com a taxa da campanha. Marca e creator acompanham cupom, vendas e comissão nas telas da Conty.
 
 <Note>
-  A taxa de comissão é configurada na campanha (ou no acordo), no painel da Conty, em pontos-base: `2500` é 25%. Campanha sem taxa registra as vendas normalmente, com a comissão nula. Taxa `0` é cupom só de rastreio: a marca acompanha as vendas de cada creator sem pagar comissão, e a comissão vem `0`.
+  A taxa de comissão é configurada na campanha, no painel da Conty, em pontos-base: `2500` é 25%. Campanha sem taxa registra as vendas normalmente, com a comissão nula. Taxa `0` é cupom só de rastreio: a marca acompanha as vendas de cada creator sem pagar comissão, e a comissão vem `0`.
 </Note>
 
 ## Regras do cupom
 
-- **Um cupom ativo por creator em cada campanha.** Em acordo, a campanha é o acordo: um creator com Reels e TikTok no mesmo acordo tem um cupom só.
+- **Um cupom ativo por creator em cada campanha.** Um creator com Reels e TikTok na mesma campanha tem um cupom só.
 - O `code` é normalizado: sem espaço nas pontas e em maiúsculas. Aceita `A-Z`, `0-9`, `_` e `-`, de 3 a 40 caracteres. `fulana10` vira `FULANA10`.
 - O código não pode repetir entre os cupons ativos da sua marca.
 - Cancelar é definitivo. As vendas do cupom cancelado continuam lá, e você pode criar um cupom novo para o mesmo creator.
@@ -229,7 +229,7 @@ Se os códigos já existem na sua loja, você não precisa criar um por creator 
 
 <Steps>
   <Step title="Cadastre os códigos da loja como cupons disponíveis">
-    Para cada código, chame `POST /coupons` com `campaign_id` no lugar de `mission_id`. Use o id da campanha avulsa ou do acordo; com o id de uma campanha do acordo, o cupom fica disponível no acordo. Ninguém é avisado.
+    Para cada código, chame `POST /coupons` com `campaign_id` no lugar de `mission_id`. Use o id da campanha, o mesmo de `GET /campaigns/{id}`. Ninguém é avisado.
 
     ```bash cURL
     curl -X POST https://api.appconty.com/public/v1/coupons \
@@ -392,7 +392,7 @@ Os eventos de estado saem por missão e seja quem for que causou a mudança: mar
 Se o cupom veio dos cupons disponíveis e o código ainda vale na sua loja, você pode desvincular com `POST /coupons/{id}/unassign` em vez de cancelar. As vendas já registradas continuam atribuídas ao creator que saiu.
 
 <Note>
-  O filtro `mission_id` acha o cupom pela missão usada na criação. Num acordo com várias plataformas, use `creator_id` e `campaign_id` do evento para achar o cupom do creator no acordo.
+  O filtro `mission_id` acha o cupom pela missão usada na criação. Numa campanha com várias plataformas, use `creator_id` e `campaign_id` do evento para achar o cupom do creator na campanha.
 </Note>
 
 ### Gatilho opcional: `mission.approved`
@@ -403,7 +403,7 @@ Se você prefere liberar o cupom só depois que o conteúdo estiver aprovado, cr
 
 <AccordionGroup>
   <Accordion title="409 coupon_exists">
-    O creator já tem um cupom ativo nessa campanha. Acontece quando o mesmo `application.approved` chega duas vezes, ou num acordo com várias plataformas. Não é falha: use o cupom existente, cujo id vem em `error.details[0].coupon_id`. Para trocar o cupom, cancele o atual com `PATCH /coupons/{id}` e `{"status": "canceled"}` e crie outro, ou vincule um dos [cupons disponíveis](#cupons-disponíveis) com `assign`, que deixa o atual disponível.
+    O creator já tem um cupom ativo nessa campanha. Acontece quando o mesmo `application.approved` chega duas vezes, ou numa campanha com várias plataformas. Não é falha: use o cupom existente, cujo id vem em `error.details[0].coupon_id`. Para trocar o cupom, cancele o atual com `PATCH /coupons/{id}` e `{"status": "canceled"}` e crie outro, ou vincule um dos [cupons disponíveis](#cupons-disponíveis) com `assign`, que deixa o atual disponível.
   </Accordion>
   <Accordion title="409 coupon_code_taken">
     Outro cupom ativo da sua marca já usa esse código. Gere outro, por exemplo acrescentando um sufixo (`FULANA10B`), ou cancele o cupom antigo que usa o código.
