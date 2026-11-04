@@ -6,7 +6,7 @@ description: "Política de Privacidade e tratamento de dados pessoais da Conty"
 import { AsaasSeal } from "/snippets/asaas-disclaimer.mdx"
 
 <Note>
-  **Última atualização:** Agosto de 2026.
+  **Última atualização:** Novembro de 2026.
   Esta Política rege o tratamento de dados pessoais no aplicativo Conty (marca própria). Para implantações white-label (ex.: Influenciador Magalu), consulte a política específica do parceiro.
 </Note>
 
@@ -158,9 +158,106 @@ A coleta ocorre das seguintes formas:
 
 - **Fornecidos diretamente pelo usuário:** cadastro, onboarding, suporte e uso de funcionalidades
 - **Automaticamente:** uso do app, cookies, SDKs e ferramentas analíticas
-- **Integrações de redes sociais:** Instagram, TikTok, X, LinkedIn — apenas mediante permissão
+- **Integrações de redes sociais:** Instagram, TikTok, YouTube, X, LinkedIn — apenas mediante permissão
 - **Pagamentos:** dados tratados por instituição de pagamento (**Asaas**, BaaS) e por Apple/Google, sem que a Conty substitua os controles de segurança desses provedores; sem armazenamento local de dados sensíveis de pagamento fora do estritamente necessário à operação
 - **Campanhas:** dados de entregas, revisões e resultados no marketplace
+
+### Contas conectadas: YouTube, Instagram e TikTok
+
+Como creator, você pode conectar à Conty as suas contas do YouTube, do Instagram e do TikTok pelo login oficial de cada rede. A conexão é opcional. Você escolhe quais redes conectar e aprova o acesso na tela da própria rede.
+
+**Regras que valem para as três redes:**
+
+- **Somente leitura.** A Conty só lê dados. Ela não publica, não edita, não apaga e não envia conteúdo em seu nome.
+- **Só com a sua autorização.** Nada é lido antes de você aprovar o acesso. Você pode retirar a autorização quando quiser.
+- **Acesso protegido.** Os tokens de acesso ficam guardados cifrados. Eles nunca são mostrados a marcas nem a outros usuários.
+- **Sem venda de dados.** A Conty não vende nem aluga esses dados e não os usa para publicidade de terceiros.
+
+**Para que a Conty usa esses dados:**
+
+- Mostrar a você o desempenho da sua conta no seu painel de creator.
+- Mostrar à marca que contratou você o desempenho dos conteúdos entregues na campanha.
+- Calcular o pagamento por visualização, nas campanhas que pagam por views.
+- Montar o seu perfil para marcas que buscam creators na Conty, com seguidores, engajamento, desempenho dos conteúdos e audiência agregada.
+- Gerar a análise do seu perfil, como o nicho de conteúdo. Essa análise pode ser feita com os provedores de IA listados na seção 6.
+
+**Com quem esses dados são compartilhados:**
+
+- **Marcas cadastradas na Conty**, ao buscar e avaliar creators: métricas da conta, desempenho dos conteúdos e audiência em percentuais agregados.
+- **A marca de cada campanha:** as métricas dos conteúdos entregues naquela campanha.
+- **Fornecedores da seção 6**, como infraestrutura e IA, apenas como operadores.
+
+Nenhuma marca recebe o seu token nem acesso à sua conta na rede.
+
+#### YouTube
+
+A Conty usa os **Serviços de API do YouTube** (YouTube Data API e YouTube Analytics API). Ao conectar o seu canal, você concorda com os [Termos de Serviço do YouTube](https://www.youtube.com/t/terms). O tratamento de dados pelo Google segue a [Política de Privacidade do Google](https://policies.google.com/privacy).
+
+A Conty pede só as permissões de leitura `youtube.readonly` e `yt-analytics.readonly`. Com elas, lê:
+
+- **Canal:** nome, @, foto e número de inscritos.
+- **Vídeos do canal:** título, descrição, miniatura, duração, data de publicação e estatísticas públicas (visualizações, curtidas e comentários).
+- **Relatórios do YouTube Analytics do seu canal:** visualizações, tempo médio assistido, inscritos ganhos e perdidos, compartilhamentos, fontes de tráfego e tipo de dispositivo.
+- **Audiência do canal:** faixa etária, gênero e país dos espectadores, sempre em percentuais agregados.
+- **Comentários públicos** dos vídeos recentes, usados para medir sinais agregados de engajamento.
+
+A Conty não envia, não edita e não apaga vídeos, comentários ou playlists do seu canal.
+
+**Como revogar o acesso:**
+
+- **Na Conty:** desconecte o YouTube na área de redes conectadas do seu perfil. A Conty também pede ao Google que revogue o acesso.
+- **No Google:** remova a Conty nas [permissões da sua Conta Google](https://security.google.com/settings/security/permissions).
+
+#### Instagram
+
+A conexão usa a API do Instagram com login do Instagram, da Meta. Ela funciona com conta profissional (Criador de conteúdo ou Comercial). O uso desses dados também segue os [Termos da Plataforma Meta](https://developers.facebook.com/terms/) e a [Política de Privacidade da Meta](https://www.facebook.com/privacy/policy/).
+
+A Conty pede só as permissões de leitura `instagram_business_basic` e `instagram_business_manage_insights`. Com elas, lê:
+
+- **Perfil:** nome, @, foto, biografia, site, tipo de conta, seguidores, contas seguidas e número de publicações.
+- **Publicações e stories:** legenda, mídia, link, data, curtidas e número de comentários.
+- **Insights das publicações e dos stories:** alcance, visualizações, interações e navegação.
+- **Insights da conta:** alcance, visualizações e seguidores ganhos e perdidos.
+- **Audiência da conta:** idade, gênero, país e cidade dos seguidores, sempre em dados agregados.
+
+A Conty não publica, não comenta e não envia mensagens pela sua conta.
+
+**Como revogar o acesso:**
+
+- **Na Conty:** desconecte o Instagram na área de redes conectadas do seu perfil.
+- **No Instagram:** abra Configurações > Apps e sites ("Apps and websites") e remova a Conty.
+
+**Como pedir a exclusão dos dados:** quando você remove a Conty no Instagram ou pede a exclusão dos dados à Meta, a Meta avisa a Conty. A Conty então apaga a conexão e os dados lidos daquela conta: métricas, audiência e análise do perfil. Você recebe um código para acompanhar o pedido. Também pode pedir a exclusão pelos contatos da seção 13, como [dpo@appconty.com](mailto:dpo@appconty.com).
+
+#### TikTok
+
+A conexão usa o Login Kit e a Display API do TikTok. O uso desses dados também segue a [Política de Privacidade do TikTok](https://www.tiktok.com/legal/privacy-policy) e os [Termos de Serviço do TikTok](https://www.tiktok.com/legal/terms-of-service).
+
+A Conty pede só as permissões de leitura `user.info.basic`, `user.info.profile`, `user.info.stats` e `video.list`. Com elas, lê:
+
+- **Perfil:** nome, @, foto, biografia, link do perfil, selo de verificação, seguidores, contas seguidas, total de curtidas e número de vídeos.
+- **Vídeos:** título, descrição, capa, duração, data, link e estatísticas públicas (visualizações, curtidas, comentários e compartilhamentos).
+
+A Conty não publica, não edita e não apaga vídeos da sua conta.
+
+**Como revogar o acesso:**
+
+- **Na Conty:** desconecte o TikTok na área de redes conectadas do seu perfil. A Conty também pede ao TikTok que revogue o acesso.
+- **No TikTok:** abra Configurações e privacidade > Segurança > Gerenciar permissões de apps ("Settings > Security > Manage app permissions") e remova a Conty.
+
+#### Retenção e o que acontece ao desconectar
+
+Enquanto a conta estiver conectada, a Conty guarda os dados lidos e os atualiza em ciclos automáticos.
+
+Quando você desconecta uma rede na Conty:
+
+- Os tokens de acesso são apagados na hora e a conexão é encerrada.
+- A análise do perfil gerada a partir daquela rede é apagada.
+- As métricas e a audiência já coletadas param de ser atualizadas e deixam de aparecer no seu perfil para as marcas.
+
+Quando você revoga o acesso direto na rede, a Conty percebe na próxima atualização. Ela apaga os tokens e avisa você para reconectar.
+
+Nos dois casos, as métricas já coletadas ficam guardadas no histórico da sua conta até você pedir a exclusão pelos contatos da seção 13. As métricas dos conteúdos entregues em campanhas ficam no histórico da campanha, para comprovar a entrega e calcular pagamentos (veja a seção 9).
 
 ---
 
@@ -252,6 +349,7 @@ As políticas são revisadas continuamente para mitigar vulnerabilidades.
 |--------------|---------------------|
 | Dados cadastrais | Mantidos enquanto houver vínculo ativo com a plataforma |
 | Dados de campanhas | Mantidos para histórico e disputas conforme Central de Regras |
+| Dados de redes conectadas (YouTube, Instagram, TikTok) | Atualizados enquanto a conta estiver conectada. Tokens apagados ao desconectar. Métricas já coletadas guardadas até o pedido de exclusão (veja a seção 3) |
 | Dados de navegação | Podem ser armazenados de forma anonimizada para fins estatísticos |
 | Snapshots do Conty Creator Index | Somente agregados anonimizados; competências publicadas permanecem como registro da pesquisa |
 | Dados financeiros | Mantidos por **5 anos** conforme legislação fiscal |
