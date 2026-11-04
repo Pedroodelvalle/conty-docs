@@ -36,7 +36,7 @@ Todo evento usa o [envelope comum](/api/webhooks/visao-geral). O que muda de um 
 </ResponseField>
 
 <ResponseField name="data.campaign" type="object" required>
-  A campanha: `id`, `name` e `url` (link da campanha no painel, ou `null`). Em campanha de acordo, `id` e `name` são os do acordo.
+  A campanha: `id`, `name` e `url` (link da campanha no painel, ou `null`). O `id` é o mesmo de `GET /campaigns/{id}`.
 </ResponseField>
 
 <ResponseField name="data.creator" type="object" required>
@@ -53,7 +53,7 @@ Eventos que nascem de uma ação do creator na missão.
 
 ### mission.accepted
 
-O creator aceitou o convite ou começou a missão numa campanha aberta. No acordo, o aceite do pacote gera um evento só, com o acordo em `data.campaign`.
+O creator aceitou o convite ou começou a missão numa campanha aberta. Numa campanha com várias plataformas, o aceite gera um evento só, com a campanha em `data.campaign`.
 
 ```json
 {
@@ -214,7 +214,7 @@ O link do post ficou confirmado na missão. Link recusado (post inacessível, de
 
 ## Decisões e estado da missão
 
-Eventos de decisão sobre o conteúdo e de mudança de estado da missão. Eles saem **seja quem for que causou** a mudança: a marca, a agência, o backoffice da Conty ou a expiração automática. Saem por missão, também em campanha de acordo.
+Eventos de decisão sobre o conteúdo e de mudança de estado da missão. Eles saem **seja quem for que causou** a mudança: a marca, a agência, o backoffice da Conty ou a expiração automática. Saem por missão, também em campanha com várias plataformas.
 
 ### mission.changes_requested
 

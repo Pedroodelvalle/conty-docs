@@ -15,11 +15,11 @@ Todo evento usa o [envelope comum](/api/webhooks/visao-geral). O que muda de um 
 
 | Evento | Quando sai |
 |---|---|
-| `application.created` | O creator se candidatou à campanha ou ao acordo |
+| `application.created` | O creator se candidatou à campanha |
 | `application.approved` | A marca aprovou a candidatura e o creator tem uma missão aberta |
 | `application.rejected` | A marca ou a agência recusou a candidatura |
 
-Num acordo, sai **um evento por candidatura**: o pacote é a unidade, e `data.campaign` é o acordo.
+Sai **um evento por candidatura**, mesmo numa campanha com várias plataformas. `data.campaign` é a campanha, o mesmo id de `GET /campaigns/{id}`.
 
 ## Campos comuns de `data`
 
@@ -28,7 +28,7 @@ Num acordo, sai **um evento por candidatura**: o pacote é a unidade, e `data.ca
 </ResponseField>
 
 <ResponseField name="data.campaign" type="object" required>
-  A campanha: `id`, `name` e `url` (link da campanha no painel, ou `null`). Em campanha de acordo, `id` e `name` são os do acordo.
+  A campanha: `id`, `name` e `url` (link da campanha no painel, ou `null`). O `id` é o mesmo de `GET /campaigns/{id}`.
 </ResponseField>
 
 <ResponseField name="data.creator" type="object" required>
@@ -45,7 +45,7 @@ Num acordo, sai **um evento por candidatura**: o pacote é a unidade, e `data.ca
 
 ## application.created
 
-O creator se candidatou à campanha avulsa ou ao acordo. Ainda não existe missão: `data.mission` vem `null`.
+O creator se candidatou à campanha. Ainda não existe missão: `data.mission` vem `null`.
 
 ```json
 {
@@ -70,7 +70,7 @@ O creator se candidatou à campanha avulsa ou ao acordo. Ainda não existe miss�
 
 ## application.approved
 
-A marca aprovou a candidatura e o creator ficou com uma missão aberta na campanha. Sai uma vez por candidatura aprovada, em qualquer caminho: aprovação unitária, em lote, por convite ou no acordo. Num acordo com várias plataformas, `data.mission` é a missão representante do pacote. Aprovar quem já tinha missão aberta também emite, com a missão existente.
+A marca aprovou a candidatura e o creator ficou com uma missão aberta na campanha. Sai uma vez por candidatura aprovada, em qualquer caminho: aprovação unitária, em lote ou por convite. Numa campanha com várias plataformas, `data.mission` é a missão representante da candidatura. Aprovar quem já tinha missão aberta também emite, com a missão existente.
 
 É o evento de partida do [cupom por creator](/api/guias/cupom-por-creator): `data.mission.id` é o `mission_id` que o `POST /coupons` espera.
 
@@ -97,7 +97,7 @@ A marca aprovou a candidatura e o creator ficou com uma missão aberta na campan
 
 ## application.rejected
 
-A marca ou a agência recusou a candidatura, de forma unitária, em lote ou no acordo. `data.mission` vem `null`, ou com a missão, se ela já existia.
+A marca ou a agência recusou a candidatura, de forma unitária ou em lote. `data.mission` vem `null`, ou com a missão, se ela já existia.
 
 ```json
 {

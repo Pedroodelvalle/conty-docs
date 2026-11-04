@@ -73,11 +73,11 @@ O id da missão chega no `data.mission.id` dos [eventos de missão](/api/webhook
 ```
 
 <ResponseField name="campaign" type="object" required>
-  A campanha raiz: o acordo quando há, ou a avulsa. `id`, `kind` e `name`. O `id` é o mesmo de [`GET /campaigns/{id}`](/api/referencia/campanhas).
+  Campanha da missão: `id`, `kind` e `name`. O `id` é o mesmo de [`GET /campaigns/{id}`](/api/referencia/campanhas).
 </ResponseField>
 
 <ResponseField name="block" type="object | null" required>
-  O bloco do acordo da missão (`id` e `platform`). `null` na avulsa.
+  O bloco da campanha em que está a missão (`id` e `platform`). `null` quando a campanha tem `kind: "campaign"`.
 </ResponseField>
 
 <ResponseField name="creator" type="object" required>

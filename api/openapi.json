@@ -94,15 +94,19 @@
                   "open_api_disabled",
                   "plan_required",
                   "coupons_disabled",
+                  "chat_disabled",
+                  "chat_forbidden",
                   "forbidden",
                   "not_found",
                   "coupon_exists",
                   "coupon_code_taken",
                   "coupon_canceled",
                   "coupon_assigned",
+                  "conversation_closed",
                   "coupon_campaign_mismatch",
                   "sale_occurred_at_out_of_range",
                   "validation_failed",
+                  "creator_not_in_campaign",
                   "mission_closed",
                   "rate_limited",
                   "internal_error"
@@ -198,7 +202,7 @@
               "id": {
                 "type": "string",
                 "format": "uuid",
-                "description": "Id da campanha avulsa ou do acordo.",
+                "description": "Id da campanha, o mesmo de GET /campaigns/{id}.",
                 "example": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f"
               },
               "name": {
@@ -211,7 +215,7 @@
               "id",
               "name"
             ],
-            "description": "Campanha do cupom. No acordo, é o acordo inteiro."
+            "description": "Campanha do cupom. Com vários blocos, o cupom vale para a campanha inteira."
           },
           "creator": {
             "$ref": "#/components/schemas/CouponCreator"
@@ -373,7 +377,7 @@
           "campaign_id": {
             "type": "string",
             "format": "uuid",
-            "description": "Campanha avulsa ou acordo. Cria o cupom disponível na campanha, para vincular a um creator depois. Informe este ou mission_id.",
+            "description": "Campanha. Cria o cupom disponível na campanha, para vincular a um creator depois. Informe este ou mission_id.",
             "example": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f"
           },
           "code": {
@@ -713,7 +717,7 @@
           "id": {
             "type": "string",
             "format": "uuid",
-            "description": "Id da campanha: o do acordo, ou o da avulsa. É o mesmo data.campaign.id dos webhooks e o campaign.id do cupom.",
+            "description": "Id da campanha. É o mesmo data.campaign.id dos webhooks e o campaign.id do cupom.",
             "example": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f"
           },
           "kind": {
@@ -735,7 +739,7 @@
             "items": {
               "$ref": "#/components/schemas/CampaignPlatform"
             },
-            "description": "Formatos de entrega da campanha. No acordo, um por bloco.",
+            "description": "Formatos de entrega da campanha, um por bloco.",
             "example": [
               "reels_collab",
               "tiktok"
@@ -834,7 +838,7 @@
           "agreement",
           "campaign"
         ],
-        "description": "agreement é um acordo, com um bloco por plataforma. campaign é uma campanha avulsa, sem acordo.",
+        "description": "Formato da campanha: agreement reúne vários blocos, um por plataforma; campaign é uma campanha de um bloco só. O id e as rotas são os mesmos nos dois.",
         "example": "agreement"
       },
       "CampaignStatus": {
@@ -1022,7 +1026,7 @@
           "id": {
             "type": "string",
             "format": "uuid",
-            "description": "Id da campanha: o do acordo, ou o da avulsa. É o mesmo data.campaign.id dos webhooks e o campaign.id do cupom.",
+            "description": "Id da campanha. É o mesmo data.campaign.id dos webhooks e o campaign.id do cupom.",
             "example": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f"
           },
           "kind": {
@@ -1044,7 +1048,7 @@
             "items": {
               "$ref": "#/components/schemas/CampaignPlatform"
             },
-            "description": "Formatos de entrega da campanha. No acordo, um por bloco.",
+            "description": "Formatos de entrega da campanha, um por bloco.",
             "example": [
               "reels_collab",
               "tiktok"
@@ -1158,14 +1162,14 @@
             "items": {
               "$ref": "#/components/schemas/CampaignBlock"
             },
-            "description": "Blocos da campanha. A avulsa tem um bloco só, ela mesma."
+            "description": "Blocos da campanha. Com kind campaign, um bloco só, a própria campanha."
           },
           "scope_options": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/CampaignScopeOption"
             },
-            "description": "Opções de escopo do acordo. Vazia na avulsa."
+            "description": "Opções de escopo da campanha. Vazia com kind campaign."
           }
         },
         "required": [
@@ -1238,7 +1242,7 @@
           "id": {
             "type": "string",
             "format": "uuid",
-            "description": "Id do bloco. Na avulsa, é o id da própria campanha.",
+            "description": "Id do bloco. Com kind campaign, é o id da própria campanha.",
             "example": "3e7a9c1d-2b4f-4d6e-8a0c-5f1b3d7e9a2c"
           },
           "platform": {
@@ -1376,7 +1380,7 @@
           "amount_cents"
         ],
         "additionalProperties": false,
-        "description": "Pacote de entregas que um creator pode fechar no acordo."
+        "description": "Pacote de entregas que um creator pode fechar na campanha."
       },
       "BoardStages": {
         "type": "object",
@@ -1510,11 +1514,9 @@
           "requestedChanges",
           "approved",
           "refused",
-          "expired",
           "excluded",
           "curationApproved",
           "curationRejected",
-          "curationExpired",
           "overview",
           "script.awaiting",
           "script.internal",
@@ -1733,7 +1735,7 @@
           "campaign_id": {
             "type": "string",
             "format": "uuid",
-            "description": "Campanha raiz: o acordo, ou a avulsa.",
+            "description": "Campanha da missão, o mesmo id de GET /campaigns/{id}.",
             "example": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f"
           },
           "block": {
@@ -1767,7 +1769,7 @@
               "platform"
             ],
             "additionalProperties": false,
-            "description": "Bloco do acordo da missão. Nulo na avulsa."
+            "description": "Bloco da campanha ao qual a missão pertence. Nulo com kind campaign."
           },
           "creator": {
             "$ref": "#/components/schemas/CreatorRef"
@@ -2265,7 +2267,7 @@
           "campaign_id": {
             "type": "string",
             "format": "uuid",
-            "description": "Campanha raiz: o acordo, ou a avulsa.",
+            "description": "Campanha da candidatura, o mesmo id de GET /campaigns/{id}.",
             "example": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f"
           },
           "creator": {
@@ -2368,7 +2370,7 @@
           "campaign_id": {
             "type": "string",
             "format": "uuid",
-            "description": "Campanha raiz: o acordo, ou a avulsa.",
+            "description": "Campanha da missão, o mesmo id de GET /campaigns/{id}.",
             "example": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f"
           },
           "block": {
@@ -2402,7 +2404,7 @@
               "platform"
             ],
             "additionalProperties": false,
-            "description": "Bloco do acordo da missão. Nulo na avulsa."
+            "description": "Bloco da campanha ao qual a missão pertence. Nulo com kind campaign."
           },
           "creator": {
             "$ref": "#/components/schemas/CreatorRef"
@@ -2517,7 +2519,7 @@
               "name"
             ],
             "additionalProperties": false,
-            "description": "Campanha da missão: o acordo quando há."
+            "description": "Campanha da missão, a mesma de GET /campaigns/{id}."
           },
           "content": {
             "$ref": "#/components/schemas/MissionContent"
@@ -2601,6 +2603,419 @@
         ],
         "additionalProperties": false,
         "description": "O que o creator entregou. Sai nulo o que a cadeia de revisão ainda não liberou para a marca."
+      },
+      "CreatorMessage": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Id da mensagem.",
+            "example": "c4e1a7d3-8b2f-4a6c-9d0e-3f5b7a1c9e24"
+          },
+          "conversation_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Id da conversa da campanha com o creator.",
+            "example": "e7b3d9f1-2a4c-4e6b-8d1f-5a7c9e3b1d68"
+          },
+          "campaign_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Id da campanha.",
+            "example": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f"
+          },
+          "creator_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Id do creator.",
+            "example": "9d3f1b7c-5e2a-4c8d-a6b1-2f3e4d5c6b7a"
+          },
+          "content": {
+            "type": "string",
+            "description": "Texto da mensagem.",
+            "example": "Oi! Pode me mandar o roteiro até sexta?"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data e hora em ISO 8601.",
+            "example": "2026-10-21T14:30:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "conversation_id",
+          "campaign_id",
+          "creator_id",
+          "content",
+          "created_at"
+        ],
+        "additionalProperties": false
+      },
+      "SendCreatorMessageBody": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000,
+            "description": "Texto da mensagem, de 1 a 4000 caracteres.",
+            "example": "Oi! Pode me mandar o roteiro até sexta?"
+          },
+          "client_ref": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Id gerado pela integração para não duplicar a mensagem no reenvio. Repetir o mesmo valor devolve a mensagem já enviada.",
+            "example": "c4e1a7d3-8b2f-4a6c-9d0e-3f5b7a1c9e24"
+          }
+        },
+        "required": [
+          "content"
+        ]
+      },
+      "ConversationPage": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Conversation"
+            },
+            "description": "Itens da página."
+          },
+          "has_more": {
+            "type": "boolean",
+            "description": "Se existe uma próxima página.",
+            "example": false
+          },
+          "next_cursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Cursor da próxima página, ou nulo na última.",
+            "example": null
+          }
+        },
+        "required": [
+          "data",
+          "has_more",
+          "next_cursor"
+        ]
+      },
+      "Conversation": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Id da conversa.",
+            "example": "e7b3d9f1-2a4c-4e6b-8d1f-5a7c9e3b1d68"
+          },
+          "campaign_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Id da campanha da conversa, o mesmo de GET /campaigns/{id}.",
+            "example": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f"
+          },
+          "creator": {
+            "$ref": "#/components/schemas/ConversationCreator"
+          },
+          "last_message": {
+            "$ref": "#/components/schemas/ConversationLastMessage"
+          },
+          "closed_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Quando a conversa foi encerrada, ou nulo se está aberta.",
+            "example": null
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data e hora em ISO 8601.",
+            "example": "2026-10-21T14:30:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "campaign_id",
+          "creator",
+          "last_message",
+          "closed_at",
+          "created_at"
+        ],
+        "additionalProperties": false
+      },
+      "ConversationCreator": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Id do creator.",
+            "example": "9d3f1b7c-5e2a-4c8d-a6b1-2f3e4d5c6b7a"
+          },
+          "name": {
+            "type": "string",
+            "description": "Nome do creator.",
+            "example": "Ana Souza"
+          },
+          "image_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Foto do perfil.",
+            "example": "https://cdn.appconty.com/avatars/ana.jpg"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "image_url"
+        ],
+        "additionalProperties": false,
+        "description": "Creator da conversa. Nunca traz e-mail, telefone, documento ou endereço."
+      },
+      "ConversationLastMessage": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "preview": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Prévia do texto da última mensagem. Nulo quando ela não tem texto.",
+            "example": "Mandei o roteiro, pode olhar?"
+          },
+          "sender": {
+            "$ref": "#/components/schemas/MessageSender"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data e hora em ISO 8601.",
+            "example": "2026-10-21T14:30:00.000Z"
+          }
+        },
+        "required": [
+          "preview",
+          "sender",
+          "at"
+        ],
+        "additionalProperties": false,
+        "description": "Última mensagem não apagada da conversa, ou nulo quando ainda não há mensagem."
+      },
+      "MessageSender": {
+        "type": "string",
+        "enum": [
+          "brand",
+          "creator",
+          "agency"
+        ],
+        "description": "Quem escreveu: brand é a marca, creator é o creator, agency é a agência que gere a marca.",
+        "example": "creator"
+      },
+      "ConversationStatus": {
+        "type": "string",
+        "enum": [
+          "open",
+          "closed"
+        ],
+        "description": "open: conversa aberta. closed: encerrada.",
+        "example": "open"
+      },
+      "ConversationMessagePage": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConversationMessage"
+            },
+            "description": "Itens da página."
+          },
+          "has_more": {
+            "type": "boolean",
+            "description": "Se existe uma próxima página.",
+            "example": false
+          },
+          "next_cursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Cursor da próxima página, ou nulo na última.",
+            "example": null
+          }
+        },
+        "required": [
+          "data",
+          "has_more",
+          "next_cursor"
+        ]
+      },
+      "ConversationMessage": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Id da mensagem.",
+            "example": "c4e1a7d3-8b2f-4a6c-9d0e-3f5b7a1c9e24"
+          },
+          "conversation_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Id da conversa.",
+            "example": "e7b3d9f1-2a4c-4e6b-8d1f-5a7c9e3b1d68"
+          },
+          "sender": {
+            "$ref": "#/components/schemas/MessageSender"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/MessageKind"
+          },
+          "content": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Texto da mensagem. Nulo na mensagem apagada e na mídia sem texto.",
+            "example": "Mandei o roteiro, pode olhar?"
+          },
+          "media": {
+            "$ref": "#/components/schemas/ConversationMessageMedia"
+          },
+          "reply_to_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Id da mensagem respondida, ou nulo.",
+            "example": null
+          },
+          "deleted": {
+            "type": "boolean",
+            "description": "Se a mensagem foi apagada. Apagada sai com content e media nulos.",
+            "example": false
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Data e hora em ISO 8601.",
+            "example": "2026-10-21T14:30:00.000Z"
+          },
+          "edited_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Quando a mensagem foi editada, ou nulo.",
+            "example": null
+          }
+        },
+        "required": [
+          "id",
+          "conversation_id",
+          "sender",
+          "kind",
+          "content",
+          "media",
+          "reply_to_id",
+          "deleted",
+          "created_at",
+          "edited_at"
+        ],
+        "additionalProperties": false
+      },
+      "MessageKind": {
+        "type": "string",
+        "enum": [
+          "text",
+          "audio",
+          "image",
+          "video",
+          "file"
+        ],
+        "description": "Tipo da mensagem: texto, áudio, imagem, vídeo ou arquivo.",
+        "example": "text"
+      },
+      "ConversationMessageMedia": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Link para abrir a mídia.",
+            "example": "https://cdn.appconty.com/chat/roteiro.pdf"
+          },
+          "download_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Link para baixar o arquivo.",
+            "example": "https://cdn.appconty.com/chat/roteiro.pdf?download=1"
+          },
+          "mime_type": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Tipo do arquivo.",
+            "example": "application/pdf"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Nome do arquivo.",
+            "example": "roteiro.pdf"
+          },
+          "size_bytes": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Tamanho em bytes.",
+            "example": 184320
+          },
+          "duration_seconds": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Duração em segundos, no áudio e no vídeo.",
+            "example": null
+          }
+        },
+        "required": [
+          "url",
+          "download_url",
+          "mime_type",
+          "name",
+          "size_bytes",
+          "duration_seconds"
+        ],
+        "additionalProperties": false,
+        "description": "Mídia da mensagem, ou nulo na mensagem de texto e na apagada. Imagem, áudio e vídeo vêm com link público; arquivo vem com link assinado que expira em 1 hora, e buscar a página de novo renova o link."
       }
     },
     "parameters": {}
@@ -2673,7 +3088,7 @@
           "Cupons"
         ],
         "summary": "Criar cupom",
-        "description": "Com mission_id, cria o cupom ativo do creator na campanha da missão, e o creator é avisado no app. Com campaign_id, cria o cupom disponível na campanha, para vincular a um creator depois. No acordo, o cupom vale para o acordo inteiro. O código é normalizado (sem espaços nas pontas, em maiúsculas).",
+        "description": "Com mission_id, cria o cupom ativo do creator na campanha da missão, e o creator é avisado no app. Com campaign_id, cria o cupom disponível na campanha, para vincular a um creator depois. Com vários blocos, o cupom vale para a campanha inteira. O código é normalizado (sem espaços nas pontas, em maiúsculas).",
         "requestBody": {
           "required": true,
           "content": {
@@ -2803,10 +3218,10 @@
             "schema": {
               "type": "string",
               "format": "uuid",
-              "description": "Filtra pela campanha ou pelo acordo do cupom."
+              "description": "Filtra pela campanha do cupom."
             },
             "required": false,
-            "description": "Filtra pela campanha ou pelo acordo do cupom.",
+            "description": "Filtra pela campanha do cupom.",
             "name": "campaign_id",
             "in": "query"
           },
@@ -3610,7 +4025,7 @@
           "Campanhas"
         ],
         "summary": "Listar campanhas",
-        "description": "Lista as campanhas da marca, da mais nova para a mais antiga. Campanha é o acordo (kind agreement, um bloco por plataforma) ou a campanha avulsa (kind campaign); bloco de acordo não aparece sozinho. Filtro por status e por nome no servidor, antes da paginação por cursor. Sem status, as arquivadas ficam de fora; status=archived lista só as arquivadas e não combina com outros status. Valores em centavos, nulos quando money_visible é false.",
+        "description": "Lista as campanhas da marca, da mais nova para a mais antiga. Campanha com kind agreement tem um bloco por plataforma; com kind campaign, um bloco só. Bloco não aparece sozinho na lista. Filtro por status e por nome no servidor, antes da paginação por cursor. Sem status, as arquivadas ficam de fora; status=archived lista só as arquivadas e não combina com outros status. Valores em centavos, nulos quando money_visible é false.",
         "parameters": [
           {
             "schema": {
@@ -3733,17 +4148,17 @@
           "Campanhas"
         ],
         "summary": "Ver campanha",
-        "description": "Devolve a campanha com os blocos por plataforma (a avulsa tem um bloco só, ela mesma), as opções de escopo do acordo, o que a campanha exige do creator e a cadeia de revisão. Aceita o id do acordo ou da avulsa; id de bloco de acordo, de outra marca ou inexistente responde 404.",
+        "description": "Devolve a campanha com os blocos por plataforma (com kind campaign, um bloco só, a própria campanha), as opções de escopo, o que a campanha exige do creator e a cadeia de revisão. Id de bloco de campanha com kind agreement, de outra marca ou inexistente responde 404.",
         "parameters": [
           {
             "schema": {
               "type": "string",
               "format": "uuid",
-              "description": "Id do acordo ou da campanha avulsa. Id de bloco de acordo responde 404.",
+              "description": "Id da campanha. Id de um bloco de campanha com kind agreement responde 404.",
               "example": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f"
             },
             "required": true,
-            "description": "Id do acordo ou da campanha avulsa. Id de bloco de acordo responde 404.",
+            "description": "Id da campanha. Id de um bloco de campanha com kind agreement responde 404.",
             "name": "id",
             "in": "path"
           }
@@ -3828,17 +4243,17 @@
           "Quadro"
         ],
         "summary": "Listar etapas",
-        "description": "Devolve as etapas do quadro da campanha que a chave enxerga, na ordem do painel, com o rótulo, a contagem e a unidade da contagem (unit). No acordo, etapa com unit creators conta pessoas, e cada creator traz todas as entregas dele nos itens. Cada etapa diz que ordenações (sorts) e que grupos de filtro (filters) valem em /items. q filtra a contagem como filtra a lista; a contagem com os outros filtros é o total de /items.",
+        "description": "Devolve as etapas do quadro da campanha que a chave enxerga, na ordem do painel, com o rótulo, a contagem e a unidade da contagem (unit). Em campanha com vários blocos, etapa com unit creators conta pessoas, e cada creator traz todas as entregas dele nos itens. Cada etapa diz que ordenações (sorts) e que grupos de filtro (filters) valem em /items. q filtra a contagem como filtra a lista; a contagem com os outros filtros é o total de /items.",
         "parameters": [
           {
             "schema": {
               "type": "string",
               "format": "uuid",
-              "description": "Id do acordo ou da campanha avulsa. Id de bloco de acordo responde 404.",
+              "description": "Id da campanha. Id de um bloco de campanha com kind agreement responde 404.",
               "example": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f"
             },
             "required": true,
-            "description": "Id do acordo ou da campanha avulsa. Id de bloco de acordo responde 404.",
+            "description": "Id da campanha. Id de um bloco de campanha com kind agreement responde 404.",
             "name": "id",
             "in": "path"
           },
@@ -3942,11 +4357,11 @@
             "schema": {
               "type": "string",
               "format": "uuid",
-              "description": "Id do acordo ou da campanha avulsa. Id de bloco de acordo responde 404.",
+              "description": "Id da campanha. Id de um bloco de campanha com kind agreement responde 404.",
               "example": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f"
             },
             "required": true,
-            "description": "Id do acordo ou da campanha avulsa. Id de bloco de acordo responde 404.",
+            "description": "Id da campanha. Id de um bloco de campanha com kind agreement responde 404.",
             "name": "id",
             "in": "path"
           },
@@ -4199,11 +4614,11 @@
             "schema": {
               "type": "string",
               "format": "uuid",
-              "description": "Só creators desta opção de escopo do acordo.",
+              "description": "Só creators desta opção de escopo da campanha.",
               "example": "5b8d0f2a-4c6e-4a1b-8d3f-7e9a1c3b5d70"
             },
             "required": false,
-            "description": "Só creators desta opção de escopo do acordo.",
+            "description": "Só creators desta opção de escopo da campanha.",
             "name": "scope_option_id",
             "in": "query"
           },
@@ -4211,11 +4626,11 @@
             "schema": {
               "type": "string",
               "format": "uuid",
-              "description": "Só creators com este briefing do acordo.",
+              "description": "Só creators com este briefing da campanha.",
               "example": "2d4f6a8c-0e1b-4c3d-9f5a-7b9c1d3e5f02"
             },
             "required": false,
-            "description": "Só creators com este briefing do acordo.",
+            "description": "Só creators com este briefing da campanha.",
             "name": "briefing_id",
             "in": "query"
           },
@@ -4377,7 +4792,7 @@
           "Missões"
         ],
         "summary": "Ver missão",
-        "description": "Devolve a missão como o painel da marca a apresenta: campanha raiz (o acordo quando há), bloco, creator, status, entregas, conteúdo enviado, link do post por rede, métricas, datas, valor e cupom. O conteúdo que a cadeia de revisão ainda não liberou para a marca sai nulo. Missão de outra marca, inexistente ou numa etapa que a chave não enxerga responde 404.",
+        "description": "Devolve a missão como o painel da marca a apresenta: campanha, bloco, creator, status, entregas, conteúdo enviado, link do post por rede, métricas, datas, valor e cupom. O conteúdo que a cadeia de revisão ainda não liberou para a marca sai nulo. Missão de outra marca, inexistente ou numa etapa que a chave não enxerga responde 404.",
         "parameters": [
           {
             "schema": {
@@ -4415,6 +4830,415 @@
           },
           "403": {
             "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not_found: Recurso não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation_failed: Os dados enviados são inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate_limited: Limite de requisições atingido. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal_error: Erro interno. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/campaigns/{id}/creators/{creator_id}/messages": {
+      "post": {
+        "tags": [
+          "Chat"
+        ],
+        "summary": "Enviar mensagem ao creator",
+        "description": "Envia um texto ao creator na conversa da campanha, como o dono da marca. O creator é notificado como em qualquer mensagem do painel. Mandar client_ref torna o reenvio idempotente: a mesma referência devolve a mensagem já enviada com 200. Precisa do módulo de mensagens liberado pela Conty para a marca.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Id da campanha, o mesmo de GET /campaigns/{id}.",
+              "example": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f"
+            },
+            "required": true,
+            "description": "Id da campanha, o mesmo de GET /campaigns/{id}.",
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Id do creator, o creator.id do quadro.",
+              "example": "9d3f1b7c-5e2a-4c8d-a6b1-2f3e4d5c6b7a"
+            },
+            "required": true,
+            "description": "Id do creator, o creator.id do quadro.",
+            "name": "creator_id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendCreatorMessageBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Mensagem já enviada com este client_ref.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatorMessage"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Mensagem enviada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatorMessage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "invalid_api_key: Chave de API ausente, inválida ou revogada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. chat_disabled: O chat pela API não está liberado para esta marca. chat_forbidden: Esta marca não pode conversar direto com o creator.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not_found: Recurso não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "conversation_closed: A conversa com o creator está encerrada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation_failed: Os dados enviados são inválidos. creator_not_in_campaign: O creator não participa desta campanha.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate_limited: Limite de requisições atingido. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal_error: Erro interno. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/conversations": {
+      "get": {
+        "tags": [
+          "Chat"
+        ],
+        "summary": "Listar conversas",
+        "description": "Lista as conversas da marca com creators nas campanhas, da que teve mensagem mais recente para a mais antiga. Filtra por campanha, creator, status e conversas aguardando resposta da marca, no servidor, antes da paginação por cursor. Ler não marca nada como lido. Precisa do módulo de mensagens liberado pela Conty para a marca.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "description": "Quantos itens por página, de 1 a 100. Padrão 20.",
+              "example": 20
+            },
+            "required": false,
+            "description": "Quantos itens por página, de 1 a 100. Padrão 20.",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Cursor opaco devolvido em next_cursor pela página anterior."
+            },
+            "required": false,
+            "description": "Cursor opaco devolvido em next_cursor pela página anterior.",
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Filtra pela campanha, o id de GET /campaigns/{id}.",
+              "example": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f"
+            },
+            "required": false,
+            "description": "Filtra pela campanha, o id de GET /campaigns/{id}.",
+            "name": "campaign_id",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Filtra pelo creator.",
+              "example": "9d3f1b7c-5e2a-4c8d-a6b1-2f3e4d5c6b7a"
+            },
+            "required": false,
+            "description": "Filtra pelo creator.",
+            "name": "creator_id",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "$ref": "#/components/schemas/ConversationStatus"
+            },
+            "required": false,
+            "description": "open: conversa aberta. closed: encerrada.",
+            "name": "status",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "true traz só as conversas em que a última mensagem é do creator. false traz as outras, inclusive as sem mensagem.",
+              "example": true
+            },
+            "required": false,
+            "description": "true traz só as conversas em que a última mensagem é do creator. false traz as outras, inclusive as sem mensagem.",
+            "name": "awaiting_reply",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Página de conversas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationPage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "invalid_api_key: Chave de API ausente, inválida ou revogada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. chat_disabled: O chat pela API não está liberado para esta marca. chat_forbidden: Esta marca não pode conversar direto com o creator.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "not_found: Recurso não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation_failed: Os dados enviados são inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate_limited: Limite de requisições atingido. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal_error: Erro interno. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/conversations/{id}/messages": {
+      "get": {
+        "tags": [
+          "Chat"
+        ],
+        "summary": "Listar mensagens da conversa",
+        "description": "Lista o histórico da conversa com o creator, da mensagem mais nova para a mais antiga, paginado por cursor. Imagem, áudio e vídeo vêm com link público; arquivo vem com link assinado que expira em 1 hora. Mensagem apagada vem sem texto e sem mídia. Ler o histórico não marca nada como lido. Precisa do módulo de mensagens liberado pela Conty para a marca.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Id da conversa, o id de GET /conversations.",
+              "example": "e7b3d9f1-2a4c-4e6b-8d1f-5a7c9e3b1d68"
+            },
+            "required": true,
+            "description": "Id da conversa, o id de GET /conversations.",
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "description": "Quantos itens por página, de 1 a 100. Padrão 20.",
+              "example": 20
+            },
+            "required": false,
+            "description": "Quantos itens por página, de 1 a 100. Padrão 20.",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Cursor opaco devolvido em next_cursor pela página anterior."
+            },
+            "required": false,
+            "description": "Cursor opaco devolvido em next_cursor pela página anterior.",
+            "name": "cursor",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Página de mensagens da conversa.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationMessagePage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "invalid_api_key: Chave de API ausente, inválida ou revogada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. chat_disabled: O chat pela API não está liberado para esta marca. chat_forbidden: Esta marca não pode conversar direto com o creator.",
             "content": {
               "application/json": {
                 "schema": {

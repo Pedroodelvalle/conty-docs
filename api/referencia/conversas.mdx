@@ -1,0 +1,264 @@
+---
+title: "Conversas"
+description: "Liste as conversas da marca com os creators nas campanhas e leia o histórico de cada uma, como no painel."
+icon: "comments"
+keywords:
+  - conversas
+  - chat
+  - histórico
+  - creator
+  - awaiting_reply
+---
+
+A chave lê as conversas da marca com os creators nas campanhas, as mesmas que a marca vê no painel. Tudo é só leitura.
+
+1. `GET /conversations` lista as conversas, com filtros.
+2. `GET /conversations/{id}/messages` traz o histórico de uma conversa.
+3. Para responder, use [`POST /campaigns/{id}/creators/{creator_id}/messages`](/api/referencia/mensagens).
+
+<Tip>
+  O `conversation_id` que o [envio de mensagem](/api/referencia/mensagens) devolve é o `id` da conversa nesta página. Com ele você abre o histórico da conversa em que acabou de escrever.
+</Tip>
+
+## Acesso
+
+O acesso é o mesmo do envio de mensagem:
+
+- O chat pela API precisa estar liberado pela Conty para a sua marca. Sem isso, a rota responde `403 chat_disabled`: fale com o time da Conty para liberar.
+- O cargo do dono da marca precisa ter permissão para ver mensagens no chat. Sem ela, a API responde `403 forbidden`.
+- Marca atendida por agência não conversa direto com o creator, como no painel (`403 chat_forbidden`).
+
+Ler não marca nada como lido. As conversas continuam com o mesmo estado no painel e no app.
+
+## Listar conversas
+
+`GET /conversations` lista as conversas da marca com creators nas campanhas. Conversa direta com o creator, fora de campanha, não entra.
+
+A lista vem da conversa com atividade mais recente para a mais antiga. Mensagem apagada também conta como atividade, então a ordem pode não bater com `last_message.at`, que é a última mensagem não apagada.
+
+| Parâmetro | O que faz |
+|---|---|
+| `campaign_id` | Só as conversas da campanha. É o id de [`GET /campaigns/{id}`](/api/referencia/campanhas). Campanha de outra marca responde `404 not_found`. |
+| `creator_id` | Só as conversas com o creator. |
+| `status` | `open` (aberta) ou `closed` (encerrada). |
+| `awaiting_reply` | `true` traz só as conversas em que a última mensagem é do creator, ou seja, esperando resposta da marca. `false` traz as outras: a última mensagem não apagada é da marca ou da agência, ou a conversa ainda não tem mensagem. |
+| `limit` | De 1 a 100. Padrão 20. |
+| `cursor` | O `next_cursor` da página anterior. |
+
+O filtro, a ordem e a paginação rodam no servidor, antes de montar a página. Enquanto `has_more` for `true`, mande o `next_cursor` em `cursor` para buscar a próxima. Na última página, `next_cursor` vem `null`.
+
+A lista é uma foto do momento: a conversa que recebe mensagem enquanto você pagina sobe para o topo e não aparece nas páginas seguintes. Para acompanhar, por exemplo varrendo `awaiting_reply=true`, comece de novo pela primeira página a cada checagem.
+
+```bash
+curl "https://api.appconty.com/public/v1/conversations?campaign_id=6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f&awaiting_reply=true" \
+  -H "Authorization: Bearer ck_live_..."
+```
+
+```json
+{
+  "data": [
+    {
+      "id": "e7b3d9f1-2a4c-4e6b-8d1f-5a7c9e3b1d68",
+      "campaign_id": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f",
+      "creator": {
+        "id": "9d3f1b7c-5e2a-4c8d-a6b1-2f3e4d5c6b7a",
+        "name": "Ana Souza",
+        "image_url": "https://cdn.appconty.com/avatars/ana.jpg"
+      },
+      "last_message": {
+        "preview": "Mandei o roteiro, pode olhar?",
+        "sender": "creator",
+        "at": "2026-10-21T14:30:00.000Z"
+      },
+      "closed_at": null,
+      "created_at": "2026-10-21T14:30:00.000Z"
+    }
+  ],
+  "has_more": false,
+  "next_cursor": null
+}
+```
+
+## O objeto Conversation
+
+<ResponseField name="id" type="string" required>
+  Id da conversa. É o `{id}` do histórico e o `conversation_id` do envio de mensagem.
+</ResponseField>
+
+<ResponseField name="campaign_id" type="string" required>
+  Id da campanha da conversa, o mesmo de `GET /campaigns/{id}`.
+</ResponseField>
+
+<ResponseField name="creator" type="object" required>
+  Creator da conversa. Nunca traz e-mail, telefone, documento ou endereço.
+
+  <Expandable title="campos">
+    <ResponseField name="id" type="string" required>
+      Id do creator.
+    </ResponseField>
+    <ResponseField name="name" type="string" required>
+      Nome do creator.
+    </ResponseField>
+    <ResponseField name="image_url" type="string | null" required>
+      Foto do perfil.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="last_message" type="object | null" required>
+  Última mensagem não apagada da conversa, ou `null` quando ainda não há mensagem.
+
+  <Expandable title="campos">
+    <ResponseField name="preview" type="string | null" required>
+      Prévia do texto da última mensagem. `null` quando ela não tem texto.
+    </ResponseField>
+    <ResponseField name="sender" type="string" required>
+      Quem escreveu: `brand`, `creator` ou `agency`. Veja [Quem escreveu](#quem-escreveu).
+    </ResponseField>
+    <ResponseField name="at" type="string" required>
+      Quando a mensagem foi enviada, ISO 8601 em UTC.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="closed_at" type="string | null" required>
+  Quando a conversa foi encerrada, ou `null` se está aberta.
+</ResponseField>
+
+<ResponseField name="created_at" type="string" required>
+  Quando a conversa foi criada, ISO 8601 em UTC.
+</ResponseField>
+
+## Histórico da conversa
+
+`GET /conversations/{id}/messages` traz as mensagens de uma conversa, da mais nova para a mais antiga. O `{id}` é o `id` de `GET /conversations`. Conversa de outra marca, ou que não aparece na lista, responde `404 not_found`.
+
+A paginação é por cursor, como na lista: `limit` de 1 a 100 (padrão 20) e o `next_cursor` da página anterior em `cursor`. Aqui a ordem é por `created_at`, que não muda, então a paginação não perde mensagem.
+
+```bash
+curl "https://api.appconty.com/public/v1/conversations/e7b3d9f1-2a4c-4e6b-8d1f-5a7c9e3b1d68/messages?limit=20" \
+  -H "Authorization: Bearer ck_live_..."
+```
+
+```json
+{
+  "data": [
+    {
+      "id": "c4e1a7d3-8b2f-4a6c-9d0e-3f5b7a1c9e24",
+      "conversation_id": "e7b3d9f1-2a4c-4e6b-8d1f-5a7c9e3b1d68",
+      "sender": "creator",
+      "kind": "file",
+      "content": "Mandei o roteiro, pode olhar?",
+      "media": {
+        "url": "https://storage.appconty.com/chat/roteiro.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Expires=3600&X-Amz-Signature=8f3a...",
+        "download_url": "https://storage.appconty.com/chat/roteiro.pdf?response-content-disposition=attachment&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Expires=3600&X-Amz-Signature=2c7d...",
+        "mime_type": "application/pdf",
+        "name": "roteiro.pdf",
+        "size_bytes": 184320,
+        "duration_seconds": null
+      },
+      "reply_to_id": null,
+      "deleted": false,
+      "created_at": "2026-10-21T14:30:00.000Z",
+      "edited_at": null
+    }
+  ],
+  "has_more": false,
+  "next_cursor": null
+}
+```
+
+### Quem escreveu
+
+| `sender` | Quem é |
+|---|---|
+| `brand` | A marca |
+| `creator` | O creator |
+| `agency` | A agência que atende a marca |
+
+Quem escreveu pela marca não aparece: a resposta não traz id nem nome da pessoa da marca.
+
+### Mídia
+
+- Imagem, áudio e vídeo: `media.url` é público. `media.download_url` é assinado e expira em 1 hora.
+- Arquivo: `media.url` e `media.download_url` são assinados e expiram em 1 hora.
+- Para renovar um link assinado, busque a página de novo.
+- Mensagem de texto vem com `media: null`.
+
+### Mensagem apagada
+
+Mensagem apagada vem com `deleted: true`, `content: null` e `media: null`.
+
+## O objeto ConversationMessage
+
+<ResponseField name="id" type="string" required>
+  Id da mensagem.
+</ResponseField>
+
+<ResponseField name="conversation_id" type="string" required>
+  Id da conversa.
+</ResponseField>
+
+<ResponseField name="sender" type="string" required>
+  Quem escreveu: `brand`, `creator` ou `agency`.
+</ResponseField>
+
+<ResponseField name="kind" type="string" required>
+  Tipo da mensagem: `text`, `audio`, `image`, `video` ou `file`.
+</ResponseField>
+
+<ResponseField name="content" type="string | null" required>
+  Texto da mensagem. `null` na mensagem apagada e na mídia sem texto.
+</ResponseField>
+
+<ResponseField name="media" type="object | null" required>
+  Mídia da mensagem, ou `null` na mensagem de texto e na apagada.
+
+  <Expandable title="campos">
+    <ResponseField name="url" type="string | null" required>
+      Link para abrir a mídia. Público na imagem, no áudio e no vídeo; assinado, por 1 hora, no arquivo.
+    </ResponseField>
+    <ResponseField name="download_url" type="string | null" required>
+      Link para baixar o arquivo. Sempre assinado, expira em 1 hora.
+    </ResponseField>
+    <ResponseField name="mime_type" type="string | null" required>
+      Tipo do arquivo.
+    </ResponseField>
+    <ResponseField name="name" type="string | null" required>
+      Nome do arquivo.
+    </ResponseField>
+    <ResponseField name="size_bytes" type="integer | null" required>
+      Tamanho em bytes.
+    </ResponseField>
+    <ResponseField name="duration_seconds" type="number | null" required>
+      Duração em segundos, no áudio e no vídeo.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="reply_to_id" type="string | null" required>
+  Id da mensagem respondida, ou `null`.
+</ResponseField>
+
+<ResponseField name="deleted" type="boolean" required>
+  Se a mensagem foi apagada.
+</ResponseField>
+
+<ResponseField name="created_at" type="string" required>
+  Quando a mensagem foi enviada, ISO 8601 em UTC.
+</ResponseField>
+
+<ResponseField name="edited_at" type="string | null" required>
+  Quando a mensagem foi editada, ou `null`.
+</ResponseField>
+
+## Erros
+
+| Status | Código | Quando |
+|---|---|---|
+| 403 | `chat_disabled` | O chat pela API não está liberado para esta marca. |
+| 403 | `forbidden` | A chave não tem acesso a campanhas |
+| 403 | `forbidden` | O dono da marca não tem permissão para ver mensagens |
+| 403 | `chat_forbidden` | A marca é atendida por agência e não conversa direto com o creator |
+| 404 | `not_found` | Conversa ou campanha de outra marca, ou inexistente. A resposta é a mesma nos dois casos |
+| 422 | `validation_failed` | Um id não é UUID, o `status` não é `open` nem `closed`, o `limit` está fora de 1 a 100, o valor de `awaiting_reply` é inválido ou o `cursor` é inválido |

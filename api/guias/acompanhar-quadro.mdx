@@ -19,7 +19,7 @@ O seu sistema enxerga o quadro da campanha como a marca vê no painel: as mesmas
 
 <Steps>
   <Step title="Liste as campanhas">
-    Campanha é o acordo (`kind: "agreement"`) ou a campanha avulsa (`kind: "campaign"`). Filtre por status e por nome no servidor:
+    A campanha tem `kind` `agreement` (vários blocos, um por plataforma) ou `campaign` (um bloco só). O id e as rotas são os mesmos nos dois. Filtre por status e por nome no servidor:
 
     ```bash
     curl "https://api.appconty.com/public/v1/campaigns?status=approved,paused&limit=20" \
@@ -188,5 +188,5 @@ A varredura completa por `/items` fica para a carga inicial e para uma conferên
 |---|---|---|
 | 403 | `open_api_disabled` | A API não está liberada para a sua marca. Veja [Disponibilidade](/api/autenticacao#disponibilidade). |
 | 403 | `forbidden` | A chave não tem acesso a campanhas, ou é de uma conta de agência. |
-| 404 | `not_found` | O id é de outra marca, não existe, ou é de um bloco do acordo. Use o id do acordo. |
+| 404 | `not_found` | O id é de outra marca, não existe, ou é de um bloco da campanha. Use o id da campanha. |
 | 422 | `validation_failed` | Veja `details[0].path`: `stage` (etapa que não veio no `/stages`) ou `cursor` (cursor de outra consulta). |
