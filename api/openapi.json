@@ -202,7 +202,7 @@
               "id": {
                 "type": "string",
                 "format": "uuid",
-                "description": "Id da campanha avulsa ou do acordo.",
+                "description": "Id da campanha, o mesmo de GET /campaigns/{id}.",
                 "example": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f"
               },
               "name": {
@@ -215,7 +215,7 @@
               "id",
               "name"
             ],
-            "description": "Campanha do cupom. No acordo, é o acordo inteiro."
+            "description": "Campanha do cupom. Com vários blocos, o cupom vale para a campanha inteira."
           },
           "creator": {
             "$ref": "#/components/schemas/CouponCreator"
@@ -377,7 +377,7 @@
           "campaign_id": {
             "type": "string",
             "format": "uuid",
-            "description": "Campanha avulsa ou acordo. Cria o cupom disponível na campanha, para vincular a um creator depois. Informe este ou mission_id.",
+            "description": "Campanha. Cria o cupom disponível na campanha, para vincular a um creator depois. Informe este ou mission_id.",
             "example": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f"
           },
           "code": {
@@ -717,7 +717,7 @@
           "id": {
             "type": "string",
             "format": "uuid",
-            "description": "Id da campanha: o do acordo, ou o da avulsa. É o mesmo data.campaign.id dos webhooks e o campaign.id do cupom.",
+            "description": "Id da campanha. É o mesmo data.campaign.id dos webhooks e o campaign.id do cupom.",
             "example": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f"
           },
           "kind": {
@@ -739,7 +739,7 @@
             "items": {
               "$ref": "#/components/schemas/CampaignPlatform"
             },
-            "description": "Formatos de entrega da campanha. No acordo, um por bloco.",
+            "description": "Formatos de entrega da campanha, um por bloco.",
             "example": [
               "reels_collab",
               "tiktok"
@@ -838,7 +838,7 @@
           "agreement",
           "campaign"
         ],
-        "description": "agreement é um acordo, com um bloco por plataforma. campaign é uma campanha avulsa, sem acordo.",
+        "description": "Formato da campanha: agreement reúne vários blocos, um por plataforma; campaign é uma campanha de um bloco só. O id e as rotas são os mesmos nos dois.",
         "example": "agreement"
       },
       "CampaignStatus": {
@@ -1026,7 +1026,7 @@
           "id": {
             "type": "string",
             "format": "uuid",
-            "description": "Id da campanha: o do acordo, ou o da avulsa. É o mesmo data.campaign.id dos webhooks e o campaign.id do cupom.",
+            "description": "Id da campanha. É o mesmo data.campaign.id dos webhooks e o campaign.id do cupom.",
             "example": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f"
           },
           "kind": {
@@ -1048,7 +1048,7 @@
             "items": {
               "$ref": "#/components/schemas/CampaignPlatform"
             },
-            "description": "Formatos de entrega da campanha. No acordo, um por bloco.",
+            "description": "Formatos de entrega da campanha, um por bloco.",
             "example": [
               "reels_collab",
               "tiktok"
@@ -1162,14 +1162,14 @@
             "items": {
               "$ref": "#/components/schemas/CampaignBlock"
             },
-            "description": "Blocos da campanha. A avulsa tem um bloco só, ela mesma."
+            "description": "Blocos da campanha. Com kind campaign, um bloco só, a própria campanha."
           },
           "scope_options": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/CampaignScopeOption"
             },
-            "description": "Opções de escopo do acordo. Vazia na avulsa."
+            "description": "Opções de escopo da campanha. Vazia com kind campaign."
           }
         },
         "required": [
@@ -1242,7 +1242,7 @@
           "id": {
             "type": "string",
             "format": "uuid",
-            "description": "Id do bloco. Na avulsa, é o id da própria campanha.",
+            "description": "Id do bloco. Com kind campaign, é o id da própria campanha.",
             "example": "3e7a9c1d-2b4f-4d6e-8a0c-5f1b3d7e9a2c"
           },
           "platform": {
@@ -1380,7 +1380,7 @@
           "amount_cents"
         ],
         "additionalProperties": false,
-        "description": "Pacote de entregas que um creator pode fechar no acordo."
+        "description": "Pacote de entregas que um creator pode fechar na campanha."
       },
       "BoardStages": {
         "type": "object",
@@ -1735,7 +1735,7 @@
           "campaign_id": {
             "type": "string",
             "format": "uuid",
-            "description": "Campanha raiz: o acordo, ou a avulsa.",
+            "description": "Campanha da missão, o mesmo id de GET /campaigns/{id}.",
             "example": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f"
           },
           "block": {
@@ -1769,7 +1769,7 @@
               "platform"
             ],
             "additionalProperties": false,
-            "description": "Bloco do acordo da missão. Nulo na avulsa."
+            "description": "Bloco da campanha ao qual a missão pertence. Nulo com kind campaign."
           },
           "creator": {
             "$ref": "#/components/schemas/CreatorRef"
@@ -2267,7 +2267,7 @@
           "campaign_id": {
             "type": "string",
             "format": "uuid",
-            "description": "Campanha raiz: o acordo, ou a avulsa.",
+            "description": "Campanha da candidatura, o mesmo id de GET /campaigns/{id}.",
             "example": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f"
           },
           "creator": {
@@ -2370,7 +2370,7 @@
           "campaign_id": {
             "type": "string",
             "format": "uuid",
-            "description": "Campanha raiz: o acordo, ou a avulsa.",
+            "description": "Campanha da missão, o mesmo id de GET /campaigns/{id}.",
             "example": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f"
           },
           "block": {
@@ -2404,7 +2404,7 @@
               "platform"
             ],
             "additionalProperties": false,
-            "description": "Bloco do acordo da missão. Nulo na avulsa."
+            "description": "Bloco da campanha ao qual a missão pertence. Nulo com kind campaign."
           },
           "creator": {
             "$ref": "#/components/schemas/CreatorRef"
@@ -2519,7 +2519,7 @@
               "name"
             ],
             "additionalProperties": false,
-            "description": "Campanha da missão: o acordo quando há."
+            "description": "Campanha da missão, a mesma de GET /campaigns/{id}."
           },
           "content": {
             "$ref": "#/components/schemas/MissionContent"
@@ -3088,7 +3088,7 @@
           "Cupons"
         ],
         "summary": "Criar cupom",
-        "description": "Com mission_id, cria o cupom ativo do creator na campanha da missão, e o creator é avisado no app. Com campaign_id, cria o cupom disponível na campanha, para vincular a um creator depois. No acordo, o cupom vale para o acordo inteiro. O código é normalizado (sem espaços nas pontas, em maiúsculas).",
+        "description": "Com mission_id, cria o cupom ativo do creator na campanha da missão, e o creator é avisado no app. Com campaign_id, cria o cupom disponível na campanha, para vincular a um creator depois. Com vários blocos, o cupom vale para a campanha inteira. O código é normalizado (sem espaços nas pontas, em maiúsculas).",
         "requestBody": {
           "required": true,
           "content": {
@@ -3218,10 +3218,10 @@
             "schema": {
               "type": "string",
               "format": "uuid",
-              "description": "Filtra pela campanha ou pelo acordo do cupom."
+              "description": "Filtra pela campanha do cupom."
             },
             "required": false,
-            "description": "Filtra pela campanha ou pelo acordo do cupom.",
+            "description": "Filtra pela campanha do cupom.",
             "name": "campaign_id",
             "in": "query"
           },
@@ -4025,7 +4025,7 @@
           "Campanhas"
         ],
         "summary": "Listar campanhas",
-        "description": "Lista as campanhas da marca, da mais nova para a mais antiga. Campanha é o acordo (kind agreement, um bloco por plataforma) ou a campanha avulsa (kind campaign); bloco de acordo não aparece sozinho. Filtro por status e por nome no servidor, antes da paginação por cursor. Sem status, as arquivadas ficam de fora; status=archived lista só as arquivadas e não combina com outros status. Valores em centavos, nulos quando money_visible é false.",
+        "description": "Lista as campanhas da marca, da mais nova para a mais antiga. Campanha com kind agreement tem um bloco por plataforma; com kind campaign, um bloco só. Bloco não aparece sozinho na lista. Filtro por status e por nome no servidor, antes da paginação por cursor. Sem status, as arquivadas ficam de fora; status=archived lista só as arquivadas e não combina com outros status. Valores em centavos, nulos quando money_visible é false.",
         "parameters": [
           {
             "schema": {
@@ -4148,17 +4148,17 @@
           "Campanhas"
         ],
         "summary": "Ver campanha",
-        "description": "Devolve a campanha com os blocos por plataforma (a avulsa tem um bloco só, ela mesma), as opções de escopo do acordo, o que a campanha exige do creator e a cadeia de revisão. Aceita o id do acordo ou da avulsa; id de bloco de acordo, de outra marca ou inexistente responde 404.",
+        "description": "Devolve a campanha com os blocos por plataforma (com kind campaign, um bloco só, a própria campanha), as opções de escopo, o que a campanha exige do creator e a cadeia de revisão. Id de bloco de campanha com kind agreement, de outra marca ou inexistente responde 404.",
         "parameters": [
           {
             "schema": {
               "type": "string",
               "format": "uuid",
-              "description": "Id do acordo ou da campanha avulsa. Id de bloco de acordo responde 404.",
+              "description": "Id da campanha. Id de um bloco de campanha com kind agreement responde 404.",
               "example": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f"
             },
             "required": true,
-            "description": "Id do acordo ou da campanha avulsa. Id de bloco de acordo responde 404.",
+            "description": "Id da campanha. Id de um bloco de campanha com kind agreement responde 404.",
             "name": "id",
             "in": "path"
           }
@@ -4243,17 +4243,17 @@
           "Quadro"
         ],
         "summary": "Listar etapas",
-        "description": "Devolve as etapas do quadro da campanha que a chave enxerga, na ordem do painel, com o rótulo, a contagem e a unidade da contagem (unit). No acordo, etapa com unit creators conta pessoas, e cada creator traz todas as entregas dele nos itens. Cada etapa diz que ordenações (sorts) e que grupos de filtro (filters) valem em /items. q filtra a contagem como filtra a lista; a contagem com os outros filtros é o total de /items.",
+        "description": "Devolve as etapas do quadro da campanha que a chave enxerga, na ordem do painel, com o rótulo, a contagem e a unidade da contagem (unit). Em campanha com vários blocos, etapa com unit creators conta pessoas, e cada creator traz todas as entregas dele nos itens. Cada etapa diz que ordenações (sorts) e que grupos de filtro (filters) valem em /items. q filtra a contagem como filtra a lista; a contagem com os outros filtros é o total de /items.",
         "parameters": [
           {
             "schema": {
               "type": "string",
               "format": "uuid",
-              "description": "Id do acordo ou da campanha avulsa. Id de bloco de acordo responde 404.",
+              "description": "Id da campanha. Id de um bloco de campanha com kind agreement responde 404.",
               "example": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f"
             },
             "required": true,
-            "description": "Id do acordo ou da campanha avulsa. Id de bloco de acordo responde 404.",
+            "description": "Id da campanha. Id de um bloco de campanha com kind agreement responde 404.",
             "name": "id",
             "in": "path"
           },
@@ -4357,11 +4357,11 @@
             "schema": {
               "type": "string",
               "format": "uuid",
-              "description": "Id do acordo ou da campanha avulsa. Id de bloco de acordo responde 404.",
+              "description": "Id da campanha. Id de um bloco de campanha com kind agreement responde 404.",
               "example": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f"
             },
             "required": true,
-            "description": "Id do acordo ou da campanha avulsa. Id de bloco de acordo responde 404.",
+            "description": "Id da campanha. Id de um bloco de campanha com kind agreement responde 404.",
             "name": "id",
             "in": "path"
           },
@@ -4614,11 +4614,11 @@
             "schema": {
               "type": "string",
               "format": "uuid",
-              "description": "Só creators desta opção de escopo do acordo.",
+              "description": "Só creators desta opção de escopo da campanha.",
               "example": "5b8d0f2a-4c6e-4a1b-8d3f-7e9a1c3b5d70"
             },
             "required": false,
-            "description": "Só creators desta opção de escopo do acordo.",
+            "description": "Só creators desta opção de escopo da campanha.",
             "name": "scope_option_id",
             "in": "query"
           },
@@ -4626,11 +4626,11 @@
             "schema": {
               "type": "string",
               "format": "uuid",
-              "description": "Só creators com este briefing do acordo.",
+              "description": "Só creators com este briefing da campanha.",
               "example": "2d4f6a8c-0e1b-4c3d-9f5a-7b9c1d3e5f02"
             },
             "required": false,
-            "description": "Só creators com este briefing do acordo.",
+            "description": "Só creators com este briefing da campanha.",
             "name": "briefing_id",
             "in": "query"
           },
@@ -4792,7 +4792,7 @@
           "Missões"
         ],
         "summary": "Ver missão",
-        "description": "Devolve a missão como o painel da marca a apresenta: campanha raiz (o acordo quando há), bloco, creator, status, entregas, conteúdo enviado, link do post por rede, métricas, datas, valor e cupom. O conteúdo que a cadeia de revisão ainda não liberou para a marca sai nulo. Missão de outra marca, inexistente ou numa etapa que a chave não enxerga responde 404.",
+        "description": "Devolve a missão como o painel da marca a apresenta: campanha, bloco, creator, status, entregas, conteúdo enviado, link do post por rede, métricas, datas, valor e cupom. O conteúdo que a cadeia de revisão ainda não liberou para a marca sai nulo. Missão de outra marca, inexistente ou numa etapa que a chave não enxerga responde 404.",
         "parameters": [
           {
             "schema": {
