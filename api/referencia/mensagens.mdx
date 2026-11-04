@@ -1,0 +1,96 @@
+---
+title: "Mensagens"
+description: "Envie uma mensagem de texto ao creator na conversa da campanha, como a marca faz no painel."
+icon: "message"
+keywords:
+  - mensagem
+  - chat
+  - conversa
+  - creator
+  - client_ref
+---
+
+`POST /campaigns/{id}/creators/{creator_id}/messages` envia uma mensagem de texto ao creator na conversa da campanha, a mesma conversa que a marca usa no painel. A mensagem aparece no painel e no app, e o creator é notificado no app.
+
+- `{id}` é o id da campanha, o mesmo de [`GET /campaigns/{id}`](/api/referencia/campanhas).
+- `{creator_id}` é o `creator.id` dos itens do [quadro](/api/referencia/campanhas#itens-de-uma-etapa) ou da [missão](/api/referencia/missoes). Vale para o creator com missão ativa (não expirada) ou com candidatura na campanha. Creator com missão expirada recebe `422 creator_not_in_campaign`.
+
+## Quem envia
+
+A mensagem sai em nome do dono da marca, e o creator vê o nome dele, como se ele tivesse escrito no painel. O cargo do dono precisa ter permissão para enviar mensagens no chat; sem ela, a API responde `403 forbidden`.
+
+O envio pela API precisa estar liberado pela Conty para a sua marca. Sem isso, a rota responde `403 chat_disabled`: fale com o time da Conty para liberar.
+
+## Regras
+
+- Só texto, de 1 a 4000 caracteres. Espaços nas pontas são removidos, e texto só com espaços responde `422 validation_failed`.
+- Anexos (áudio, imagem, vídeo e arquivo) ainda não são aceitos.
+- Marca atendida por agência não conversa direto com o creator, como no painel (`403 chat_forbidden`).
+
+## Reenvio seguro com client_ref
+
+Mande um `client_ref` (um UUID gerado pela sua integração) para poder repetir a chamada sem duplicar a mensagem. A primeira chamada responde `201` com a mensagem criada. As seguintes com o mesmo `client_ref` respondem `200` com a mesma mensagem, sem gravar outra e sem notificar o creator de novo.
+
+O reenvio só devolve a mensagem original enquanto a conversa está aberta e o creator continua na campanha. Se a conversa foi encerrada ou o creator saiu nesse meio tempo, o reenvio recebe o mesmo erro de um envio novo (`409 conversation_closed` ou `422 creator_not_in_campaign`).
+
+```bash
+curl -X POST https://api.appconty.com/public/v1/campaigns/6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f/creators/9d3f1b7c-5e2a-4c8d-a6b1-2f3e4d5c6b7a/messages \
+  -H "Authorization: Bearer ck_live_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "content": "Oi! Pode me mandar o roteiro até sexta?",
+    "client_ref": "c4e1a7d3-8b2f-4a6c-9d0e-3f5b7a1c9e24"
+  }'
+```
+
+## O objeto CreatorMessage
+
+```json
+{
+  "id": "c4e1a7d3-8b2f-4a6c-9d0e-3f5b7a1c9e24",
+  "conversation_id": "e7b3d9f1-2a4c-4e6b-8d1f-5a7c9e3b1d68",
+  "campaign_id": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f",
+  "creator_id": "9d3f1b7c-5e2a-4c8d-a6b1-2f3e4d5c6b7a",
+  "content": "Oi! Pode me mandar o roteiro até sexta?",
+  "created_at": "2026-10-21T14:30:00.000Z"
+}
+```
+
+<ResponseField name="id" type="string" required>
+  Id da mensagem.
+</ResponseField>
+
+<ResponseField name="conversation_id" type="string" required>
+  Id da conversa da campanha com o creator.
+</ResponseField>
+
+<ResponseField name="campaign_id" type="string" required>
+  Id da campanha, o `{id}` da rota.
+</ResponseField>
+
+<ResponseField name="creator_id" type="string" required>
+  Id do creator.
+</ResponseField>
+
+<ResponseField name="content" type="string" required>
+  Texto da mensagem.
+</ResponseField>
+
+<ResponseField name="created_at" type="string" required>
+  Quando a mensagem foi enviada, ISO 8601 em UTC.
+</ResponseField>
+
+## Erros
+
+Em todos os casos abaixo, nenhuma mensagem é gravada.
+
+| Status | Código | Quando |
+|---|---|---|
+| 403 | `chat_disabled` | O chat pela API não está liberado para esta marca. |
+| 403 | `forbidden` | A chave não tem acesso a campanhas |
+| 403 | `forbidden` | O dono da marca não tem permissão para enviar mensagens |
+| 403 | `chat_forbidden` | A marca é atendida por agência e não conversa direto com o creator |
+| 404 | `not_found` | Campanha de outra marca ou inexistente. A resposta é a mesma nos dois casos |
+| 409 | `conversation_closed` | A conversa com o creator está encerrada |
+| 422 | `creator_not_in_campaign` | O creator não tem missão ativa nem candidatura na campanha. Vale também para missão expirada |
+| 422 | `validation_failed` | Um id não é UUID, o `content` está vazio ou passa de 4000 caracteres, ou o `client_ref` não é UUID |

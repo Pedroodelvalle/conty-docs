@@ -746,11 +746,14 @@
                       },
                       {
                         "group": "Chat",
-                        "tag": "Em breve",
                         "expanded": false,
+                        "openapi": "api/openapi.json",
                         "pages": [
-                          "api/referencia/em-breve/enviar-mensagem",
-                          "api/referencia/em-breve/listar-conversas"
+                          "api/referencia/mensagens",
+                          "POST /campaigns/{id}/creators/{creator_id}/messages",
+                          "api/referencia/conversas",
+                          "GET /conversations",
+                          "GET /conversations/{id}/messages"
                         ]
                       },
                       {

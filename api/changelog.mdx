@@ -10,6 +10,18 @@ keywords:
 
 Toda mudança no contrato da API aparece aqui antes de entrar no ar. Enquanto a API estiver em beta, mudanças que quebram compatibilidade são possíveis, sempre anunciadas nesta página com o que muda e o que fazer.
 
+<Update label="Chat com o creator" description="4 de novembro de 2026">
+  Envio de mensagem de texto ao creator pela chave, na conversa da campanha, e leitura das conversas e do histórico.
+
+  **API**
+  - `POST /campaigns/{id}/creators/{creator_id}/messages`: envia texto ao creator na conversa da campanha, como o dono da marca, igual ao painel. O creator é notificado no app. Só texto, de 1 a 4000 caracteres; anexos ainda não. Ver [Mensagens](/api/referencia/mensagens).
+  - `client_ref` (UUID, opcional) para reenviar sem duplicar: a primeira chamada responde `201`, as seguintes com o mesmo valor respondem `200` com a mesma mensagem, sem notificar de novo.
+  - `GET /conversations`: lista as conversas da marca com creators nas campanhas, da mensagem mais recente para a mais antiga, com filtros `campaign_id`, `creator_id`, `status` (`open` ou `closed`) e paginação por cursor. `awaiting_reply=true` traz só as conversas em que a última mensagem é do creator, esperando resposta da marca. Ver [Conversas](/api/referencia/conversas).
+  - `GET /conversations/{id}/messages`: o histórico da conversa, da mais nova para a mais antiga, com `sender` (`brand`, `creator` ou `agency`), tipo, texto, mídia e mensagem apagada (`deleted: true`). Imagem, áudio e vídeo vêm com link público; arquivo vem com link assinado que expira em 1 hora. Ler não marca nada como lido.
+  - O chat pela API precisa ser liberado pela Conty para cada marca, e o cargo do dono da marca precisa ter permissão para enviar e ver mensagens (`403 forbidden`).
+  - Novos erros: `403 chat_disabled`, `403 chat_forbidden`, `409 conversation_closed` e `422 creator_not_in_campaign`.
+</Update>
+
 <Update label="0.2.0-beta" description="22 de outubro de 2026">
   Pagamento da comissão do cupom.
 
