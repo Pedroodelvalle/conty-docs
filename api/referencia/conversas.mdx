@@ -47,6 +47,8 @@ A lista vem da conversa com atividade mais recente para a mais antiga. Mensagem 
 
 O filtro, a ordem e a paginação rodam no servidor, antes de montar a página. Enquanto `has_more` for `true`, mande o `next_cursor` em `cursor` para buscar a próxima. Na última página, `next_cursor` vem `null`.
 
+A lista é uma foto do momento: a conversa que recebe mensagem enquanto você pagina sobe para o topo e não aparece nas páginas seguintes. Para acompanhar, por exemplo varrendo `awaiting_reply=true`, comece de novo pela primeira página a cada checagem.
+
 ```bash
 curl "https://api.appconty.com/public/v1/conversations?campaign_id=6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f&awaiting_reply=true" \
   -H "Authorization: Bearer ck_live_..."
@@ -131,7 +133,7 @@ curl "https://api.appconty.com/public/v1/conversations?campaign_id=6c1e8f2a-3b4d
 
 `GET /conversations/{id}/messages` traz as mensagens de uma conversa, da mais nova para a mais antiga. O `{id}` é o `id` de `GET /conversations`. Conversa de outra marca, ou que não aparece na lista, responde `404 not_found`.
 
-A paginação é por cursor, como na lista: `limit` de 1 a 100 (padrão 20) e o `next_cursor` da página anterior em `cursor`.
+A paginação é por cursor, como na lista: `limit` de 1 a 100 (padrão 20) e o `next_cursor` da página anterior em `cursor`. Aqui a ordem é por `created_at`, que não muda, então a paginação não perde mensagem.
 
 ```bash
 curl "https://api.appconty.com/public/v1/conversations/e7b3d9f1-2a4c-4e6b-8d1f-5a7c9e3b1d68/messages?limit=20" \

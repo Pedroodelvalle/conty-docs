@@ -31,6 +31,8 @@ O envio pela API precisa estar liberado pela Conty para a sua marca. Sem isso, a
 
 Mande um `client_ref` (um UUID gerado pela sua integração) para poder repetir a chamada sem duplicar a mensagem. A primeira chamada responde `201` com a mensagem criada. As seguintes com o mesmo `client_ref` respondem `200` com a mesma mensagem, sem gravar outra e sem notificar o creator de novo.
 
+O `client_ref` é único por conversa, não na marca toda. O mesmo `client_ref` mandado para outra campanha ou outro creator cria uma mensagem nova.
+
 O reenvio só devolve a mensagem original enquanto a conversa está aberta e o creator continua na campanha. Se a conversa foi encerrada ou o creator saiu nesse meio tempo, o reenvio recebe o mesmo erro de um envio novo (`409 conversation_closed` ou `422 creator_not_in_campaign`).
 
 ```bash
