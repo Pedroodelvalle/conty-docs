@@ -1,0 +1,41 @@
+---
+title: "Limites e erros"
+description: "Limites de evento e de lote da API de eventos e o que o SDK faz com cada código HTTP."
+icon: "triangle-exclamation"
+keywords:
+  - sdk
+  - limites
+  - erros
+  - rate limit
+  - "429"
+---
+
+O SDK não valida o evento: quem valida é a API. Ele só divide lotes no limite e confere o tipo da chave.
+
+## Limites
+
+| Limite | Valor |
+|---|---|
+| `event` (nome) | 64 caracteres, só `a-z 0-9 _ : . $ -` |
+| `external_id` | 128 caracteres |
+| `link_code` | 32 caracteres |
+| `utm_campaign` e `utm_content` | 200 caracteres |
+| `properties` | 2 KB (2048 bytes em JSON) |
+| Eventos por requisição | 100 |
+| Tamanho do lote | 120 KB |
+| Requisições | 600 por minuto por IP |
+
+## Erros
+
+| Status | `code` | Quando | O que o SDK faz |
+|---|---|---|---|
+| `400` | `invalid_json` | Corpo não é JSON válido. | Node devolve o `error`, sem nova tentativa. |
+| `401` | `invalid_event_key` | Chave ausente, errada ou revogada. | Node devolve o `error`. Site e app não lançam. |
+| `403` | `origin_not_allowed` | Chave pública usada de uma origem fora das origens permitidas. | Site e app não lançam. Confira as [origens da chave](/api/sdk/site#origens-permitidas). |
+| `413` | `event_batch_too_large` | Lote acima de 120 KB. | Node já divide os lotes nesse limite. Se chegar, devolve o `error`. |
+| `422` | `invalid_event_batch` | Evento fora da regra. `details.index` aponta o primeiro inválido. | Node devolve o `error` com `details.index`, sem nova tentativa. Nada do lote foi gravado. |
+| `429` | `rate_limited` | Mais de 600 requisições por minuto no mesmo IP. Vem com `Retry-After: 60`. | Node espera o `Retry-After` e tenta de novo. |
+| `500` | `internal_error` | Erro inesperado na Conty. | Node tenta de novo com espera crescente. |
+| `503` | `ingest_unavailable` | Recebimento de eventos fora do ar. | Node tenta de novo com espera crescente. |
+
+No site e no app, o SDK nunca lança erro: falha de rede ou de API não quebra a página. No Node, os erros locais vêm com `status: null` e `code` `network_error`, `timeout`, `invalid_event` ou `unexpected_error`.

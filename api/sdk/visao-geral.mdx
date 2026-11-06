@@ -1,0 +1,38 @@
+---
+title: "Visão geral"
+description: "O que é o SDK de eventos da Conty, as duas chaves e qual pacote usar em cada lugar."
+icon: "code"
+keywords:
+  - sdk
+  - eventos
+  - conversão
+  - cpk_
+  - cev_
+---
+
+O SDK de eventos manda as conversões do seu site, app ou servidor para a [API de eventos](/api/guias/eventos-de-conversao) sem você montar a requisição. No site e no app ele também guarda as UTMs do link do creator, para cada evento sair já [atribuído](/api/sdk/atribuicao).
+
+## Qual pacote usar
+
+| Pacote | Onde roda | Chave |
+|---|---|---|
+| [Script `sdk.js`](/api/sdk/site) ou [`@conty/web`](/api/sdk/web) | Navegador | Pública, `cpk_` |
+| [`@conty/react-native`](/api/sdk/react-native) | App React Native e Expo | Pública, `cpk_` |
+| [`@conty/node`](/api/sdk/node) | Servidor: Node 20+, Cloudflare Workers, Deno e Bun | Secreta, `cev_` |
+
+## Duas chaves
+
+| | Pública, `cpk_…` | Secreta, `cev_…` |
+|---|---|---|
+| Onde usar | Site e app. Fica visível no código. | Só no servidor. Nunca no navegador nem no app. |
+| Valor de compra | A API ignora `value_cents`. | Conta `value_cents`. |
+| `external_id` | Gravado como `pk:<id>`, isolado dos ids do servidor. | Gravado como você mandou. |
+| Origem | Só aceita as origens permitidas da chave, quando você define alguma (`403 origin_not_allowed` fora delas). | Sem conferência de origem. |
+
+**Compra com valor sai do servidor**, com a chave secreta, por exemplo no webhook de pagamento aprovado. No site e no app, mande os passos do funil: `sign_up`, `begin_checkout`, `add_to_cart`.
+
+## Criar as chaves
+
+As duas chaves nascem juntas. Em **Desenvolvedores → Eventos**, clique em **Nova chave** e dê um nome que diga onde elas vão ficar, por exemplo `Loja online`. A Conty cria uma chave pública e uma secreta com esse nome. A pública (`cpk_`) pode ser vista e copiada no painel a qualquer momento. A secreta (`cev_`) aparece uma vez só, na criação: copie na hora, depois ela não aparece de novo.
+
+Para limitar onde a chave pública funciona, veja [origens permitidas](/api/sdk/site#origens-permitidas).

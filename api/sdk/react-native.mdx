@@ -1,0 +1,48 @@
+---
+title: "React Native"
+description: "Instale o @conty/react-native no seu app React Native ou Expo e capture o deep link do creator."
+icon: "/icons/react-native.svg"
+keywords:
+  - sdk
+  - "@conty/react-native"
+  - react native
+  - expo
+  - deep link
+---
+
+```bash
+npm i @conty/react-native @react-native-async-storage/async-storage
+```
+
+No Expo, use `npx expo install @conty/react-native @react-native-async-storage/async-storage`. No bare, rode `pod install` na pasta `ios`. A atribuição fica no AsyncStorage.
+
+Chame o `init` uma vez, fora de componente, por exemplo no `app/_layout.tsx`:
+
+```tsx
+import { conty } from "@conty/react-native";
+
+conty.init("cpk_c_SUA_CHAVE_PUBLICA");
+
+conty.track("sign_up");
+```
+
+Os `track` feitos antes do `init` ficam numa fila de até 100 eventos e saem quando o SDK fica pronto. Cada evento espera até 10 segundos; depois disso, é descartado. Cada evento leva `$os` e `$os_version` em `properties`.
+
+## Deep link
+
+No `init`, o SDK lê o deep link que abriu o app (`Linking.getInitialURL()`) e os links recebidos com o app aberto. O link do creator precisa abrir o app com as UTMs na query:
+
+```text
+minhaloja://produto/42?utm_campaign=verao-2027&utm_content=cr_ab12cd34
+```
+
+Configure o `scheme` no `app.json` (e universal links ou app links, se usar link `https://`). Quando o link chega por outro caminho, como expo-router, push ou um provedor de link adiado, passe a URL você mesmo:
+
+```tsx app/+native-intent.tsx
+import { conty } from "@conty/react-native";
+
+export function redirectSystemPath({ path }: { path: string; initial: boolean }) {
+  conty.captureUrl(path);
+  return path;
+}
+```

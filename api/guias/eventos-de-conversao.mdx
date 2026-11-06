@@ -1,0 +1,257 @@
+---
+title: "Eventos de conversão"
+description: "Envie cadastros, compras e outros eventos do seu site, app ou servidor para a Conty e veja quanto cada creator gerou nos resultados da campanha."
+icon: "bolt"
+keywords:
+  - eventos
+  - conversão
+  - atribuição
+  - utm
+  - cadastro
+  - compra
+  - chave de eventos
+---
+
+O link do creator leva o público para o seu site ou app com as UTMs da campanha. A API de eventos fecha o ciclo: quando esse público se cadastra, compra ou faz qualquer outra ação que importa para você, o seu site, app ou servidor avisa a Conty, e o evento aparece na seção **Tráfego** dos resultados da campanha, somado ao creator que trouxe a pessoa.
+
+<Note>
+  Evento é métrica. Um evento `purchase` com `value_cents` aparece como receita de evento em **Tráfego**, mas não registra venda de cupom nem gera comissão para o creator. Para comissão por venda, use o [Cupom por creator](/api/guias/cupom-por-creator).
+</Note>
+
+A API de eventos é separada da API pública: tem host próprio e chaves próprias.
+
+| | API pública | API de eventos |
+|---|---|---|
+| Endereço | `https://api.appconty.com/public/v1` | `https://conty.link/v1/events` |
+| Chave | `ck_live_…` | `cpk_…` (pública) e `cev_…` (secreta) |
+| O que faz | Lê e escreve cupons, campanhas, quadro e mensagens | Só recebe eventos |
+
+<Tip>
+  O jeito mais rápido de integrar é o [SDK de eventos](/api/sdk/visao-geral): script no site, `@conty/web`, `@conty/react-native` ou `@conty/node`. Ele guarda as UTMs do link do creator e monta a requisição por você. Esta página descreve a API por baixo do SDK.
+</Tip>
+
+## Duas chaves
+
+| | Pública, `cpk_…` | Secreta, `cev_…` |
+|---|---|---|
+| Onde usar | Site e app. Fica visível no código. | Só no servidor. |
+| `value_cents` | Ignorado. | Contado. |
+| `external_id` | Gravado como `pk:<id>`. Sem ele, a Conty gera um. | Gravado como você mandou. |
+| Origem | Só as origens permitidas da chave, quando você define alguma. | Sem conferência. |
+
+As duas só servem para enviar eventos: não leem nada da sua conta e não mexem em campanha, cupom ou pagamento.
+
+**Compras e receita saem do servidor, com a chave secreta.** O evento do servidor, por exemplo do webhook da sua loja ou do seu meio de pagamento quando o pedido é pago, não se perde com bloqueador de anúncio, aba fechada ou app sem rede, e é o único que conta `value_cents`. Cadastro, início de checkout e outros passos do funil podem sair do site ou do app, com a chave pública.
+
+<Note>
+  Como o `external_id` da chave pública ganha o prefixo `pk:`, um evento do site nunca se confunde com um evento do servidor, mesmo com o mesmo id. Mande cada conversão por um lado só: a compra pelo servidor.
+</Note>
+
+## Criar as chaves
+
+<Steps>
+  <Step title="Abra a aba Eventos">
+    No painel, abra **Menu → Desenvolvedores** e escolha a aba **Eventos**.
+
+    Para ver a página Desenvolvedores, o seu cargo precisa da permissão **Gerenciar chaves de API e webhooks**. A API de eventos precisa estar liberada pela Conty para a sua marca; se a aba não deixa criar a chave, fale com o seu contato na Conty.
+  </Step>
+
+  <Step title="Crie o par de chaves">
+    Clique em **Nova chave** e dê um nome que diga onde elas vão ficar, por exemplo `Loja online`. A Conty cria uma chave pública e uma secreta com esse nome.
+  </Step>
+
+  <Step title="Copie as chaves na hora">
+    As chaves vêm no formato `cpk_c_` e `cev_c_` seguidos de 43 caracteres. A chave pública (`cpk_`) pode ser vista e copiada no painel a qualquer momento. A secreta (`cev_`) aparece uma vez só, na criação: a Conty guarda apenas um hash dela e não consegue mostrar de novo. Depois de fechar a janela, a lista mostra só os 4 últimos caracteres da secreta (`••••Xa9Q`).
+
+    Guarde a secreta na configuração do servidor. Nos exemplos abaixo ela está em `CONTY_EVENT_KEY`.
+  </Step>
+
+  <Step title="Defina as origens da chave pública (opcional)">
+    No menu da chave, escolha **Editar origens** e informe os endereços que podem enviar eventos com a chave pública: `https://dominio`, com porta se precisar, ou `http://localhost` para testar, até 10. Sem nenhuma, qualquer origem é aceita. Envio de outra origem recebe `403 origin_not_allowed`.
+  </Step>
+</Steps>
+
+Para revogar, abra o menu da chave e escolha **Revogar chave pública**, **Revogar chave secreta** ou **Revogar as duas**. Não dá para desfazer. Todo envio com a chave revogada passa a receber `401 invalid_event_key` em até 1 minuto.
+
+## Enviar eventos
+
+Mande um `POST` para `https://conty.link/v1/events` com a chave no cabeçalho `Authorization` e um lote de 1 a 100 eventos no corpo:
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://conty.link/v1/events \
+  -H "Authorization: Bearer $CONTY_EVENT_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "events": [
+      {
+        "event": "sign_up",
+        "occurred_at": "2026-11-06T14:32:10-03:00",
+        "external_id": "user_84213",
+        "utm_campaign": "verao-2027",
+        "utm_content": "cr_ab12cd34"
+      },
+      {
+        "event": "purchase",
+        "occurred_at": "2026-11-06T14:40:02-03:00",
+        "external_id": "order_10492",
+        "value_cents": 18990,
+        "utm_campaign": "verao-2027",
+        "utm_content": "cr_ab12cd34",
+        "properties": { "plan": "anual", "items": 2 }
+      }
+    ]
+  }'
+```
+
+```javascript Node.js
+const ENDPOINT = "https://conty.link/v1/events";
+
+export async function sendEvents(events) {
+  const response = await fetch(ENDPOINT, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.CONTY_EVENT_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ events }),
+  });
+
+  if (response.status === 202) return response.json();
+
+  const { error } = await response.json();
+  const retryable = response.status === 429 || response.status >= 500;
+  throw Object.assign(new Error(`${error.code}: ${error.message}`), {
+    retryable,
+    index: error.details?.index ?? null,
+  });
+}
+
+await sendEvents([
+  {
+    event: "purchase",
+    occurred_at: new Date().toISOString(),
+    external_id: "order_10492",
+    value_cents: 18990,
+    utm_campaign: "verao-2027",
+    utm_content: "cr_ab12cd34",
+  },
+]);
+```
+
+</CodeGroup>
+
+```json 202
+{
+  "accepted": 2
+}
+```
+
+O `202` confirma que o lote foi recebido. A gravação acontece em segundo plano, e o evento aparece em **Tráfego** na próxima atualização dos resultados.
+
+### Campos do evento
+
+| Campo | Tipo | Obrigatório | Regra |
+|---|---|---|---|
+| `event` | string | Sim | Nome do evento, até 64 caracteres. Só minúsculas, números e `_ : . $ -`, por exemplo `sign_up`, `purchase`, `checkout:start`. |
+| `occurred_at` | string | Sim | Data e hora ISO 8601 com fuso, `Z` ou `-03:00`. Os segundos são opcionais. |
+| `external_id` | string | Não | O id do evento no seu sistema, até 128 caracteres. Reenvio com o mesmo valor não duplica. |
+| `link_code` | string | Não | O código curto do link do creator, até 32 caracteres. Veja [Atribuição](#atribuição-ao-creator-e-à-campanha). |
+| `utm_campaign` | string | Não | A `utm_campaign` que chegou no seu site, até 200 caracteres. |
+| `utm_content` | string | Não | A `utm_content` que chegou no seu site: o código do creator (`cr_` + 8 caracteres hexadecimais) ou o id do creator. Até 200 caracteres. |
+| `value_cents` | integer | Não | Valor do evento em centavos, de `0` a `2147483647`. Número inteiro, sem casas decimais. |
+| `properties` | object | Não | Dados extras do evento, até 2048 bytes em JSON. |
+
+Os campos de texto não aceitam o caractere nulo (`\u0000`), nem dentro de `properties`. Texto vazio em `link_code`, `utm_campaign` e `utm_content` também é recusado: se não tem o valor, não mande o campo.
+
+### Reenvio sem duplicar
+
+Use sempre o `external_id`, com o id do pedido, do cadastro ou do evento no seu sistema. Ele é único por marca: se o mesmo `external_id` chegar de novo, em outro lote ou na mesma requisição, o evento continua contado uma vez. Assim você pode reenviar um lote inteiro depois de um erro de rede sem medo.
+
+Evento sem `external_id` nunca é tratado como repetido. Cada envio conta de novo.
+
+Com a chave pública, o `external_id` é gravado como `pk:<id>`, então a deduplicação vale entre envios da chave pública, nunca contra um id mandado pelo servidor.
+
+## Atribuição ao creator e à campanha
+
+O caminho de ponta a ponta:
+
+<Steps>
+  <Step title="O público clica no link do creator">
+    O link do creator tem o formato `https://conty.link/cX7pQ2mLa`. A Conty conta o clique e redireciona para a página de destino da campanha com as UTMs:
+
+    ```text
+    https://sualoja.com.br/verao?utm_source=conty&utm_medium=creator&utm_campaign=verao-2027&utm_content=cr_ab12cd34
+    ```
+
+    `utm_content` é o código do creator: `cr_` seguido de 8 caracteres hexadecimais. Ele não muda.
+
+    As outras UTMs são configuradas por campanha, em **Link dos creators → UTMs**:
+
+    | Parâmetro | Padrão | Pode mudar |
+    |---|---|---|
+    | `utm_campaign` | O nome padrão da campanha | Sim, até 100 caracteres. |
+    | `utm_source` | `conty` | Sim: minúsculas, números, `.`, `-` e `_`. |
+    | `utm_medium` | `creator` | Sim, com a mesma regra. |
+    | Parâmetros extras | Nenhum | Até 5, com nome de até 32 caracteres. Não podem repetir uma UTM. |
+  </Step>
+
+  <Step title="O seu site ou app guarda as UTMs">
+    O [SDK](/api/sdk/atribuicao) guarda `utm_campaign` e `utm_content` por 30 dias, com último toque com creator. Sem o SDK, guarde as duas junto da sessão ou do cadastro da pessoa (cookie, banco ou o que a sua stack já usa para atribuição).
+  </Step>
+
+  <Step title="O seu site, app ou servidor envia o evento com as UTMs">
+    Quando a conversão acontece, mande o evento com as duas UTMs que você guardou. A Conty acha o link do creator na campanha e soma o evento a ele.
+  </Step>
+</Steps>
+
+A Conty procura o link do creator nesta ordem, sempre entre os links da sua marca:
+
+1. **`link_code`**: o código curto no fim do link do creator (`cX7pQ2mLa` em `https://conty.link/cX7pQ2mLa`). Quando ele bate, vale ele.
+2. **`utm_campaign` + `utm_content`**: os dois juntos. `utm_content` é o código do creator (`cr_ab12cd34`) ou o id do creator, e `utm_campaign` é a campanha como chegou na URL: o valor configurado em **UTMs**, o nome padrão da campanha ou o id dela. A comparação de `utm_campaign` ignora maiúsculas e minúsculas. Só `utm_content`, sem `utm_campaign`, não atribui.
+
+Evento sem atribuição, ou com UTMs que não batem com nenhum link da marca, é gravado como evento da marca sem creator: entra no total da marca em **Tráfego**, mas não soma para nenhum creator.
+
+<Tip>
+  Mande as UTMs exatamente como chegaram na URL, sem trocar `utm_content` pelo nome do creator nem `utm_campaign` pelo nome da campanha.
+</Tip>
+
+## Limites
+
+| Limite | Valor |
+|---|---|
+| Eventos por requisição | 1 a 100 |
+| Tamanho do lote | cerca de 120 KB depois de validado (`413` acima disso) |
+| `properties` por evento | 2048 bytes |
+| `value_cents` | inteiro de `0` a `2147483647` |
+| Requisições | 600 por minuto por IP |
+
+Passou de 600 requisições no minuto, a resposta é `429 rate_limited` com o cabeçalho `Retry-After: 60`. Junte eventos em lotes em vez de mandar um por requisição.
+
+## Erros
+
+Todo erro vem no mesmo envelope:
+
+```json 422
+{
+  "error": {
+    "code": "invalid_event_batch",
+    "message": "Lote de eventos inválido.",
+    "details": { "index": 2 }
+  }
+}
+```
+
+| Status | `code` | Quando acontece | O que fazer |
+|---|---|---|---|
+| `400` | `invalid_json` | O corpo não é JSON válido. | Corrija o corpo. |
+| `401` | `invalid_event_key` | Chave ausente, fora do formato `Bearer cpk_…` ou `Bearer cev_…`, errada ou revogada. | Confira a chave. Se foi revogada, crie outra. |
+| `403` | `origin_not_allowed` | Chave pública enviada de uma origem fora das origens permitidas dela. | Adicione a origem em **Editar origens** ou use a chave certa. |
+| `413` | `event_batch_too_large` | O lote passou do tamanho máximo. | Mande menos eventos por requisição. |
+| `422` | `invalid_event_batch` | Algum evento do lote é inválido. `details.index` aponta o primeiro evento com problema (começa em `0`), ou vem `null` quando o problema é o lote, como lista vazia ou mais de 100 eventos. | Corrija o evento e reenvie o lote. Nada do lote foi gravado. |
+| `429` | `rate_limited` | Passou de 600 requisições por minuto no mesmo IP. | Espere o `Retry-After` e tente de novo. |
+| `503` | `ingest_unavailable` | Recebimento de eventos fora do ar. | Tente de novo com espera crescente. |
+| `500` | `internal_error` | Erro inesperado na Conty. | Tente de novo com espera crescente. |
+
+Em `429`, `500` e `503`, reenvie o mesmo lote. Com `external_id` em cada evento, o reenvio não duplica nada.

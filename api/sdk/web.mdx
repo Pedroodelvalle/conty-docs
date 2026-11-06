@@ -1,0 +1,41 @@
+---
+title: "React e Next.js"
+description: "Instale o @conty/web no seu app React ou Next.js e mande eventos com a chave pública."
+icon: "/icons/react.svg"
+keywords:
+  - sdk
+  - "@conty/web"
+  - react
+  - next.js
+  - cpk_
+---
+
+```bash
+npm i @conty/web
+```
+
+```tsx
+import { conty } from "@conty/web";
+
+conty.init("cpk_c_SUA_CHAVE_PUBLICA");
+conty.track("begin_checkout", { plan: "anual" });
+```
+
+Importar o pacote não mexe em `window` nem em `localStorage`. As UTMs da URL atual são lidas no `init`. No servidor (SSR), `init` e `track` não fazem nada, então chame o `init` num componente de cliente que roda em todas as páginas.
+
+| `conty.track(name, props)` | |
+|---|---|
+| `name` | Nome do evento, por exemplo `sign_up`. Sem `init`, nada é enviado. |
+| `props.external_id` | Id do evento. Sem ele, o SDK gera um UUID. |
+| `props.link_code` | Código do link do creator, se você tiver. |
+| Qualquer outro campo | Vai em `properties`, junto com `$os: "web"`, `utm_source` e `utm_medium`. |
+
+A atribuição fica em `localStorage`, na chave `conty_attribution`, no formato `{ utm, expires_at }`, com `expires_at` em milissegundos. Leia de lá `utm_campaign` e `utm_content` para guardar no pedido e mandar a compra pelo [servidor](/api/sdk/node), e ignore a atribuição vencida:
+
+```ts
+const saved = JSON.parse(localStorage.getItem("conty_attribution") ?? "null");
+const attribution = saved && saved.expires_at > Date.now() ? saved.utm : null;
+
+const utmCampaign = attribution?.utm_campaign ?? null;
+const utmContent = attribution?.utm_content ?? null;
+```
