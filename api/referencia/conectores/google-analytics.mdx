@@ -1,0 +1,29 @@
+---
+title: "Google Analytics 4"
+description: "Veja as sessões e os eventos que cada creator trouxe para o seu site, lidos da sua propriedade do Google Analytics 4."
+icon: "/images/conectores/google-analytics.svg"
+keywords:
+  - conector
+  - integração
+  - google analytics 4
+  - análise
+---
+
+import ConectorQuadro from "/snippets/conector-quadro.mdx";
+
+<ConectorQuadro
+  slug="google-analytics"
+  nome="Google Analytics 4"
+  logo="/images/conectores/google-analytics.svg"
+  status="Disponível"
+  categoria="Análise"
+  faz="Lê a propriedade do Google Analytics 4 da marca para mostrar as sessões e os eventos que cada creator trouxe e as sessões totais do site por origem. A Conty só lê os dados."
+  coleta="Por dia: sessões e eventos por creator, e as sessões totais da marca por origem."
+  liga="Pelas UTMs do link do creator, utm_campaign e utm_content (o código cr_ do creator), que o Google Analytics grava na sessão."
+  precisa="Propriedade do Google Analytics 4 com acesso de Leitor e um site que preserva as UTMs do link até a página de destino. A conexão é pelo login do Google, escolhendo a propriedade."
+  atualizacao="A cada 3 horas, relendo os últimos 3 dias. O Google leva algumas horas para processar os dados e até 48 horas para fechar os números do dia."
+/>
+
+## Conectar
+
+No painel, abra **Menu → Integrações**, escolha o conector e siga os passos. Para conectar, o seu cargo precisa da permissão **Gerenciar integrações**. Os dados aparecem nos resultados de cada campanha depois da primeira coleta.

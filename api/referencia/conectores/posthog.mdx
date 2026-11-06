@@ -1,0 +1,29 @@
+---
+title: "PostHog"
+description: "Veja as visitas e os eventos que cada creator trouxe para o seu site ou app, lidos do seu projeto no PostHog."
+icon: "/images/conectores/posthog.svg"
+keywords:
+  - conector
+  - integração
+  - posthog
+  - análise
+---
+
+import ConectorQuadro from "/snippets/conector-quadro.mdx";
+
+<ConectorQuadro
+  slug="posthog"
+  nome="PostHog"
+  logo="/images/conectores/posthog.svg"
+  status="Disponível"
+  categoria="Análise"
+  faz="Lê o projeto do PostHog da marca para mostrar, na seção Tráfego dos resultados, as visitas e os eventos que cada creator trouxe e o tráfego total do site ou app por origem. A Conty só lê os dados."
+  coleta="Por dia: visitas e os eventos de conversão que a marca escolhe em Resultados, separados por creator, e as visitas totais da marca por domínio de origem."
+  liga="Pelas UTMs do link do creator: utm_campaign e utm_content (o código cr_ do creator) gravadas no evento ou, quando faltam no evento, as UTMs iniciais da pessoa."
+  precisa="Projeto no PostHog com o posthog-js capturando as UTMs e acesso de Admin ou Member à organização. A conexão é pelo botão Conectar com PostHog, escolhendo o projeto."
+  atualizacao="A cada 3 horas, relendo os últimos 3 dias. O PostHog leva poucos minutos para disponibilizar cada evento."
+/>
+
+## Conectar
+
+No painel, abra **Menu → Integrações**, escolha o conector e siga os passos. Para conectar, o seu cargo precisa da permissão **Gerenciar integrações**. Os dados aparecem nos resultados de cada campanha depois da primeira coleta.
