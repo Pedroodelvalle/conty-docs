@@ -259,6 +259,31 @@ Quando você revoga o acesso direto na rede, a Conty percebe na próxima atualiz
 
 Nos dois casos, as métricas já coletadas ficam guardadas no histórico da sua conta até você pedir a exclusão pelos contatos da seção 13. As métricas dos conteúdos entregues em campanhas ficam no histórico da campanha, para comprovar a entrega e calcular pagamentos (veja a seção 9).
 
+### Conectores da Marca e API de eventos
+
+A Marca pode conectar à Conty contas de outras plataformas (Meta Ads, Google Analytics 4, PostHog, App Store Connect e os demais conectores listados na [documentação](/api/referencia/conectores)) e enviar eventos de conversão pela API de eventos ou pelo script da Conty no próprio site. Esses dados dizem respeito ao público e aos clientes da Marca.
+
+**Papéis.** Nesses dados, a **Marca é a controladora** e a **Conty atua como operadora**: trata os dados em nome da Marca, conforme o que a Marca configura no painel (quais contas conecta, quais eventos escolhe e envia), e só para medir os resultados das campanhas da Marca e atribuí-los aos Criadores. Pedidos de titulares sobre esses dados devem ser feitos à Marca; se chegarem à Conty, serão encaminhados a ela.
+
+**O que a Conty guarda:**
+
+- **Conectores de análise (Google Analytics 4, PostHog e App Store Connect):** métricas diárias agregadas, como visitas, sessões, eventos e primeiros downloads, por dia e por link de Criador, e os totais da Marca por origem. A Conty não guarda dados de visitantes identificados.
+- **Meta Ads:** o desempenho diário de cada anúncio criado pela Conty, como gasto, impressões, alcance, cliques, visualizações do vídeo, compras e valor atribuídos pela Meta.
+- **API de eventos e script do site:** para cada evento, o nome, a data e a hora, o valor, o identificador enviado pela Marca, as UTMs de campanha e do Criador, o link do Criador atribuído e as informações adicionais que a Marca incluir. A Conty não grava o endereço IP nem o navegador de quem gerou o evento; o IP da requisição é usado apenas no momento do envio, para limitar o volume de requisições.
+- **Script do site:** guarda no navegador do visitante, em armazenamento local e sem cookies, as UTMs da visita por até 30 dias. Esse dado fica no aparelho do visitante.
+- **Credenciais dos conectores:** tokens, chaves e arquivos de acesso ficam cifrados com AES-256, com chave própria de cada operação da plataforma, e não são exibidos a outros usuários.
+- **Chaves de eventos:** a chave pública (`cpk_`) pode ser vista e copiada no painel a qualquer momento. Da chave secreta (`cev_`), a Conty guarda apenas o hash e os 4 últimos caracteres, para identificação no painel, e a chave completa aparece uma única vez, na criação.
+
+**Quem vê.** Esses dados aparecem apenas para os membros da Marca com permissão de acesso às campanhas. **Criadores não têm acesso** aos dados do público e dos clientes da Marca. A Conty não vende esses dados nem os usa para outra finalidade.
+
+**Ao desconectar:**
+
+- **Meta Ads:** o token de acesso é apagado na hora, a Conty pausa os anúncios ativos que criou e deixa de ler o desempenho. O histórico de desempenho já coletado continua nos resultados da campanha.
+- **Conectores de análise:** a coleta para na hora. A Conty apaga as credenciais de acesso. As métricas já coletadas continuam nos resultados da campanha.
+- **Chave de eventos revogada:** os envios com ela passam a ser recusados em até 1 minuto. Os eventos já recebidos continuam nos resultados da campanha.
+
+As métricas e os eventos ficam guardados enquanto a conta da Marca existir, para compor o histórico das campanhas, ou até a Marca pedir a exclusão pelos contatos da seção 13.
+
 ---
 
 ## 4. Finalidades do Tratamento de Dados
@@ -324,6 +349,7 @@ A Conty pode transferir dados para outros países, especialmente para serviços 
 - Ferramentas de IA: OpenAI, Google Cloud
 - Serviços de automação e comunicação
 - **Asaas:** tratamento predominantemente no âmbito da operação regulada no Brasil; eventuais subprocessadores ou ferramentas do grupo seguem as informações do DPA/política do Asaas
+- **Conectores da Marca:** os dados lidos dos conectores vêm de plataformas sediadas ou com servidores no exterior, como Meta, Google e Apple (EUA) e PostHog (EUA ou União Europeia, conforme a região escolhida pela Marca). A Marca, como controladora, contrata essas plataformas diretamente
 
 As transferências ocorrem com cláusulas contratuais padrão e garantias adequadas de proteção.
 
@@ -350,6 +376,7 @@ As políticas são revisadas continuamente para mitigar vulnerabilidades.
 | Dados cadastrais | Mantidos enquanto houver vínculo ativo com a plataforma |
 | Dados de campanhas | Mantidos para histórico e disputas conforme Central de Regras |
 | Dados de redes conectadas (YouTube, Instagram, TikTok) | Atualizados enquanto a conta estiver conectada. Tokens apagados ao desconectar. Métricas já coletadas guardadas até o pedido de exclusão (veja a seção 3) |
+| Dados de conectores e eventos da Marca | Métricas e eventos guardados enquanto a conta da Marca existir ou até o pedido de exclusão da Marca. Tokens e credenciais dos conectores apagados ao desconectar (veja a seção 3) |
 | Dados de navegação | Podem ser armazenados de forma anonimizada para fins estatísticos |
 | Snapshots do Conty Creator Index | Somente agregados anonimizados; competências publicadas permanecem como registro da pesquisa |
 | Dados financeiros | Mantidos por **5 anos** conforme legislação fiscal |
