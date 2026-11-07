@@ -10,6 +10,22 @@ keywords:
 
 Toda mudança no contrato da API aparece aqui antes de entrar no ar. Enquanto a API estiver em beta, mudanças que quebram compatibilidade são possíveis, sempre anunciadas nesta página com o que muda e o que fazer.
 
+<Update label="API de eventos" description="6 de novembro de 2026">
+  Envio de eventos de conversão (cadastro, compra e outros) do site, do app ou do servidor da marca, atribuídos ao creator e à campanha. Ver [Eventos de conversão](/api/guias/eventos-de-conversao).
+
+  **API de eventos**
+  - `POST https://conty.link/v1/events`: recebe um lote de 1 a 100 eventos e responde `202` com `accepted`. A gravação é em segundo plano. Fica fora da API pública e da aba Referência.
+  - Par de chaves criado junto em **Desenvolvedores → Eventos**: a pública, `cpk_…`, vai no site e no app; a secreta, `cev_…`, só no servidor. A pública aparece no painel a qualquer momento; a secreta aparece uma vez só, na criação, e a Conty guarda só o hash e os 4 últimos caracteres.
+  - Origens permitidas na chave pública: até 10, no formato `https://dominio` (com porta, se precisar) ou `http://localhost`. Sem nenhuma, qualquer origem é aceita. Envio de outra origem recebe `403 origin_not_allowed`.
+  - Chave pública ignora `value_cents` e grava o `external_id` como `pk:<id>`. Compras e receita saem do servidor, com a chave secreta.
+  - Evento: `event`, `occurred_at`, `external_id`, `link_code`, `utm_campaign`, `utm_content`, `value_cents` e `properties`. Atribuição pelo `link_code` ou pelo par `utm_campaign` + `utm_content` (`cr_…`); sem atribuição, o evento conta só no total da marca. Reenvio com o mesmo `external_id` não duplica.
+  - Evento é métrica: `value_cents` aparece como receita de evento em **Tráfego** e não gera venda de cupom nem comissão.
+  - Limites: 600 requisições por minuto por IP, `properties` até 2048 bytes, `value_cents` até `2147483647`. Erros `400 invalid_json`, `401 invalid_event_key`, `403 origin_not_allowed`, `413 event_batch_too_large`, `422 invalid_event_batch` (com `details.index`), `429 rate_limited` (com `Retry-After`) e `503 ingest_unavailable`.
+
+  **SDK**
+  - Script do site em `https://conty.link/sdk.js`, `@conty/web`, `@conty/react-native` e `@conty/node`. Os três primeiros usam a chave pública e guardam as UTMs do link do creator; o `@conty/node` usa a chave secreta e tenta de novo em falha de rede, `429` e `5xx`. Ver [SDK de eventos](/api/sdk/visao-geral).
+</Update>
+
 <Update label="Chat com o creator" description="4 de novembro de 2026">
   Envio de mensagem de texto ao creator pela chave, na conversa da campanha, e leitura das conversas e do histórico.
 

@@ -11,6 +11,18 @@
     "family": "Geist"
   },
   "favicon": "/favicon.png",
+  "contextual": {
+    "options": [
+      "copy",
+      "view",
+      "chatgpt",
+      "claude",
+      "perplexity",
+      "mcp",
+      "cursor",
+      "vscode"
+    ]
+  },
   "metadata": {
     "og:site_name": "Conty",
     "og:title": "Conty - Central de Ajuda, Tutoriais e Blog",
@@ -629,7 +641,35 @@
                     "group": "Guias",
                     "pages": [
                       "api/guias/cupom-por-creator",
-                      "api/guias/acompanhar-quadro"
+                      "api/guias/acompanhar-quadro",
+                      "api/guias/eventos-de-conversao"
+                    ]
+                  }
+                ]
+              },
+              {
+                "tab": "SDK",
+                "groups": [
+                  {
+                    "group": "Começar",
+                    "pages": [
+                      "api/sdk/visao-geral"
+                    ]
+                  },
+                  {
+                    "group": "Instalar",
+                    "pages": [
+                      "api/sdk/site",
+                      "api/sdk/web",
+                      "api/sdk/react-native",
+                      "api/sdk/node"
+                    ]
+                  },
+                  {
+                    "group": "Referência",
+                    "pages": [
+                      "api/sdk/atribuicao",
+                      "api/sdk/limites-e-erros"
                     ]
                   }
                 ]
@@ -766,6 +806,30 @@
                         ]
                       }
                     ]
+                  },
+                  {
+                    "group": "Conectores",
+                    "pages": [
+                      "api/referencia/conectores/index",
+                      "api/referencia/conectores/meta-ads",
+                      "api/referencia/conectores/posthog",
+                      "api/referencia/conectores/google-analytics",
+                      "api/referencia/conectores/app-store-connect",
+                      "api/referencia/conectores/google-ads",
+                      "api/referencia/conectores/tiktok-ads",
+                      "api/referencia/conectores/shopify",
+                      "api/referencia/conectores/woocommerce",
+                      "api/referencia/conectores/nuvemshop",
+                      "api/referencia/conectores/vtex",
+                      "api/referencia/conectores/cartpanda",
+                      "api/referencia/conectores/hotmart",
+                      "api/referencia/conectores/kiwify",
+                      "api/referencia/conectores/kirvano",
+                      "api/referencia/conectores/stripe",
+                      "api/referencia/conectores/mercado-pago",
+                      "api/referencia/conectores/asaas",
+                      "api/referencia/conectores/revenuecat"
+                    ]
                   }
                 ]
               },
@@ -809,18 +873,6 @@
       "label": "Acessar",
       "href": "https://appconty.com"
     }
-  },
-  "contextual": {
-    "options": [
-      "copy",
-      "view",
-      "chatgpt",
-      "claude",
-      "perplexity",
-      "mcp",
-      "cursor",
-      "vscode"
-    ]
   },
   "footer": {
     "socials": {

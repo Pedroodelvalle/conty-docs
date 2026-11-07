@@ -1,0 +1,33 @@
+---
+title: "Script"
+description: "Instale o SDK da Conty no site com uma tag de script e mande eventos com conty.track."
+icon: "/icons/html5.svg"
+keywords:
+  - sdk
+  - script
+  - sdk.js
+  - site
+  - cpk_
+---
+
+Cole no `<head>` de todas as páginas, com a sua chave pública:
+
+```html
+<script>
+  window.conty = window.conty || { q: [], track(...args) { this.q.push(args); } };
+</script>
+<script async src="https://conty.link/sdk.js" data-key="cpk_c_SUA_CHAVE_PUBLICA"></script>
+```
+
+Com `data-key`, o SDK inicia sozinho e lê as UTMs da URL. O primeiro `<script>` cria a fila: os `conty.track` chamados antes de o `sdk.js` carregar ficam guardados e saem quando ele chega.
+
+```javascript
+conty.track("sign_up");
+conty.track("begin_checkout", { plan: "anual" });
+```
+
+O `sdk.js` pesa cerca de 1,8 KB com gzip. Cada evento sai com `fetch` e `keepalive`, então o envio sobrevive à troca de página.
+
+## Origens permitidas
+
+Para limitar onde a chave pública funciona, abra o menu da chave em **Desenvolvedores → Eventos** e escolha **Editar origens**. Use `https://dominio`, com porta se precisar, ou `http://localhost` para testar, até 10 origens. Sem nenhuma, qualquer origem é aceita. Fora delas, a API responde `403 origin_not_allowed`.

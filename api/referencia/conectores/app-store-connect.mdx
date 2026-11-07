@@ -1,0 +1,29 @@
+---
+title: "App Store Connect"
+description: "Veja os primeiros downloads do app que cada creator trouxe pela App Store, e os downloads totais por origem."
+icon: "/images/conectores/app-store-connect.svg"
+keywords:
+  - conector
+  - integração
+  - app store connect
+  - análise
+---
+
+import ConectorQuadro from "/snippets/conector-quadro.mdx";
+
+<ConectorQuadro
+  slug="app-store-connect"
+  nome="App Store Connect"
+  logo="/images/conectores/app-store-connect.svg"
+  status="Disponível"
+  categoria="Análise"
+  faz="Lê os relatórios da App Store para mostrar os primeiros downloads do app que cada creator trouxe e os downloads totais por tipo de origem. A Conty só lê os dados."
+  coleta="Por dia: primeiros downloads por creator e downloads totais do app por tipo de origem na App Store."
+  liga="Pelo link de campanha da App Store: quando o destino da campanha é o app, o link do creator chega na App Store com o provider token da marca (pt) e o código curto do link (ct). Sem o provider token, os downloads não são separados por creator."
+  precisa="Chave de API do App Store Connect (Issuer ID, Key ID e o arquivo .p8), com a função Admin na primeira conexão, e o app publicado na App Store. Depois, a marca escolhe o app e informa o provider token."
+  atualizacao="A cada 3 horas, relendo os últimos 4 dias. A Apple publica os relatórios com 1 a 2 dias de atraso."
+/>
+
+## Conectar
+
+No painel, abra **Menu → Integrações**, escolha o conector e siga os passos. Para conectar, o seu cargo precisa da permissão **Gerenciar integrações**. Os dados aparecem nos resultados de cada campanha depois da primeira coleta.

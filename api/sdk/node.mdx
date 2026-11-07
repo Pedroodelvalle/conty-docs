@@ -1,0 +1,73 @@
+---
+title: "Servidor Node"
+description: "Instale o @conty/node no servidor e mande compras com valor usando a chave secreta."
+icon: "/icons/nodejs.svg"
+keywords:
+  - sdk
+  - "@conty/node"
+  - servidor
+  - cev_
+  - trackBatch
+---
+
+Roda em Node 20+, Cloudflare Workers, Deno e Bun. Use a chave secreta, `cev_`, só aqui.
+
+```bash
+npm i @conty/node
+```
+
+Guarde a chave secreta numa variável de ambiente:
+
+```ts
+import { createConty } from "@conty/node";
+
+const key = process.env.CONTY_EVENT_KEY;
+if (!key) throw new Error("CONTY_EVENT_KEY ausente");
+
+const conty = createConty({ key });
+
+const { error } = await conty.track({
+  event: "purchase",
+  external_id: order.id,
+  value_cents: order.totalCents,
+  utm_campaign: order.utmCampaign,
+  utm_content: order.utmContent,
+  properties: { currency: "BRL", items: order.items.length },
+});
+if (error) logger.warn(error.code, error.message);
+```
+
+Guarde `utm_campaign` e `utm_content` no pedido quando ele é criado e mande junto da compra. No site, o `@conty/web` deixa as duas em `localStorage`, na chave `conty_attribution`, no formato `{ utm, expires_at }`. Leia no navegador, na hora de criar o pedido, e ignore a atribuição vencida:
+
+```ts
+const saved = JSON.parse(localStorage.getItem("conty_attribution") ?? "null");
+const attribution = saved && saved.expires_at > Date.now() ? saved.utm : null;
+
+const utmCampaign = attribution?.utm_campaign ?? null;
+const utmContent = attribution?.utm_content ?? null;
+```
+
+## Vários eventos
+
+Use `trackBatch`. Os lotes saem em sequência, com até 100 eventos e 120 KB cada:
+
+```ts
+const { data, error } = await conty.trackBatch(
+  orders.map((order) => ({
+    event: "purchase",
+    external_id: order.id,
+    value_cents: order.totalCents,
+  })),
+);
+```
+
+Se um lote falha, os seguintes não saem e `error.accepted` diz quantos eventos já tinham entrado.
+
+## Comportamento
+
+- **Nunca lança erro de API nem de rede.** Toda chamada devolve `{ data: { accepted }, error: null }` ou `{ data: null, error }`. Só a chave errada no `createConty`, inclusive uma `cpk_`, lança na hora.
+- **Tenta de novo** em 429, 5xx, falha de rede e tempo esgotado: 2 novas tentativas por padrão (`maxRetries`, de 0 a 10), respeitando o `Retry-After` até 2 minutos. Sem `Retry-After`, espera um tempo aleatório até o teto exponencial (500 ms, 1 s, 2 s, até 30 s). Nunca repete outro 4xx.
+- **Tempo limite** de 10 segundos por tentativa (`timeoutMs`).
+- **`external_id`**: use o id do pedido. Se o webhook chegar duas vezes, a venda conta uma vez só, e reenviar um lote inteiro é seguro. Sem `external_id`, o SDK gera um UUID, que não protege contra reenvio.
+
+Os códigos de erro estão em [Limites e erros](/api/sdk/limites-e-erros).
