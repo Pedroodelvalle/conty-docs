@@ -2139,7 +2139,6 @@ html.dark body:has(.conector-head) #page-title::before,
 
 body:has(.conector-head[data-conector="app-store-connect"]) #page-title::before { background-image: url("/images/conectores/app-store-connect.svg"); }
 body:has(.conector-head[data-conector="asaas"]) #page-title::before { background-image: url("/images/conectores/asaas.png"); }
-body:has(.conector-head[data-conector="cartpanda"]) #page-title::before { background-image: url("/images/conectores/cartpanda.png"); }
 body:has(.conector-head[data-conector="google-ads"]) #page-title::before { background-image: url("/images/conectores/google-ads.svg"); }
 body:has(.conector-head[data-conector="google-analytics"]) #page-title::before { background-image: url("/images/conectores/google-analytics.svg"); }
 body:has(.conector-head[data-conector="hotmart"]) #page-title::before { background-image: url("/images/conectores/hotmart.png"); }
@@ -2153,7 +2152,6 @@ body:has(.conector-head[data-conector="revenuecat"]) #page-title::before { backg
 body:has(.conector-head[data-conector="shopify"]) #page-title::before { background-image: url("/images/conectores/shopify.svg"); }
 body:has(.conector-head[data-conector="stripe"]) #page-title::before { background-image: url("/images/conectores/stripe.svg"); }
 body:has(.conector-head[data-conector="tiktok-ads"]) #page-title::before { background-image: url("/images/conectores/tiktok.svg"); }
-body:has(.conector-head[data-conector="vtex"]) #page-title::before { background-image: url("/images/conectores/vtex.svg"); }
 body:has(.conector-head[data-conector="woocommerce"]) #page-title::before { background-image: url("/images/conectores/woocommerce.svg"); }
 
 #sidebar-content img[src^="/icons/"] {
