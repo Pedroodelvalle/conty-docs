@@ -1,0 +1,66 @@
+---
+title: "App Store Connect"
+description: "Conecte o App Store Connect e veja, nos resultados da campanha, os primeiros downloads do app que cada creator trouxe pela App Store."
+icon: "/images/conectores/app-store-connect.svg"
+keywords:
+  - app store connect
+  - apple
+  - downloads
+  - provider token
+  - conector
+---
+
+## O que você ganha
+
+- **Downloads por creator.** Os primeiros downloads do app que vieram do link de cada creator, na App Store.
+- **Downloads totais por origem.** Quanto o app baixou no total, por tipo de origem na App Store.
+
+Download é métrica, não venda. Para comissão por assinatura no app, use o conector [RevenueCat](/api/guias/conectores/revenuecat).
+
+## Antes de começar
+
+- **Conector liberado.** A Conty libera o conector App Store Connect para a sua marca. Se ele não aparece em **Plugins → Conectores**, fale com o seu contato na Conty.
+- **Permissão na Conty.** O seu cargo precisa da permissão **Gerenciar integrações**.
+- **Na Apple:** o app publicado na App Store e acesso para gerar uma chave da App Store Connect API com o papel **Admin**.
+- **Campanha com destino no app.** O link do creator chega na App Store com o provider token da marca e o código do link. É assim que a Apple separa os downloads por creator.
+
+## Conectar
+
+<Steps>
+  <Step title="Crie a chave no App Store Connect">
+    No [App Store Connect](https://appstoreconnect.apple.com/access/integrations/api), abra **Usuários e Acesso → Integrações → App Store Connect API** e gere uma chave com o papel **Admin**.
+  </Step>
+  <Step title="Baixe o .p8 e copie o Issuer ID">
+    Baixe o arquivo `AuthKey_XXXXXXXXXX.p8`. A Apple só deixa baixar uma vez: guarde o arquivo. Copie o **Issuer ID**, que fica no topo da mesma página, acima da lista de chaves.
+  </Step>
+  <Step title="Envie a chave na Conty">
+    No painel da Conty, abra **Plugins → Conectores → App Store Connect**, clique em **Conectar** e depois em **Continuar**. Arraste o arquivo `.p8` em **Arquivo da chave (.p8)**. O **Key ID** é preenchido pelo nome do arquivo. Cole o **Issuer ID** e clique em **Continuar**.
+  </Step>
+  <Step title="Escolha o app e informe o provider token">
+    Escolha o app na lista. Em **Provider token**, cole o número que vem depois de `pt=` num link de campanha do app: no App Store Connect, **App Analytics → Campanhas → Gerar link**. Clique em **Conectar**.
+  </Step>
+</Steps>
+
+## Conferir que funcionou
+
+- A página do conector fica **Conectada** e mostra o **App**.
+- A Apple publica os relatórios com 1 a 2 dias de atraso, então os primeiros downloads aparecem depois disso.
+
+## Erros comuns
+
+<AccordionGroup>
+  <Accordion title="Esse arquivo não é uma chave .p8 da Apple.">
+    Envie o arquivo `AuthKey_….p8` baixado da Apple, sem renomear nem abrir em editor.
+  </Accordion>
+  <Accordion title="O Issuer ID tem o formato 00000000-0000-0000-0000-000000000000.">
+    Você colou o Key ID ou outro número. O Issuer ID fica acima da lista de chaves.
+  </Accordion>
+  <Accordion title="Não foi possível falar com a Apple. Confira a chave e tente de novo.">
+    A chave foi revogada ou não tem o papel Admin. Gere outra.
+  </Accordion>
+  <Accordion title="Downloads sem separar por creator">
+    Falta o provider token. Sem ele, a Conty conta os downloads totais, mas não separa por creator.
+  </Accordion>
+</AccordionGroup>
+
+O que o conector coleta e de quanto em quanto tempo está na [referência do conector App Store Connect](/api/referencia/conectores/app-store-connect).

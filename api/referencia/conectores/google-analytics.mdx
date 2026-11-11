@@ -24,28 +24,6 @@ import ConectorQuadro from "/snippets/conector-quadro.mdx";
   atualizacao="A cada 3 horas, relendo os últimos 3 dias. O Google leva algumas horas para processar os dados e até 48 horas para fechar os números do dia."
 />
 
-## Como conectar
-
-O seu cargo precisa da permissão **Gerenciar integrações**. Se o conector não aparece na lista, ele ainda não foi liberado para a sua marca: fale com o seu contato na Conty.
-
-<Steps>
-  <Step title="Abra o conector">
-    No painel da Conty, abra **Plugins → Conectores → Google Analytics** e clique em **Conectar com Google**.
-  </Step>
-  <Step title="Autorize no Google">
-    Entre com uma conta Google que tem pelo menos acesso de **Leitor** na propriedade do Google Analytics 4 e marque a permissão de leitura do Google Analytics. Você volta para a Conty com o aviso **Google Analytics autorizado. Falta escolher a propriedade.**
-  </Step>
-  <Step title="Escolha a propriedade">
-    Em **Escolha a propriedade do Google Analytics**, marque a propriedade do site e clique em **Salvar e começar a coleta**. Com uma propriedade só, a coleta começa sozinha.
-  </Step>
-  <Step title="Confira">
-    A página do conector fica **Conectada** e mostra a **Propriedade**. **Última coleta** mostra a hora da última leitura. O Google leva algumas horas para processar os dados do dia.
-  </Step>
-</Steps>
-
-### Erros comuns
-
-- **"Falta autorizar a leitura do Google Analytics"**: a permissão ficou desmarcada na tela do Google. Conecte de novo e marque.
-- **"Essa conta Google não tem propriedade do Google Analytics 4"**: a conta não enxerga nenhuma propriedade GA4. Conecte com outra conta, ou peça acesso de Leitor.
-- **Status "Falta escolher a propriedade"**: abra o conector e escolha a propriedade.
-- **Nada por creator**: o site precisa manter as UTMs do link do creator até a página de destino. Redirecionamento que tira os parâmetros apaga a origem.
+<Card title="Ver o guia de conexão" icon="arrow-right" href="/api/guias/conectores/google-analytics" horizontal>
+  Passo a passo da conexão, o que precisa antes, como conferir que funcionou e os erros comuns.
+</Card>

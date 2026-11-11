@@ -25,30 +25,6 @@ import ConectorQuadro from "/snippets/conector-quadro.mdx";
   atualizacao="Na hora: cada cobrança chega pelo webhook do Asaas. Com a chave de sandbox, nenhuma cobrança vira venda."
 />
 
-## Como conectar
-
-O seu cargo precisa da permissão **Gerenciar integrações**. Se o conector não aparece na lista, ele ainda não foi liberado para a sua marca: fale com o seu contato na Conty.
-
-<Steps>
-  <Step title="Copie a chave de API do Asaas">
-    No Asaas, abra **Integrações → Chaves de API** e gere ou copie a chave da conta. A de produção começa com `$aact_prod_`; a de sandbox, com `$aact_hmlg_`.
-  </Step>
-  <Step title="Conecte na Conty">
-    Abra **Plugins → Conectores → Asaas**, clique em **Conectar**, cole a chave em **Chave de API** e confirme. A Conty cadastra sozinha, na sua conta do Asaas, o webhook **Conty - vendas de assinatura**. Não é preciso copiar nada.
-  </Step>
-  <Step title="Grave o código do creator">
-    O seu sistema grava o código do cupom do creator no `externalReference` da assinatura ou da cobrança no Asaas.
-  </Step>
-  <Step title="Confira">
-    A página do conector fica **Conectada**. Depois da primeira cobrança paga, **Última cobrança** mostra a hora do evento.
-  </Step>
-</Steps>
-
-### Erros comuns
-
-- **"Não foi possível conectar. Confira a chave e tente de novo."**: a chave foi recusada pelo Asaas. Copie de novo, sem espaços.
-- **Chave de sandbox (`$aact_hmlg_`)**: conecta e recebe os eventos, mas nenhuma cobrança vira venda. Use a de produção para valer.
-- **Cobranças sem dono**: o `externalReference` da cobrança está ocupado com outro valor (o id do pedido, por exemplo). Deixe o da cobrança vazio e grave o código na assinatura.
-- **Webhook apagado no Asaas**: as cobranças param de chegar. Desconecte e conecte de novo na Conty.
-
-Onde gravar o código, exemplos de chamada e como testar estão no guia [Vendas de assinatura com creators](/api/guias/vendas-de-assinatura).
+<Card title="Ver o guia de conexão" icon="arrow-right" href="/api/guias/conectores/asaas" horizontal>
+  Passo a passo da conexão, o que precisa antes, como conferir que funcionou e os erros comuns.
+</Card>

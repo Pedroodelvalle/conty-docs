@@ -24,31 +24,6 @@ import ConectorQuadro from "/snippets/conector-quadro.mdx";
   atualizacao="A cada 3 horas, relendo os últimos 4 dias. A Apple publica os relatórios com 1 a 2 dias de atraso."
 />
 
-## Como conectar
-
-O seu cargo precisa da permissão **Gerenciar integrações**. Se o conector não aparece na lista, ele ainda não foi liberado para a sua marca: fale com o seu contato na Conty.
-
-<Steps>
-  <Step title="Crie a chave no App Store Connect">
-    No [App Store Connect](https://appstoreconnect.apple.com/access/integrations/api), abra **Usuários e Acesso → Integrações → App Store Connect API** e gere uma chave com o papel **Admin**.
-  </Step>
-  <Step title="Baixe o .p8 e copie o Issuer ID">
-    Baixe o arquivo `AuthKey_XXXXXXXXXX.p8`. A Apple só deixa baixar uma vez: guarde o arquivo. Copie o **Issuer ID**, que fica no topo da mesma página, acima da lista de chaves.
-  </Step>
-  <Step title="Envie a chave na Conty">
-    No painel da Conty, abra **Plugins → Conectores → App Store Connect** e clique em **Continuar**. Arraste o arquivo `.p8` em **Arquivo da chave (.p8)**. O **Key ID** é preenchido pelo nome do arquivo. Cole o **Issuer ID** e clique em **Continuar**.
-  </Step>
-  <Step title="Escolha o app e informe o provider token">
-    Escolha o app na lista. Em **Provider token**, cole o número que vem depois de `pt=` num link de campanha do app: no App Store Connect, **App Analytics → Campanhas → Gerar link**. Clique em **Conectar**.
-  </Step>
-  <Step title="Confira">
-    A página do conector fica **Conectada** e mostra o **App**. A Apple publica os relatórios com 1 a 2 dias de atraso, então os primeiros downloads aparecem depois disso.
-  </Step>
-</Steps>
-
-### Erros comuns
-
-- **"Esse arquivo não é uma chave .p8 da Apple"**: envie o arquivo `AuthKey_….p8` baixado da Apple, sem renomear nem abrir em editor.
-- **"O Issuer ID tem o formato 00000000-0000-0000-0000-000000000000"**: você colou o Key ID ou outro número. O Issuer ID fica acima da lista de chaves.
-- **"Não foi possível falar com a Apple. Confira a chave e tente de novo."**: a chave foi revogada ou não tem o papel Admin. Gere outra.
-- **Downloads sem separar por creator**: falta o provider token. Sem ele, a Conty conta os downloads totais, mas não separa por creator.
+<Card title="Ver o guia de conexão" icon="arrow-right" href="/api/guias/conectores/app-store-connect" horizontal>
+  Passo a passo da conexão, o que precisa antes, como conferir que funcionou e os erros comuns.
+</Card>

@@ -1,0 +1,66 @@
+---
+title: "Google Analytics 4"
+description: "Conecte a propriedade do Google Analytics 4 e veja, nos resultados da campanha, as sessões e os eventos que cada creator trouxe para o seu site."
+icon: "/images/conectores/google-analytics.svg"
+keywords:
+  - google analytics
+  - ga4
+  - sessões
+  - eventos
+  - utm
+  - conector
+---
+
+## O que você ganha
+
+- **Sessões e eventos por creator.** Em **Tráfego**, nos resultados da campanha, você vê quantas sessões e quais eventos cada creator trouxe para o site.
+- **Sem instalar nada novo.** A Conty lê a propriedade que você já usa. Só leitura.
+
+Evento é métrica, não venda: ele não entra no cupom e não gera comissão. Para comissão, use um conector de loja ou de pagamento, ou a [API de vendas](/api/guias/registrar-vendas).
+
+## Antes de começar
+
+- **Conector liberado.** A Conty libera o conector Google Analytics para a sua marca. Se ele não aparece em **Plugins → Conectores**, fale com o seu contato na Conty.
+- **Permissão na Conty.** O seu cargo precisa da permissão **Gerenciar integrações**.
+- **No Google:** uma conta Google com pelo menos acesso de **Leitor** na propriedade do Google Analytics 4.
+- **Site que mantém as UTMs.** O link do creator chega com `utm_campaign` e `utm_content` (o código `cr_` do creator). O site precisa manter esses parâmetros até a página de destino.
+
+## Conectar
+
+<Steps>
+  <Step title="Abra o conector">
+    No painel da Conty, abra **Plugins → Conectores → Google Analytics**, clique em **Conectar** e depois em **Conectar com Google**.
+  </Step>
+  <Step title="Autorize no Google">
+    Entre com a conta Google que tem acesso à propriedade e marque a permissão de leitura do Google Analytics. Você volta para a Conty com o aviso **Google Analytics autorizado. Falta escolher a propriedade.**
+  </Step>
+  <Step title="Escolha a propriedade">
+    Em **Escolha a propriedade do Google Analytics**, marque a propriedade do site e clique em **Salvar e começar a coleta**. Com uma propriedade só, a coleta começa sozinha.
+  </Step>
+</Steps>
+
+Os eventos de conversão que entram em **Tráfego** você escolhe depois, em **Resultados**.
+
+## Conferir que funcionou
+
+- A página do conector fica **Conectada** e mostra a **Propriedade**.
+- **Última coleta** mostra a hora da última leitura. A Conty lê a propriedade a cada 3 horas. O Google leva algumas horas para processar os dados do dia.
+
+## Erros comuns
+
+<AccordionGroup>
+  <Accordion title="Falta autorizar a leitura do Google Analytics">
+    A permissão ficou desmarcada na tela do Google. Conecte de novo e marque.
+  </Accordion>
+  <Accordion title="Essa conta Google não tem propriedade do Google Analytics 4">
+    A conta não enxerga nenhuma propriedade GA4. Conecte com outra conta, ou peça acesso de Leitor.
+  </Accordion>
+  <Accordion title="Status Falta escolher a propriedade">
+    A autorização deu certo, mas a propriedade não foi salva. Abra o conector e escolha a propriedade.
+  </Accordion>
+  <Accordion title="Nada aparece por creator">
+    O site está perdendo as UTMs do link. Redirecionamento que tira os parâmetros apaga a origem.
+  </Accordion>
+</AccordionGroup>
+
+O que o conector coleta está na [referência do conector Google Analytics 4](/api/referencia/conectores/google-analytics).

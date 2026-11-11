@@ -341,6 +341,10 @@
     {
       "source": "/help-center/lgpd",
       "destination": "/legal/lgpd"
+    },
+    {
+      "source": "/api/guias/vendas-de-assinatura",
+      "destination": "/api/guias"
     }
   ],
   "navigation": {
@@ -638,12 +642,33 @@
                 "tab": "Guias",
                 "groups": [
                   {
-                    "group": "Guias",
+                    "group": "Comece aqui",
                     "pages": [
+                      "api/guias/index"
+                    ]
+                  },
+                  {
+                    "group": "Com conectores",
+                    "pages": [
+                      "api/guias/conectores/shopify",
+                      "api/guias/conectores/nuvemshop",
+                      "api/guias/conectores/revenuecat",
+                      "api/guias/conectores/asaas",
+                      "api/guias/conectores/meta-ads",
+                      "api/guias/conectores/google-analytics",
+                      "api/guias/conectores/posthog",
+                      "api/guias/conectores/app-store-connect"
+                    ]
+                  },
+                  {
+                    "group": "Com a API",
+                    "pages": [
+                      "api/guias/primeiros-passos",
                       "api/guias/cupom-por-creator",
-                      "api/guias/acompanhar-quadro",
+                      "api/guias/registrar-vendas",
+                      "api/guias/assinatura-sem-conector",
                       "api/guias/eventos-de-conversao",
-                      "api/guias/vendas-de-assinatura"
+                      "api/guias/acompanhar-quadro"
                     ]
                   }
                 ]

@@ -1,0 +1,70 @@
+---
+title: "Nuvemshop"
+description: "Conecte a loja Nuvemshop e transforme os pedidos feitos com o cupom de cada creator em vendas com comissão, sem escrever código."
+icon: "/images/conectores/nuvemshop.png"
+keywords:
+  - nuvemshop
+  - conector
+  - loja
+  - cupom
+  - vendas
+  - comissão
+---
+
+## O que você ganha
+
+- **Vendas por creator, sem código.** Cada pedido pago com o cupom de um creator vira venda do cupom dele, com a comissão calculada pela taxa do acordo.
+- **Cupons criados na loja.** A Conty cria na Nuvemshop o cupom de cada creator aprovado, com o mesmo código e o desconto do acordo.
+- **Reembolso tratado.** Pedido cancelado ou reembolsado cancela a venda e a comissão segue as [regras do cupom](/api/referencia/cupons#pagamento-da-comissão).
+- **Compra pelo link, mesmo sem cupom.** Pedido que chegou pelo link do creator, sem cupom, conta como compra em **Tráfego**, nos resultados da campanha. Ele mede, mas não gera comissão.
+
+## Antes de começar
+
+- **Conector liberado.** A Conty libera o conector Nuvemshop para a sua marca. Se ele não aparece em **Plugins → Conectores**, fale com o seu contato na Conty.
+- **Permissão na Conty.** O seu cargo precisa da permissão **Gerenciar integrações**.
+- **Acesso na loja.** O seu usuário na Nuvemshop precisa ser administrador da loja.
+- **Acordo com cupom por creator.** No passo financeiro do acordo, ligue **Cupom de desconto** e **Pagar comissão sobre vendas**, com a taxa e a verba de comissão.
+
+## Conectar
+
+<Steps>
+  <Step title="Abra o conector">
+    No painel da Conty, abra **Plugins → Conectores → Nuvemshop**, clique em **Conectar** e depois em **Continuar**.
+  </Step>
+  <Step title="Autorize na Nuvemshop">
+    A Nuvemshop abre a tela de autorização do app da Conty. Entre no admin da loja, se pedir, e aceite. Você volta para a Conty com o aviso **Nuvemshop conectada.**
+  </Step>
+</Steps>
+
+## Como a venda liga ao creator
+
+1. **Pelo cupom.** O pedido usou o código do cupom de um creator: vira venda do cupom, com comissão.
+2. **Pelo link, sem cupom.** O pedido não usou cupom, mas a página de entrada trazia as UTMs do link do creator (`utm_content` com o código `cr_`): conta como compra em **Tráfego**, sem comissão.
+
+## Conferir que funcionou
+
+- A página do conector fica **Conectada** e mostra a **Loja** e o **Endereço**.
+- A Conty traz os pedidos dos últimos 60 dias. Daí em diante, cada pedido chega na hora, e **Último pedido** mostra a hora do último recebido.
+- Faça um pedido com o cupom de um creator. Ele aparece como venda no cupom, nos resultados do acordo e em [`GET /coupons/{id}/sales`](/api/guias/registrar-vendas#consultar-as-vendas), com `external_id` `nuvemshop:{id do pedido}`.
+
+## Erros comuns
+
+<AccordionGroup>
+  <Accordion title="O link de conexão expirou. Tente conectar de novo.">
+    A autorização demorou mais de 10 minutos. Comece de novo pela Conty.
+  </Accordion>
+  <Accordion title="A loja não confirmou o acesso. Tente conectar de novo.">
+    A autorização foi recusada ou interrompida na Nuvemshop.
+  </Accordion>
+  <Accordion title="Sua marca já tem uma loja Nuvemshop conectada.">
+    Cada marca conecta uma loja por plataforma. Desconecte a atual antes de conectar outra.
+  </Accordion>
+  <Accordion title="A loja não respondeu agora.">
+    Instabilidade na Nuvemshop. Tente de novo em alguns minutos.
+  </Accordion>
+  <Accordion title="N cupons para criar na loja, ou cupons não sincronizados">
+    A Conty não conseguiu criar esses cupons na loja (o código já existe na Nuvemshop, por exemplo). Crie o cupom na loja com o mesmo código, ou troque o código do cupom na Conty.
+  </Accordion>
+</AccordionGroup>
+
+O que o conector coleta e de quanto em quanto tempo está na [referência do conector Nuvemshop](/api/referencia/conectores/nuvemshop).

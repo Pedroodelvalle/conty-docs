@@ -25,35 +25,6 @@ import ConectorQuadro from "/snippets/conector-quadro.mdx";
   atualizacao="Na hora: cada cobrança chega pelo webhook do RevenueCat. Eventos de sandbox nunca viram venda."
 />
 
-## Como conectar
-
-O seu cargo precisa da permissão **Gerenciar integrações**. Se o conector não aparece na lista, ele ainda não foi liberado para a sua marca: fale com o seu contato na Conty.
-
-<Steps>
-  <Step title="Crie a chave no RevenueCat">
-    No projeto do app, abra **Project settings → API keys** e crie uma **chave secreta da API v2** com estas permissões:
-    - **Project configuration**: **Read only**.
-    - **Customer information**: **Read only** em **Customers**, **Subscriptions** e **Purchases**.
-  </Step>
-  <Step title="Copie o ID do projeto">
-    Ele começa com `proj` e aparece no endereço do painel do RevenueCat, depois de `/projects/`.
-  </Step>
-  <Step title="Conecte na Conty">
-    Abra **Plugins → Conectores → RevenueCat**, clique em **Conectar**, cole a chave e o ID do projeto e confirme.
-  </Step>
-  <Step title="Cadastre o webhook">
-    A Conty mostra a **URL do webhook** e o **Authorization** uma vez só. No RevenueCat, em **Integrations → Webhooks**, crie um webhook com essa URL e cole o Authorization em **Authorization header value**.
-  </Step>
-  <Step title="Confira">
-    A página do conector fica **Conectada**. Depois da primeira compra (de sandbox ou de produção), **Última cobrança** mostra a hora do evento.
-  </Step>
-</Steps>
-
-### Erros comuns
-
-- **"Falta marcar: …"**: a chave não tem uma das permissões acima. Edite a chave no RevenueCat e marque o que o aviso lista.
-- **Chave da API v1**: crie uma chave secreta da **v2**. Chaves da v1 e chaves públicas do app (`appl_…`, `goog_…`) não servem.
-- **ID do projeto não bate com a chave**: a chave é de outro projeto. Confira o `proj…` com o projeto da chave aberto.
-- **Webhook responde `401`**: o Authorization no RevenueCat está diferente do que a Conty mostrou. Se perdeu o valor, conecte de novo e atualize o webhook com a URL e o Authorization novos.
-
-O passo a passo completo, com o código do app para React Native, Swift, Kotlin e Flutter, está no guia [Vendas de assinatura com creators](/api/guias/vendas-de-assinatura).
+<Card title="Ver o guia de conexão" icon="arrow-right" href="/api/guias/conectores/revenuecat" horizontal>
+  Passo a passo da conexão, o que precisa antes, como conferir que funcionou e os erros comuns.
+</Card>

@@ -24,30 +24,6 @@ import ConectorQuadro from "/snippets/conector-quadro.mdx";
   atualizacao="Na hora: cada pedido chega pelo webhook da Shopify. Ao conectar, a Conty traz os pedidos dos últimos 60 dias."
 />
 
-## Como conectar
-
-O seu cargo precisa da permissão **Gerenciar integrações**. Se o conector não aparece na lista, ele ainda não foi liberado para a sua marca: fale com o seu contato na Conty. O seu usuário na Shopify precisa ser proprietário da loja ou colaborador com permissão de apps.
-
-<Steps>
-  <Step title="Abra o conector">
-    No painel da Conty, abra **Plugins → Conectores → Shopify** e clique em **Conectar**.
-  </Step>
-  <Step title="Informe a loja">
-    Em **Loja**, digite o nome da loja como aparece no endereço `.myshopify.com`: para `sua-loja.myshopify.com`, digite `sua-loja`. Ele fica em **Configurações → Domínios** no admin da Shopify. Clique em **Continuar**.
-  </Step>
-  <Step title="Instale o app na Shopify">
-    A Shopify abre a tela de instalação do app da Conty, com as permissões de ler pedidos, ler descontos e criar descontos. Clique em **Instalar**. Você volta para a Conty com o aviso **Shopify conectada.**
-  </Step>
-  <Step title="Confira">
-    A página do conector fica **Conectada** e mostra a **Loja** e o **Endereço**. A Conty traz os pedidos dos últimos 60 dias e, daí em diante, cada pedido chega na hora. **Último pedido** mostra a hora do último pedido recebido.
-  </Step>
-</Steps>
-
-### Erros comuns
-
-- **"O link de conexão expirou. Tente conectar de novo."**: a autorização demorou mais de 10 minutos. Comece de novo pela Conty.
-- **"A loja não confirmou o acesso. Tente conectar de novo."**: a autorização foi recusada ou interrompida na loja.
-- **"Sua marca já tem uma loja Shopify conectada. Desconecte antes de conectar outra."**: cada marca conecta uma loja por plataforma.
-- **"A loja não respondeu agora. Tente de novo em alguns minutos."**: instabilidade na plataforma.
-- **"N cupons para criar na loja"** ou **"cupons não sincronizados"**: a Conty não conseguiu criar esses cupons na loja (código já usado, por exemplo). Crie manualmente na loja com o mesmo código, ou troque o código do cupom na Conty.
-- **Endereço da loja recusado**: use só o nome antes de `.myshopify.com`, não o domínio próprio da loja (`www.sualoja.com.br`).
+<Card title="Ver o guia de conexão" icon="arrow-right" href="/api/guias/conectores/shopify" horizontal>
+  Passo a passo da conexão, o que precisa antes, como conferir que funcionou e os erros comuns.
+</Card>
