@@ -642,7 +642,8 @@
                     "pages": [
                       "api/guias/cupom-por-creator",
                       "api/guias/acompanhar-quadro",
-                      "api/guias/eventos-de-conversao"
+                      "api/guias/eventos-de-conversao",
+                      "api/guias/vendas-de-assinatura"
                     ]
                   }
                 ]
@@ -815,18 +816,18 @@
                       "api/referencia/conectores/posthog",
                       "api/referencia/conectores/google-analytics",
                       "api/referencia/conectores/app-store-connect",
+                      "api/referencia/conectores/revenuecat",
+                      "api/referencia/conectores/asaas",
+                      "api/referencia/conectores/shopify",
+                      "api/referencia/conectores/nuvemshop",
                       "api/referencia/conectores/google-ads",
                       "api/referencia/conectores/tiktok-ads",
-                      "api/referencia/conectores/shopify",
                       "api/referencia/conectores/woocommerce",
-                      "api/referencia/conectores/nuvemshop",
                       "api/referencia/conectores/hotmart",
                       "api/referencia/conectores/kiwify",
                       "api/referencia/conectores/kirvano",
                       "api/referencia/conectores/stripe",
-                      "api/referencia/conectores/mercado-pago",
-                      "api/referencia/conectores/asaas",
-                      "api/referencia/conectores/revenuecat"
+                      "api/referencia/conectores/mercado-pago"
                     ]
                   }
                 ]
