@@ -1,8 +1,9 @@
 ---
-title: "Assinatura sem conector"
-description: "Use a API de vendas para comissionar os creators pelas assinaturas cobradas no Stripe ou no seu próprio sistema: uma venda por cobrança paga."
+title: "Vendas sem conector"
+description: "Use a API de vendas para comissionar os creators pelas compras avulsas e pelas assinaturas cobradas no Stripe ou no seu próprio sistema: uma venda por cobrança paga."
 icon: "repeat"
 keywords:
+  - compra avulsa
   - assinatura
   - recorrência
   - stripe
@@ -11,10 +12,10 @@ keywords:
   - comissão
 ---
 
-Sem conector para o seu meio de pagamento, a assinatura entra na Conty pela mesma [API de vendas](/api/guias/registrar-vendas): **cada cobrança paga vira uma venda** no cupom do creator que trouxe o assinante.
+Sem conector para o seu meio de pagamento, as vendas entram na Conty pela [API de vendas](/api/guias/registrar-vendas), com `PUT /coupons/{id}/sales/{external_id}`: **cada cobrança paga vira uma venda** no cupom do creator que trouxe o cliente. Vale para compra avulsa (uma cobrança) e para assinatura (uma cobrança por ciclo).
 
 <Note>
-  Cobra pelo **RevenueCat** (assinatura no app) ou pelo **Asaas**? Use o conector: [RevenueCat](/api/guias/conectores/revenuecat) ou [Asaas](/api/guias/conectores/asaas). Ele confere cada cobrança, trata o reembolso e aplica o limite de cobranças do acordo sozinho.
+  Vende pelo **RevenueCat** (compras no app) ou pelo **Asaas**? Use o conector: [RevenueCat](/api/referencia/conectores/revenuecat) ou [Asaas](/api/referencia/conectores/asaas). Ele confere cada cobrança, trata o reembolso e aplica o limite de cobranças de assinatura do acordo sozinho.
 </Note>
 
 ## Antes de começar
@@ -22,7 +23,20 @@ Sem conector para o seu meio de pagamento, a assinatura entra na Conty pela mesm
 - **Chave de API e cupons liberados.** Veja [Primeiros passos](/api/guias/primeiros-passos).
 - **Acordo com cupom por creator e comissão.** Cada creator aprovado tem um cupom. Veja [Cupom por creator](/api/guias/cupom-por-creator).
 
-## Passo a passo
+## Compra avulsa
+
+Uma compra paga uma vez é uma venda. Guarde o código do cupom no pedido (no Stripe, nos `metadata` do Checkout Session ou do PaymentIntent) e, quando o pagamento for aprovado (no Stripe, `checkout.session.completed` ou `payment_intent.succeeded`), chame `PUT /coupons/{id}/sales/{external_id}` com o id do pagamento como `external_id`. O reembolso é o mesmo `PUT` com `"status": "canceled"`.
+
+```bash curl
+curl -X PUT https://api.appconty.com/public/v1/coupons/4f2c7a1e-9b3d-4c8a-a1f0-6d2e8b7c5a10/sales/stripe-pi_3QxYz2AbCdEf \
+  -H "Authorization: Bearer $CONTY_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "amount_cents": 14990, "status": "confirmed", "occurred_at": "2026-11-15T09:12:00Z" }'
+```
+
+O passo a passo completo, com Node.js e o tratamento de erros, está em [Registrar vendas pela API](/api/guias/registrar-vendas).
+
+## Assinatura
 
 <Steps>
   <Step title="Guarde o código na assinatura">
@@ -78,11 +92,12 @@ Sem conector para o seu meio de pagamento, a assinatura entra na Conty pela mesm
 
 ## Quantas cobranças comissionar
 
-O campo **Cobranças de assinatura que comissionam** do acordo vale para os conectores RevenueCat e Asaas. Pela API, **quem decide é o seu sistema**: a Conty registra toda venda que você manda.
+O campo **Cobranças de assinatura que comissionam** do acordo vale para os conectores RevenueCat e Asaas, e só para as cobranças recorrentes: lá, compra avulsa sempre comissiona. Pela API, **quem decide é o seu sistema**: a Conty registra toda venda que você manda.
 
 - **Comissão só na primeira cobrança:** mande só a primeira cobrança paga de cada assinante.
 - **Comissão nas N primeiras:** conte as cobranças pagas do assinante no seu sistema e pare de mandar depois da N-ésima.
 - **Comissão enquanto a pessoa assinar:** mande todas.
+- **Compra avulsa:** mande sempre, como nos conectores.
 
 Para medir as renovações sem pagar comissão sobre elas, use um acordo com taxa `0` (cupom só de rastreio): as vendas contam e a comissão vem `0`.
 

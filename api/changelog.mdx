@@ -10,18 +10,18 @@ keywords:
 
 Toda mudança no contrato da API aparece aqui antes de entrar no ar. Enquanto a API estiver em beta, mudanças que quebram compatibilidade são possíveis, sempre anunciadas nesta página com o que muda e o que fazer.
 
-<Update label="Vendas de assinatura" description="11 de novembro de 2026">
-  Conectores RevenueCat e Asaas: cada cobrança de assinatura paga com o código de um creator vira venda do cupom dele, com comissão. Ver [RevenueCat](/api/guias/conectores/revenuecat) e [Asaas](/api/guias/conectores/asaas).
+<Update label="Vendas por RevenueCat e Asaas" description="11 de novembro de 2026">
+  Conectores RevenueCat e Asaas: cada venda paga com o código de um creator, compra avulsa ou cobrança de assinatura, vira venda do cupom dele, com comissão. Ver [RevenueCat](/api/referencia/conectores/revenuecat) e [Asaas](/api/referencia/conectores/asaas).
 
   **Conectores**
-  - [RevenueCat](/api/referencia/conectores/revenuecat): a marca cola a chave secreta da API v2 e o ID do projeto (`proj…`) em **Plugins → Conectores** e cadastra no RevenueCat a URL do webhook e o `Authorization` que a Conty mostra uma vez só. O app grava o código do cupom no atributo `coupon` do assinante, com o SDK do RevenueCat, antes da compra.
-  - [Asaas](/api/referencia/conectores/asaas): a marca cola a chave de API e a Conty cadastra o webhook de cobranças na conta sozinha, autenticado pelo header `asaas-access-token`. O código do cupom vai no `externalReference` da cobrança ou da assinatura.
+  - [RevenueCat](/api/referencia/conectores/revenuecat): a marca cola a chave secreta da API v2 e o ID do projeto (`proj…`) em **Plugins → Conectores** e cadastra no RevenueCat a URL do webhook e o `Authorization` que a Conty mostra uma vez só. O app grava o código do cupom no atributo `coupon` do cliente, com o SDK do RevenueCat, antes da compra. Contam assinaturas (`INITIAL_PURCHASE`, `RENEWAL`) e compras avulsas (`NON_RENEWING_PURCHASE`).
+  - [Asaas](/api/referencia/conectores/asaas): a marca cola a chave de API e a Conty cadastra o webhook de cobranças na conta sozinha, autenticado pelo header `asaas-access-token`. O código do cupom vai no `externalReference` da cobrança avulsa, do link de pagamento ou da assinatura.
   - Cada cobrança é conferida no provedor com a chave da marca antes de virar venda. Sandbox, moeda diferente de BRL, valor zero, cobrança não confirmada e código desconhecido ficam sem venda.
   - O valor da venda é o líquido: `price_in_purchased_currency × takehome_percentage` no RevenueCat, `netValue` no Asaas. A venda aparece no cupom com `external_id` `sub:revenuecat:{transaction_id}` ou `sub:asaas:{id da cobrança}`.
   - Reembolso e chargeback cancelam a venda e estornam a comissão pelas regras do cupom.
 
   **Acordo**
-  - Campo **Cobranças de assinatura que comissionam** no passo financeiro: vazio comissiona todas as cobranças de cada assinante; N comissiona até a N-ésima. As seguintes ficam sem venda.
+  - Campo **Cobranças de assinatura que comissionam** no passo financeiro: vale só para cobranças recorrentes. Vazio comissiona todas as cobranças de cada assinante; N comissiona até a N-ésima, e as seguintes ficam sem venda. Compra avulsa sempre comissiona, com cupom ativo e o código do creator.
 </Update>
 
 <Update label="API de eventos" description="6 de novembro de 2026">

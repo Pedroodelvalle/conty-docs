@@ -63,6 +63,42 @@
   },
   "redirects": [
     {
+      "source": "/api/guias/assinatura-sem-conector",
+      "destination": "/api/guias/vendas-sem-conector"
+    },
+    {
+      "source": "/api/guias/conectores/shopify",
+      "destination": "/api/referencia/conectores/shopify"
+    },
+    {
+      "source": "/api/guias/conectores/nuvemshop",
+      "destination": "/api/referencia/conectores/nuvemshop"
+    },
+    {
+      "source": "/api/guias/conectores/revenuecat",
+      "destination": "/api/referencia/conectores/revenuecat"
+    },
+    {
+      "source": "/api/guias/conectores/asaas",
+      "destination": "/api/referencia/conectores/asaas"
+    },
+    {
+      "source": "/api/guias/conectores/meta-ads",
+      "destination": "/api/referencia/conectores/meta-ads"
+    },
+    {
+      "source": "/api/guias/conectores/google-analytics",
+      "destination": "/api/referencia/conectores/google-analytics"
+    },
+    {
+      "source": "/api/guias/conectores/posthog",
+      "destination": "/api/referencia/conectores/posthog"
+    },
+    {
+      "source": "/api/guias/conectores/app-store-connect",
+      "destination": "/api/referencia/conectores/app-store-connect"
+    },
+    {
       "source": "/help-center/creators/inicio",
       "destination": "/help-center/creators/index"
     },
@@ -648,25 +684,12 @@
                     ]
                   },
                   {
-                    "group": "Com conectores",
-                    "pages": [
-                      "api/guias/conectores/shopify",
-                      "api/guias/conectores/nuvemshop",
-                      "api/guias/conectores/revenuecat",
-                      "api/guias/conectores/asaas",
-                      "api/guias/conectores/meta-ads",
-                      "api/guias/conectores/google-analytics",
-                      "api/guias/conectores/posthog",
-                      "api/guias/conectores/app-store-connect"
-                    ]
-                  },
-                  {
                     "group": "Com a API",
                     "pages": [
                       "api/guias/primeiros-passos",
                       "api/guias/cupom-por-creator",
                       "api/guias/registrar-vendas",
-                      "api/guias/assinatura-sem-conector",
+                      "api/guias/vendas-sem-conector",
                       "api/guias/eventos-de-conversao",
                       "api/guias/acompanhar-quadro"
                     ]

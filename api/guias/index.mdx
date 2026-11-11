@@ -28,49 +28,48 @@ Na dúvida, comece pelo conector: se a sua plataforma tem um, ele resolve sem pr
 
 | Seu caso | Caminho | Guia |
 |---|---|---|
-| Loja na Shopify | Conector | [Shopify](/api/guias/conectores/shopify) |
-| Loja na Nuvemshop | Conector | [Nuvemshop](/api/guias/conectores/nuvemshop) |
-| Assinatura dentro do app (App Store e Google Play) com RevenueCat | Conector | [RevenueCat](/api/guias/conectores/revenuecat) |
-| Cobrança ou assinatura no site cobrada pelo Asaas | Conector | [Asaas](/api/guias/conectores/asaas) |
-| Impulsionar os vídeos dos creators como anúncio no Instagram | Conector | [Meta Ads](/api/guias/conectores/meta-ads) |
-| Visitas e eventos do site que já estão no Google Analytics 4 ou no PostHog | Conector | [Google Analytics 4](/api/guias/conectores/google-analytics) ou [PostHog](/api/guias/conectores/posthog) |
-| Downloads do app na App Store | Conector | [App Store Connect](/api/guias/conectores/app-store-connect) |
-| Checkout próprio, Stripe ou outra plataforma, com comissão por venda | API | [Registrar vendas pela API](/api/guias/registrar-vendas) |
-| Assinatura no Stripe ou em checkout próprio, com comissão por cobrança | API | [Assinatura sem conector](/api/guias/assinatura-sem-conector) |
+| Loja na Shopify | Conector | [Shopify](/api/referencia/conectores/shopify) |
+| Loja na Nuvemshop | Conector | [Nuvemshop](/api/referencia/conectores/nuvemshop) |
+| Vendas no app (App Store e Google Play), assinatura ou compra avulsa, com RevenueCat | Conector | [RevenueCat](/api/referencia/conectores/revenuecat) |
+| Vendas no site cobradas pelo Asaas: compra avulsa, link de pagamento ou assinatura | Conector | [Asaas](/api/referencia/conectores/asaas) |
+| Impulsionar os vídeos dos creators como anúncio no Instagram | Conector | [Meta Ads](/api/referencia/conectores/meta-ads) |
+| Visitas e eventos do site que já estão no Google Analytics 4 ou no PostHog | Conector | [Google Analytics 4](/api/referencia/conectores/google-analytics) ou [PostHog](/api/referencia/conectores/posthog) |
+| Downloads do app na App Store | Conector | [App Store Connect](/api/referencia/conectores/app-store-connect) |
+| Vendas no site ou no app por checkout próprio, Stripe ou outra plataforma, compra avulsa ou assinatura | API | [Vendas sem conector](/api/guias/vendas-sem-conector) e [Registrar vendas pela API](/api/guias/registrar-vendas) |
 | Cadastros, compras e outros eventos do site ou do app, sem comissão | API (SDK) | [Eventos de conversão](/api/guias/eventos-de-conversao) |
 | Ler as campanhas e os creators no seu sistema | API | [Acompanhar o quadro](/api/guias/acompanhar-quadro) |
 
 <Note>
-  **Venda tem comissão, evento não.** Venda (pelo conector de loja, de assinatura ou pela API de vendas) entra no cupom do creator e gera comissão. Evento (pelo SDK, pelo Google Analytics ou pelo PostHog) aparece em **Tráfego**, nos resultados da campanha, e serve para medir.
+  **Venda tem comissão, evento não.** Venda (pelo conector de loja, de pagamento ou pela API de vendas) entra no cupom do creator e gera comissão. Evento (pelo SDK, pelo Google Analytics ou pelo PostHog) aparece em **Tráfego**, nos resultados da campanha, e serve para medir.
 </Note>
 
 ## Com conectores
 
-Cada guia mostra o que você ganha, o que precisa antes, o passo a passo do painel e como conferir que funcionou.
+Cada página de conector traz o que ele coleta, o que precisa antes, o passo a passo do painel e como conferir que funcionou.
 
 <CardGroup cols={2}>
-  <Card title="Shopify" icon="/images/conectores/shopify.svg" href="/api/guias/conectores/shopify">
+  <Card title="Shopify" icon="/images/conectores/shopify.svg" href="/api/referencia/conectores/shopify">
     Pedidos da loja com o cupom do creator viram venda com comissão.
   </Card>
-  <Card title="Nuvemshop" icon="/images/conectores/nuvemshop.png" href="/api/guias/conectores/nuvemshop">
+  <Card title="Nuvemshop" icon="/images/conectores/nuvemshop.png" href="/api/referencia/conectores/nuvemshop">
     Pedidos da loja com o cupom do creator viram venda com comissão.
   </Card>
-  <Card title="RevenueCat" icon="/images/conectores/revenuecat.svg" href="/api/guias/conectores/revenuecat">
-    Assinaturas do app viram venda no cupom do creator.
+  <Card title="RevenueCat" icon="/images/conectores/revenuecat.svg" href="/api/referencia/conectores/revenuecat">
+    Compras no app, assinaturas e avulsas, viram venda no cupom do creator.
   </Card>
-  <Card title="Asaas" icon="/images/conectores/asaas.png" href="/api/guias/conectores/asaas">
-    Cobranças e assinaturas no Asaas viram venda no cupom do creator.
+  <Card title="Asaas" icon="/images/conectores/asaas.png" href="/api/referencia/conectores/asaas">
+    Compras avulsas e assinaturas no Asaas viram venda no cupom do creator.
   </Card>
-  <Card title="Meta Ads" icon="/images/conectores/meta.svg" href="/api/guias/conectores/meta-ads">
+  <Card title="Meta Ads" icon="/images/conectores/meta.svg" href="/api/referencia/conectores/meta-ads">
     Impulsione os vídeos aprovados como anúncio de parceria.
   </Card>
-  <Card title="Google Analytics 4" icon="/images/conectores/google-analytics.svg" href="/api/guias/conectores/google-analytics">
+  <Card title="Google Analytics 4" icon="/images/conectores/google-analytics.svg" href="/api/referencia/conectores/google-analytics">
     Sessões e eventos que cada creator trouxe para o site.
   </Card>
-  <Card title="PostHog" icon="/images/conectores/posthog.svg" href="/api/guias/conectores/posthog">
+  <Card title="PostHog" icon="/images/conectores/posthog.svg" href="/api/referencia/conectores/posthog">
     Visitas e eventos que cada creator trouxe para o site ou app.
   </Card>
-  <Card title="App Store Connect" icon="/images/conectores/app-store-connect.svg" href="/api/guias/conectores/app-store-connect">
+  <Card title="App Store Connect" icon="/images/conectores/app-store-connect.svg" href="/api/referencia/conectores/app-store-connect">
     Downloads do app que cada creator trouxe pela App Store.
   </Card>
 </CardGroup>
@@ -89,8 +88,8 @@ Cada guia traz as chamadas prontas em `curl` e Node.js.
   <Card title="Registrar vendas pela API" icon="cart-shopping" href="/api/guias/registrar-vendas">
     Mande cada venda e cada estorno do seu checkout.
   </Card>
-  <Card title="Assinatura sem conector" icon="repeat" href="/api/guias/assinatura-sem-conector">
-    Mande cada cobrança de assinatura do Stripe ou do seu sistema.
+  <Card title="Vendas sem conector" icon="repeat" href="/api/guias/vendas-sem-conector">
+    Mande cada compra avulsa e cada cobrança de assinatura do Stripe ou do seu sistema.
   </Card>
   <Card title="Eventos de conversão" icon="bolt" href="/api/guias/eventos-de-conversao">
     Cadastros, compras e outros eventos pelo SDK.

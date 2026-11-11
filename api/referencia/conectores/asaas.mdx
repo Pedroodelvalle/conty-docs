@@ -1,6 +1,6 @@
 ---
 title: "Asaas"
-description: "Transforme as cobranças de assinatura no Asaas em vendas do cupom de cada creator."
+description: "Transforme as vendas no Asaas, compras avulsas e assinaturas, em vendas do cupom de cada creator."
 icon: "/images/conectores/asaas.png"
 keywords:
   - conector
@@ -8,6 +8,12 @@ keywords:
   - asaas
   - pagamentos e assinaturas
   - externalReference
+  - assinatura
+  - compra avulsa
+  - link de pagamento
+  - cobrança
+  - comissão
+  - afiliados
 ---
 
 import ConectorQuadro from "/snippets/conector-quadro.mdx";
@@ -18,13 +24,166 @@ import ConectorQuadro from "/snippets/conector-quadro.mdx";
   logo="/images/conectores/asaas.png"
   status="Disponível"
   categoria="Pagamentos e assinaturas"
-  faz="Recebe as cobranças pagas e os reembolsos da conta do Asaas da marca por webhook e transforma cada cobrança paga e conferida em venda do cupom do creator. A Conty só lê os dados."
+  faz="Recebe as vendas da conta do Asaas da marca por webhook, compras avulsas e cobranças de assinatura, e transforma cada cobrança paga e conferida em venda do cupom do creator. Reembolso e chargeback cancelam a venda. A Conty só lê os dados."
   coleta="Por cobrança: id, cliente (customer), assinatura, valor, valor líquido (netValue) e externalReference. Eventos PAYMENT_RECEIVED e PAYMENT_CONFIRMED, e reembolsos e chargebacks (PAYMENT_REFUNDED, PAYMENT_CHARGEBACK_REQUESTED, PAYMENT_CHARGEBACK_DISPUTE)."
-  liga="Pelo código do cupom do creator no externalReference da cobrança ou, se ele está vazio, da assinatura da cobrança. Cada cobrança é conferida no Asaas antes de virar venda, e o valor da venda é o netValue."
+  liga="Pelo código do cupom do creator no externalReference da cobrança avulsa, do link de pagamento ou da assinatura. Cada cobrança é conferida no Asaas antes de virar venda, e o valor da venda é o netValue."
   precisa="Conta do Asaas ativa e a chave de API. A Conty cadastra o webhook de cobranças na conta sozinha. Acordo com cupom por creator e comissão ligados."
   atualizacao="Na hora: cada cobrança chega pelo webhook do Asaas. Com a chave de sandbox, nenhuma cobrança vira venda."
 />
 
-<Card title="Ver o guia de conexão" icon="arrow-right" href="/api/guias/conectores/asaas" horizontal>
-  Passo a passo da conexão, o que precisa antes, como conferir que funcionou e os erros comuns.
-</Card>
+## O que você ganha
+
+- **Reembolso e chargeback tratados.** Eles cancelam a venda, e a comissão sai ou é estornada pelas [regras do cupom](/api/referencia/cupons#pagamento-da-comissão).
+
+## Antes de começar
+
+- **Conector liberado.** A Conty libera para a sua marca os conectores, os cupons e o Asaas. Se ele não aparece em **Plugins → Conectores**, fale com o seu contato na Conty.
+- **Permissão na Conty.** O seu cargo precisa da permissão **Gerenciar integrações**.
+- **Conta do Asaas ativa**, de onde saem as vendas do seu site ou do seu sistema: cobranças avulsas, links de pagamento ou assinaturas.
+- **Acordo com cupom por creator.** No passo financeiro do acordo, ligue **Cupom de desconto** e **Pagar comissão sobre vendas**, com a taxa e a verba de comissão. Cada creator aprovado ganha um cupom próprio, e o código desse cupom é o que o seu sistema grava na cobrança.
+- **Quantas cobranças de assinatura comissionam.** No mesmo passo, o campo **Cobranças de assinatura que comissionam** diz quantas cobranças recorrentes de cada cliente viram venda. Vazio comissiona todas. Compra avulsa sempre comissiona. Ver [Comissão](#comissão).
+
+## Conectar
+
+<Steps>
+  <Step title="Copie a chave de API do Asaas">
+    No Asaas, abra **Integrações → Chaves de API** e gere ou copie a chave da conta. A de produção começa com `$aact_prod_`; a de sandbox, com `$aact_hmlg_`.
+  </Step>
+  <Step title="Conecte na Conty">
+    Abra **Plugins → Conectores → Asaas** e clique em **Conectar**. Na janela **Conectar com Asaas**, cole a chave em **Chave de API** e clique em **Conectar**.
+  </Step>
+  <Step title="Pronto">
+    A Conty testa a chave e cadastra na sua conta do Asaas um webhook de cobranças com o nome **Conty - vendas**. A janela **Asaas conectado** mostra a URL desse webhook só para conferência: você não copia nada. Clique em **Concluir**.
+
+    Não apague esse webhook no Asaas. Para parar, desconecte na Conty, que remove o webhook.
+  </Step>
+</Steps>
+
+## Gravar o código do creator na venda
+
+O código do creator vai no campo `externalReference` do que o seu sistema cria no Asaas:
+
+| Como você vende | Onde vai o código |
+|---|---|
+| Compra avulsa (`POST /v3/payments`) | `externalReference` da cobrança |
+| Link de pagamento (`POST /v3/paymentLinks`) | `externalReference` do link. Um link por creator, e cada cobrança paga pelo link leva o código |
+| Assinatura (`POST /v3/subscriptions`) | `externalReference` da assinatura (ou de cada cobrança dela) |
+
+Exemplo de assinatura mensal com o cupom `ANA10`:
+
+<CodeGroup>
+```bash curl
+curl -X POST https://api.asaas.com/v3/subscriptions \
+  -H "access_token: $ASAAS_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "customer": "cus_000005219613",
+    "billingType": "CREDIT_CARD",
+    "value": 29.90,
+    "nextDueDate": "2026-11-15",
+    "cycle": "MONTHLY",
+    "description": "Plano mensal",
+    "externalReference": "ANA10"
+  }'
+```
+
+```javascript Node.js
+const response = await fetch("https://api.asaas.com/v3/subscriptions", {
+  method: "POST",
+  headers: {
+    access_token: process.env.ASAAS_API_KEY,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    customer: customerId,
+    billingType: "CREDIT_CARD",
+    value: 29.9,
+    nextDueDate: "2026-11-15",
+    cycle: "MONTHLY",
+    description: "Plano mensal",
+    externalReference: couponCode, // o código que a pessoa digitou ou que veio no link
+  }),
+});
+```
+</CodeGroup>
+
+Compra avulsa e link de pagamento são iguais, em `POST /v3/payments` e `POST /v3/paymentLinks`, com o código no `externalReference`.
+
+A Conty procura o código nesta ordem:
+
+1. o `externalReference` da cobrança;
+2. se ele está vazio e a cobrança é de uma assinatura, o `externalReference` da assinatura.
+
+A comparação ignora maiúsculas e espaços nas pontas: `ana10` acha o cupom `ANA10`.
+
+<Warning>
+  Se o seu sistema já usa o `externalReference` da cobrança para outra coisa (o id do pedido, por exemplo), a Conty lê esse valor, não acha cupom e a cobrança fica sem dono. Nesse caso, numa assinatura, deixe o `externalReference` da cobrança vazio e grave o código só na assinatura. Numa compra avulsa não há onde mais procurar: o código precisa estar no `externalReference` da cobrança.
+</Warning>
+
+**De onde vem o código.** De um campo de cupom no checkout, ou de um parâmetro do link do creator que o site guarda até a compra.
+
+## Conferir que funcionou
+
+**Sandbox nunca vira venda, por desenho.** A conexão com a chave de sandbox (`$aact_hmlg_`) recebe os eventos, mas nenhuma cobrança é confirmada. Use o sandbox para conferir a ligação, não para ver venda.
+
+1. **Crie uma cobrança de teste** na conta de sandbox, com o código no `externalReference`, e pague. Na página do conector, **Última cobrança** passa a mostrar a hora do evento. Isso confirma que a cobrança chegou e foi lida.
+2. **Conecte a chave de produção.** A primeira cobrança paga com o código de um creator aparece como venda no cupom dele, nos resultados do acordo e em [`GET /coupons/{id}/sales`](/api/guias/registrar-vendas#consultar-as-vendas), com `external_id` `sub:asaas:{id da cobrança}`.
+
+O webhook da Conty responde:
+
+| Status | Corpo | Quando |
+|---|---|---|
+| `200` | `{ "ok": true }` | Evento recebido, virando venda ou não |
+| `401` | `{ "error": "Invalid token" }` | O header `asaas-access-token` não bate com a conexão |
+| `404` | `{ "error": "Not found" }` | Conexão não existe ou foi desconectada |
+| `503` | `{ "error": "Retry later" }` | O Asaas não respondeu na conferência. Ele reenvia o evento |
+
+## Como a Conty decide se vira venda
+
+Toda cobrança paga que chega, avulsa ou de assinatura, é guardada. Ela vira venda do cupom só se passar por todas as conferências, nesta ordem:
+
+| Situação | Status da cobrança | Vira venda? |
+|---|---|---|
+| Valor líquido zero | `zero_amount` | Não |
+| Não confirmada no Asaas | `unverified` | Não |
+| Código vazio, desconhecido ou de cupom cancelado | `unattributed` | Não |
+| Cobrança de assinatura além do limite do acordo | `over_policy` | Não |
+| Passou em tudo | `paid` | Sim |
+| Reembolso ou chargeback | `refunded` | Cancela a venda |
+
+**Confirmada no Asaas** quer dizer que a Conty chamou `GET /v3/payments/{id}` com a sua chave e a cobrança estava `RECEIVED`, `CONFIRMED` ou `RECEIVED_IN_CASH`.
+
+Contam os eventos `PAYMENT_RECEIVED` e `PAYMENT_CONFIRMED`. O reembolso vem de `PAYMENT_REFUNDED`, `PAYMENT_CHARGEBACK_REQUESTED` e `PAYMENT_CHARGEBACK_DISPUTE`. Os outros eventos são ignorados, e o mesmo evento repetido não duplica a venda.
+
+## Comissão
+
+A venda é uma venda de cupom como as outras: a comissão é reservada na verba do acordo e paga ao creator 7 dias depois da venda.
+
+**Valor da venda é o líquido:** o `netValue` da cobrança, já sem a taxa do Asaas.
+
+**Compra avulsa sempre comissiona.** Cobrança sem `subscription` (avulsa ou de link de pagamento) vira venda sempre que tem o código de um cupom ativo, sem limite por cliente.
+
+**Cobranças de assinatura que comissionam.** O campo no passo financeiro do acordo vale só para as cobranças recorrentes, as que têm `subscription`. Ele define quantas cobranças de assinatura pagas de cada cliente viram venda:
+
+- **Vazio:** todas as cobranças.
+- **1:** só a primeira.
+- **N:** até a N-ésima. A partir da N+1, a cobrança fica `over_policy`, sem venda.
+
+A contagem é por cliente (o `customer` do Asaas) dentro do acordo e só soma cobranças de assinatura: uma compra avulsa do mesmo cliente não gasta o limite. Cobrança reembolsada continua contando.
+
+## Erros comuns
+
+<AccordionGroup>
+  <Accordion title="A chave informada foi recusada pelo provedor.">
+    O Asaas não aceitou a chave. Copie de novo, inteira e sem espaços.
+  </Accordion>
+  <Accordion title="Conectei com a chave de sandbox e nada vira venda">
+    É o esperado. A chave `$aact_hmlg_` recebe os eventos, mas nenhuma cobrança é confirmada. Desconecte e conecte com a chave de produção.
+  </Accordion>
+  <Accordion title="As cobranças chegam, mas ficam sem dono">
+    O `externalReference` da cobrança está ocupado com outro valor (o id do pedido, por exemplo), ou o código não é de um cupom ativo da marca. Na assinatura, deixe o da cobrança vazio e grave o código na assinatura. Na compra avulsa, o código tem que ir no da cobrança.
+  </Accordion>
+  <Accordion title="As cobranças pararam de chegar">
+    O webhook **Conty - vendas** foi apagado ou desativado no Asaas. Desconecte e conecte de novo na Conty, que cadastra o webhook outra vez.
+  </Accordion>
+</AccordionGroup>

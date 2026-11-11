@@ -7,6 +7,10 @@ keywords:
   - integração
   - shopify
   - e-commerce
+  - loja
+  - cupom
+  - vendas
+  - comissão
 ---
 
 import ConectorQuadro from "/snippets/conector-quadro.mdx";
@@ -24,6 +28,63 @@ import ConectorQuadro from "/snippets/conector-quadro.mdx";
   atualizacao="Na hora: cada pedido chega pelo webhook da Shopify. Ao conectar, a Conty traz os pedidos dos últimos 60 dias."
 />
 
-<Card title="Ver o guia de conexão" icon="arrow-right" href="/api/guias/conectores/shopify" horizontal>
-  Passo a passo da conexão, o que precisa antes, como conferir que funcionou e os erros comuns.
-</Card>
+## O que você ganha
+
+- **Reembolso tratado.** Pedido cancelado ou reembolsado cancela a venda e a comissão segue as [regras do cupom](/api/referencia/cupons#pagamento-da-comissão).
+
+## Antes de começar
+
+- **Conector liberado.** A Conty libera o conector Shopify para a sua marca. Se ele não aparece em **Plugins → Conectores**, fale com o seu contato na Conty.
+- **Permissão na Conty.** O seu cargo precisa da permissão **Gerenciar integrações**.
+- **Acesso na loja.** O seu usuário na Shopify precisa ser proprietário da loja ou colaborador com permissão de apps.
+- **Acordo com cupom por creator.** No passo financeiro do acordo, ligue **Cupom de desconto** e **Pagar comissão sobre vendas**, com a taxa e a verba de comissão. Sem cupom, não há venda para comissionar.
+
+## Conectar
+
+<Steps>
+  <Step title="Abra o conector">
+    No painel da Conty, abra **Plugins → Conectores → Shopify** e clique em **Conectar**.
+  </Step>
+  <Step title="Informe a loja">
+    Em **Loja**, digite o nome da loja como aparece no endereço `.myshopify.com`: para `sua-loja.myshopify.com`, digite `sua-loja`. Ele fica em **Configurações → Domínios** no admin da Shopify. Clique em **Continuar**.
+  </Step>
+  <Step title="Instale o app na Shopify">
+    A Shopify abre a tela de instalação do app da Conty, com as permissões de ler pedidos, ler descontos e criar descontos. Clique em **Instalar**. Você volta para a Conty com o aviso **Shopify conectada.**
+  </Step>
+</Steps>
+
+## Como a venda liga ao creator
+
+1. **Pelo cupom.** O pedido usou o código do cupom de um creator: vira venda do cupom, com comissão.
+2. **Pelo link, sem cupom.** O pedido não usou cupom, mas a página de entrada trazia as UTMs do link do creator (`utm_content` com o código `cr_`): conta como compra em **Tráfego**, sem comissão.
+
+O valor da venda é o subtotal do pedido, já com o desconto e sem frete.
+
+## Conferir que funcionou
+
+- A página do conector fica **Conectada** e mostra a **Loja** e o **Endereço**.
+- A Conty traz os pedidos dos últimos 60 dias. Daí em diante, cada pedido chega na hora, e **Último pedido** mostra a hora do último recebido.
+- Faça um pedido com o cupom de um creator. Ele aparece como venda no cupom, nos resultados do acordo e em [`GET /coupons/{id}/sales`](/api/guias/registrar-vendas#consultar-as-vendas), com `external_id` `shopify:{id do pedido}`.
+
+## Erros comuns
+
+<AccordionGroup>
+  <Accordion title="O link de conexão expirou. Tente conectar de novo.">
+    A autorização demorou mais de 10 minutos. Comece de novo pela Conty.
+  </Accordion>
+  <Accordion title="A loja não confirmou o acesso. Tente conectar de novo.">
+    A instalação foi recusada ou interrompida na Shopify. Conecte de novo e clique em **Instalar** até o fim.
+  </Accordion>
+  <Accordion title="Sua marca já tem uma loja Shopify conectada.">
+    Cada marca conecta uma loja por plataforma. Desconecte a atual antes de conectar outra.
+  </Accordion>
+  <Accordion title="A loja não respondeu agora.">
+    Instabilidade na Shopify. Tente de novo em alguns minutos.
+  </Accordion>
+  <Accordion title="N cupons para criar na loja, ou cupons não sincronizados">
+    A Conty não conseguiu criar esses cupons na loja (o código já existe na Shopify, por exemplo). Crie o cupom na loja com o mesmo código, ou troque o código do cupom na Conty.
+  </Accordion>
+  <Accordion title="Endereço da loja recusado">
+    Use só o nome antes de `.myshopify.com`, não o domínio próprio da loja (`www.sualoja.com.br`).
+  </Accordion>
+</AccordionGroup>

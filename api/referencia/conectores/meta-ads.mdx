@@ -7,6 +7,10 @@ keywords:
   - integração
   - meta ads
   - anúncios
+  - meta
+  - instagram
+  - parceria
+  - impulsionar
 ---
 
 import ConectorQuadro from "/snippets/conector-quadro.mdx";
@@ -24,6 +28,57 @@ import ConectorQuadro from "/snippets/conector-quadro.mdx";
   atualizacao="A cada 2 horas, relendo os últimos 3 dias. A Meta pode revisar os números dos dias anteriores, e a releitura acompanha esses ajustes."
 />
 
-<Card title="Ver o guia de conexão" icon="arrow-right" href="/api/guias/conectores/meta-ads" horizontal>
-  Passo a passo da conexão, o que precisa antes, como conferir que funcionou e os erros comuns.
-</Card>
+## O que você ganha
+
+- **Permissão de parceria pedida pela Conty.** A Conty pede a permissão de parceria ao creator quando ele aceita a campanha. Você não negocia isso por fora.
+
+## Antes de começar
+
+- **Conector liberado.** A Conty libera o conector Meta para a sua marca. Se ele não aparece em **Plugins → Conectores**, fale com o seu contato na Conty.
+- **Permissão na Conty.** O seu cargo precisa da permissão **Gerenciar integrações**.
+- **Na Meta:** uma Página do Facebook com Instagram profissional ligado, uma conta de anúncios em reais e uma conta do Facebook com acesso de administrador ao Gerenciador de Negócios da marca.
+
+## Conectar
+
+<Steps>
+  <Step title="Abra o conector">
+    No painel da Conty, abra **Plugins → Conectores → Meta** e clique em **Conectar**.
+  </Step>
+  <Step title="Entre com a Meta">
+    A Conty abre o login da Meta. Entre com a conta do Facebook que é administradora do Gerenciador de Negócios da marca e aceite as permissões pedidas. Você volta para a Conty com o aviso **Conta da Meta conectada. Escolha os ativos.**
+  </Step>
+  <Step title="Escolha os ativos">
+    Em três telas:
+
+    - **Conta de anúncio**: a que paga os anúncios. O gasto sai dela, na moeda e no fuso dela. Use uma conta em reais.
+    - **Página**: o anúncio aparece como parceria entre o creator e esta Página.
+    - **Instagram**: confirme o Instagram profissional ligado à Página.
+
+    Clique em **Conectar**.
+  </Step>
+</Steps>
+
+## Conferir que funcionou
+
+- A tela mostra **Meta conectada** e a página do conector fica **Conectada**.
+- Os números dos anúncios aparecem nos resultados da campanha depois da primeira coleta. A Conty lê a Meta a cada 2 horas. Para forçar uma coleta, use **Sincronizar agora**.
+
+## Erros comuns
+
+<AccordionGroup>
+  <Accordion title="Esta Página não tem um Instagram profissional ligado">
+    Ligue um Instagram profissional à Página no Facebook, ou escolha outra Página.
+  </Accordion>
+  <Accordion title="Nenhuma conta de anúncio disponível neste login, ou nenhuma Página disponível neste login">
+    A conta do Facebook que entrou não tem acesso a esses ativos no Gerenciador de Negócios. Peça o acesso ao administrador, ou conecte com outra conta.
+  </Accordion>
+  <Accordion title="Conta de anúncio Indisponível">
+    A Meta marcou a conta como inativa. Resolva no Gerenciador de Anúncios ou escolha outra.
+  </Accordion>
+  <Accordion title="Status Escolha os ativos">
+    O login deu certo, mas a escolha não foi terminada. Abra o conector e conclua.
+  </Accordion>
+  <Accordion title="Status Reconectar">
+    A Meta derrubou o acesso (troca de senha, permissão removida). Conecte de novo.
+  </Accordion>
+</AccordionGroup>

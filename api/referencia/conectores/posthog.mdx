@@ -7,6 +7,9 @@ keywords:
   - integração
   - posthog
   - análise
+  - visitas
+  - eventos
+  - utm
 ---
 
 import ConectorQuadro from "/snippets/conector-quadro.mdx";
@@ -24,6 +27,61 @@ import ConectorQuadro from "/snippets/conector-quadro.mdx";
   atualizacao="A cada 3 horas, relendo os últimos 3 dias. O PostHog leva poucos minutos para disponibilizar cada evento."
 />
 
-<Card title="Ver o guia de conexão" icon="arrow-right" href="/api/guias/conectores/posthog" horizontal>
-  Passo a passo da conexão, o que precisa antes, como conferir que funcionou e os erros comuns.
-</Card>
+## O que você ganha
+
+- **Sem copiar chave.** A conexão é pelo login do PostHog. A Conty só lê.
+
+Evento é métrica, não venda: ele não entra no cupom e não gera comissão. Para comissão, use um conector de loja ou de pagamento, ou a [API de vendas](/api/guias/registrar-vendas).
+
+## Antes de começar
+
+- **Conector liberado.** A Conty libera o conector PostHog para a sua marca. Se ele não aparece em **Plugins → Conectores**, fale com o seu contato na Conty.
+- **Permissão na Conty.** O seu cargo precisa da permissão **Gerenciar integrações**.
+- **No PostHog:** acesso de **Admin** ou **Member** à organização do projeto.
+- **posthog-js capturando as UTMs.** O link do creator chega com `utm_campaign` e `utm_content` (o código `cr_` do creator). O posthog-js grava esses parâmetros nos eventos por padrão; confira se o site não os tira num redirecionamento.
+
+## Conectar
+
+<Steps>
+  <Step title="Abra o conector">
+    No painel da Conty, abra **Plugins → Conectores → PostHog**, clique em **Conectar** e depois em **Conectar com PostHog**.
+  </Step>
+  <Step title="Autorize no PostHog">
+    Entre na sua conta do PostHog, escolha a organização e autorize a leitura. Você volta para a Conty com o aviso **PostHog autorizado. Falta escolher o projeto.**
+  </Step>
+  <Step title="Escolha o projeto">
+    Em **Escolha o projeto do PostHog**, marque o projeto do site ou app e clique em **Salvar e começar a coleta**. Com um projeto só, a coleta começa sozinha.
+  </Step>
+</Steps>
+
+Os eventos de conversão que entram em **Tráfego** você escolhe depois, em **Resultados**.
+
+<Accordion title="PostHog em instância própria (self-hosted)">
+  Na janela de conexão, escolha **Usar chave de API** e preencha:
+
+  - **Região**: US Cloud, EU Cloud ou **Outro endereço**, com o endereço `https://` da sua instância.
+  - **ID do projeto**: no PostHog, em **Settings → Project**.
+  - **Chave pessoal** (`phx_…`): no PostHog, nas configurações da sua conta, em **Personal API keys**, crie uma chave com o escopo **Query Read**.
+</Accordion>
+
+## Conferir que funcionou
+
+- A página do conector fica **Conectada** e mostra o **Projeto**.
+- **Última coleta** mostra a hora da última leitura. A Conty lê o projeto a cada 3 horas.
+
+## Erros comuns
+
+<AccordionGroup>
+  <Accordion title="Status Falta escolher o projeto">
+    A autorização deu certo, mas nenhum projeto foi salvo. Abra o conector e escolha o projeto.
+  </Accordion>
+  <Accordion title="Essa organização não tem projeto">
+    Você autorizou uma organização vazia. Conecte de novo e escolha outra organização.
+  </Accordion>
+  <Accordion title="O link de conexão expirou">
+    A autorização demorou demais. Conecte de novo.
+  </Accordion>
+  <Accordion title="Nada aparece por creator">
+    Confira se o `utm_campaign` e o `utm_content` (`cr_…`) chegam nos eventos do PostHog.
+  </Accordion>
+</AccordionGroup>
