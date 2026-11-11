@@ -1,6 +1,6 @@
 ---
 title: "Nuvemshop"
-description: "Em breve: cruze os pedidos da loja Nuvemshop com cada creator."
+description: "Cruze os pedidos da loja Nuvemshop com o cupom ou o link de cada creator e registre as vendas do cupom."
 icon: "/images/conectores/nuvemshop.png"
 keywords:
   - conector
@@ -15,15 +15,35 @@ import ConectorQuadro from "/snippets/conector-quadro.mdx";
   slug="nuvemshop"
   nome="Nuvemshop"
   logo="/images/conectores/nuvemshop.png"
-  status="Em breve"
+  status="Disponível"
   categoria="E-commerce"
-  faz="Vai trazer os pedidos da loja Nuvemshop da marca com o cupom de cada creator, para você ver quanto cada um vendeu na campanha."
-  coleta="Pedidos com o cupom usado, valor e status de pagamento."
-  liga="Pelo cupom do creator."
-  precisa="Loja Nuvemshop ativa, acesso de administrador e cupons por creator."
-  atualizacao="A coleta vai rodar por rotina, como nos conectores disponíveis, nunca na hora de abrir a tela. Frequência e atraso ficam definidos no lançamento."
+  faz="Recebe os pedidos pagos, atualizados e cancelados da loja Nuvemshop da marca e cria na loja os cupons dos creators da campanha. Pedido com o cupom de um creator vira venda do cupom, com comissão; pedido que veio do link do creator sem cupom conta como compra em Tráfego."
+  coleta="Por pedido: número, subtotal menos o desconto (sem frete), status de pagamento, cupom usado e a página de entrada com as UTMs."
+  liga="Pelo cupom do creator usado no pedido. Sem cupom, pelas UTMs do link do creator (utm_content com o código cr_) na página de entrada do pedido."
+  precisa="Loja Nuvemshop ativa, acesso de administrador e o acordo com cupom por creator."
+  atualizacao="Na hora: cada pedido chega pelo webhook da Nuvemshop. Ao conectar, a Conty traz os pedidos dos últimos 60 dias."
 />
 
-<Note>
-  Este conector ainda não está disponível. O quadro acima descreve o que ele vai trazer; os detalhes podem mudar até o lançamento. Enquanto isso, a [API de eventos](/api/guias/eventos-de-conversao) já leva cadastros e compras do seu sistema para a Conty.
-</Note>
+## Como conectar
+
+O seu cargo precisa da permissão **Gerenciar integrações**. Se o conector não aparece na lista, ele ainda não foi liberado para a sua marca: fale com o seu contato na Conty. O seu usuário na Nuvemshop precisa ser administrador da loja.
+
+<Steps>
+  <Step title="Abra o conector">
+    No painel da Conty, abra **Plugins → Conectores → Nuvemshop** e clique em **Conectar**, depois em **Continuar**.
+  </Step>
+  <Step title="Autorize na Nuvemshop">
+    A Nuvemshop abre a tela de autorização do app da Conty. Entre no admin da loja, se pedir, e aceite. Você volta para a Conty com o aviso **Nuvemshop conectada.**
+  </Step>
+  <Step title="Confira">
+    A página do conector fica **Conectada** e mostra a **Loja** e o **Endereço**. A Conty traz os pedidos dos últimos 60 dias e, daí em diante, cada pedido chega na hora. **Último pedido** mostra a hora do último pedido recebido.
+  </Step>
+</Steps>
+
+### Erros comuns
+
+- **"O link de conexão expirou. Tente conectar de novo."**: a autorização demorou mais de 10 minutos. Comece de novo pela Conty.
+- **"A loja não confirmou o acesso. Tente conectar de novo."**: a autorização foi recusada ou interrompida na loja.
+- **"Sua marca já tem uma loja Nuvemshop conectada. Desconecte antes de conectar outra."**: cada marca conecta uma loja por plataforma.
+- **"A loja não respondeu agora. Tente de novo em alguns minutos."**: instabilidade na plataforma.
+- **"N cupons para criar na loja"** ou **"cupons não sincronizados"**: a Conty não conseguiu criar esses cupons na loja (código já usado, por exemplo). Crie manualmente na loja com o mesmo código, ou troque o código do cupom na Conty.

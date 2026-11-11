@@ -24,6 +24,34 @@ import ConectorQuadro from "/snippets/conector-quadro.mdx";
   atualizacao="A cada 2 horas, relendo os últimos 3 dias. A Meta pode revisar os números dos dias anteriores, e a releitura acompanha esses ajustes."
 />
 
-## Conectar
+## Como conectar
 
-No painel, abra **Menu → Integrações**, escolha o conector e siga os passos. Para conectar, o seu cargo precisa da permissão **Gerenciar integrações**. Os dados aparecem nos resultados de cada campanha depois da primeira coleta.
+O seu cargo precisa da permissão **Gerenciar integrações**. Se o conector não aparece na lista, ele ainda não foi liberado para a sua marca: fale com o seu contato na Conty.
+
+<Steps>
+  <Step title="Abra o conector">
+    No painel da Conty, abra **Plugins → Conectores → Meta** e clique em **Conectar**.
+  </Step>
+  <Step title="Entre com a Meta">
+    A Conty abre o login da Meta. Entre com a conta do Facebook que é administradora do Gerenciador de Negócios da marca e aceite as permissões pedidas. Você volta para a Conty com o aviso **Conta da Meta conectada. Escolha os ativos.**
+  </Step>
+  <Step title="Escolha os ativos">
+    Em três telas:
+    - **Conta de anúncio**: a que paga os anúncios. O gasto sai dela, na moeda e no fuso dela. Use uma conta em reais.
+    - **Página**: o anúncio aparece como parceria entre o creator e esta Página.
+    - **Instagram**: confirme o Instagram profissional ligado à Página.
+
+    Clique em **Conectar**.
+  </Step>
+  <Step title="Confira">
+    A tela mostra **Meta conectada** e a página do conector fica **Conectada**. Os números dos anúncios aparecem nos resultados da campanha depois da primeira coleta. Para forçar uma coleta, use **Sincronizar agora**.
+  </Step>
+</Steps>
+
+### Erros comuns
+
+- **"Esta Página não tem um Instagram profissional ligado"**: ligue um Instagram profissional à Página no Facebook, ou escolha outra Página.
+- **"Nenhuma conta de anúncio disponível neste login"** ou **"Nenhuma Página disponível neste login"**: a conta do Facebook que entrou não tem acesso a esses ativos no Gerenciador de Negócios. Peça o acesso ao administrador, ou conecte com outra conta.
+- **Conta de anúncio "Indisponível"**: a Meta marcou a conta como inativa. Resolva no Gerenciador de Anúncios ou escolha outra.
+- **Status "Escolha os ativos"**: o login deu certo, mas a escolha não foi terminada. Abra o conector e conclua.
+- **Status "Reconectar"**: a Meta derrubou o acesso (troca de senha, permissão removida). Conecte de novo.

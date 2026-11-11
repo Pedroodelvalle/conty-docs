@@ -22,14 +22,14 @@ Webhook é a Conty avisando o seu sistema. Em vez de consultar a API de tempos e
 ## Cadastrar um endpoint
 
 <Steps>
-  <Step title="Abra Desenvolvedores">
-    No painel, vá em **Menu → Desenvolvedores → Webhooks**. É preciso ter a permissão **Gerenciar chaves de API e webhooks**.
+  <Step title="Abra Plugins → Integrações">
+    No painel, vá em **Plugins → Integrações → Webhooks**. É preciso ter a permissão **Gerenciar chaves de API e webhooks**.
   </Step>
   <Step title="Adicione o endpoint">
     Informe um nome, a URL HTTPS pública e os eventos. Se o seu receptor exige um cabeçalho de autenticação próprio (por exemplo `Authorization: Bearer …`), cadastre também: ele vai em toda entrega, junto com os cabeçalhos da Conty.
   </Step>
   <Step title="Guarde o segredo">
-    O segredo de assinatura (`whsec_…`) aparece uma vez só, ao salvar. Ele serve para [verificar a assinatura](/api/webhooks/assinatura). Se perder, gere um novo em **Girar segredo**.
+    O segredo de assinatura (`whsec_…`) aparece uma vez só, ao salvar. Ele serve para [verificar a assinatura](/api/webhooks/assinatura). Se perder, gere um novo em **Gerar novo segredo**.
   </Step>
   <Step title="Mande um teste">
     Clique em **Enviar teste** e confira se chegou um evento `webhook.test` no seu servidor.

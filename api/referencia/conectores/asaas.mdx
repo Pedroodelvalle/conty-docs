@@ -1,12 +1,13 @@
 ---
 title: "Asaas"
-description: "Em breve: atribua cobranças e assinaturas no Asaas a cada creator."
+description: "Transforme as cobranças de assinatura no Asaas em vendas do cupom de cada creator."
 icon: "/images/conectores/asaas.png"
 keywords:
   - conector
   - integração
   - asaas
   - pagamentos e assinaturas
+  - externalReference
 ---
 
 import ConectorQuadro from "/snippets/conector-quadro.mdx";
@@ -15,15 +16,39 @@ import ConectorQuadro from "/snippets/conector-quadro.mdx";
   slug="asaas"
   nome="Asaas"
   logo="/images/conectores/asaas.png"
-  status="Em breve"
+  status="Disponível"
   categoria="Pagamentos e assinaturas"
-  faz="Vai trazer as cobranças e as assinaturas da conta do Asaas da marca, para você ver a receita que cada creator trouxe."
-  coleta="Cobranças e assinaturas com valor e status."
-  liga="Pelo cupom do creator ou pela referência de UTM gravada na cobrança."
-  precisa="Conta do Asaas ativa, chave de API e cupom ou referência de UTM nas cobranças."
-  atualizacao="A coleta vai rodar por rotina, como nos conectores disponíveis, nunca na hora de abrir a tela. Frequência e atraso ficam definidos no lançamento."
+  faz="Recebe as cobranças pagas e os reembolsos da conta do Asaas da marca por webhook e transforma cada cobrança paga e conferida em venda do cupom do creator. A Conty só lê os dados."
+  coleta="Por cobrança: id, cliente (customer), assinatura, valor, valor líquido (netValue) e externalReference. Eventos PAYMENT_RECEIVED e PAYMENT_CONFIRMED, e reembolsos e chargebacks (PAYMENT_REFUNDED, PAYMENT_CHARGEBACK_REQUESTED, PAYMENT_CHARGEBACK_DISPUTE)."
+  liga="Pelo código do cupom do creator no externalReference da cobrança ou, se ele está vazio, da assinatura da cobrança. Cada cobrança é conferida no Asaas antes de virar venda, e o valor da venda é o netValue."
+  precisa="Conta do Asaas ativa e a chave de API. A Conty cadastra o webhook de cobranças na conta sozinha. Acordo com cupom por creator e comissão ligados."
+  atualizacao="Na hora: cada cobrança chega pelo webhook do Asaas. Com a chave de sandbox, nenhuma cobrança vira venda."
 />
 
-<Note>
-  Este conector ainda não está disponível. O quadro acima descreve o que ele vai trazer; os detalhes podem mudar até o lançamento. Enquanto isso, a [API de eventos](/api/guias/eventos-de-conversao) já leva cadastros e compras do seu sistema para a Conty.
-</Note>
+## Como conectar
+
+O seu cargo precisa da permissão **Gerenciar integrações**. Se o conector não aparece na lista, ele ainda não foi liberado para a sua marca: fale com o seu contato na Conty.
+
+<Steps>
+  <Step title="Copie a chave de API do Asaas">
+    No Asaas, abra **Integrações → Chaves de API** e gere ou copie a chave da conta. A de produção começa com `$aact_prod_`; a de sandbox, com `$aact_hmlg_`.
+  </Step>
+  <Step title="Conecte na Conty">
+    Abra **Plugins → Conectores → Asaas**, clique em **Conectar**, cole a chave em **Chave de API** e confirme. A Conty cadastra sozinha, na sua conta do Asaas, o webhook **Conty - vendas de assinatura**. Não é preciso copiar nada.
+  </Step>
+  <Step title="Grave o código do creator">
+    O seu sistema grava o código do cupom do creator no `externalReference` da assinatura ou da cobrança no Asaas.
+  </Step>
+  <Step title="Confira">
+    A página do conector fica **Conectada**. Depois da primeira cobrança paga, **Última cobrança** mostra a hora do evento.
+  </Step>
+</Steps>
+
+### Erros comuns
+
+- **"Não foi possível conectar. Confira a chave e tente de novo."**: a chave foi recusada pelo Asaas. Copie de novo, sem espaços.
+- **Chave de sandbox (`$aact_hmlg_`)**: conecta e recebe os eventos, mas nenhuma cobrança vira venda. Use a de produção para valer.
+- **Cobranças sem dono**: o `externalReference` da cobrança está ocupado com outro valor (o id do pedido, por exemplo). Deixe o da cobrança vazio e grave o código na assinatura.
+- **Webhook apagado no Asaas**: as cobranças param de chegar. Desconecte e conecte de novo na Conty.
+
+Onde gravar o código, exemplos de chamada e como testar estão no guia [Vendas de assinatura com creators](/api/guias/vendas-de-assinatura).

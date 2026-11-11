@@ -1,12 +1,13 @@
 ---
 title: "RevenueCat"
-description: "Em breve: atribua as assinaturas do seu app no RevenueCat a cada creator."
+description: "Transforme as assinaturas do app no RevenueCat em vendas do cupom de cada creator."
 icon: "/images/conectores/revenuecat.svg"
 keywords:
   - conector
   - integração
   - revenuecat
   - pagamentos e assinaturas
+  - coupon
 ---
 
 import ConectorQuadro from "/snippets/conector-quadro.mdx";
@@ -15,15 +16,44 @@ import ConectorQuadro from "/snippets/conector-quadro.mdx";
   slug="revenuecat"
   nome="RevenueCat"
   logo="/images/conectores/revenuecat.svg"
-  status="Em breve"
+  status="Disponível"
   categoria="Pagamentos e assinaturas"
-  faz="Vai trazer as assinaturas do app do projeto do RevenueCat da marca, para você ver a receita recorrente que cada creator trouxe."
-  coleta="Assinaturas, renovações e cancelamentos."
-  liga="Pelo link de campanha do app de cada creator, com o código do creator gravado pelo app no cliente do RevenueCat."
-  precisa="Projeto no RevenueCat com o app configurado, chave secreta de API do projeto e link de campanha do app por creator."
-  atualizacao="A coleta vai rodar por rotina, como nos conectores disponíveis, nunca na hora de abrir a tela. Frequência e atraso ficam definidos no lançamento."
+  faz="Recebe as compras, as renovações e os reembolsos das assinaturas do app pelo webhook do RevenueCat e transforma cada cobrança paga e conferida em venda do cupom do creator. A Conty só lê os dados."
+  coleta="Por cobrança: transação, assinante (app_user_id), produto, valor, moeda, take-home e o atributo coupon. Compras e renovações pagas (INITIAL_PURCHASE, RENEWAL, NON_RENEWING_PURCHASE) e reembolsos (CANCELLATION com cancel_reason CUSTOMER_SUPPORT)."
+  liga="Pelo código do cupom do creator, que o app grava no atributo coupon do assinante com o SDK do RevenueCat antes da compra. Cada cobrança é conferida no RevenueCat antes de virar venda, e o valor da venda é o líquido (preço × takehome_percentage)."
+  precisa="Projeto no RevenueCat com o app configurado, uma chave secreta da API v2 com leitura de configuração do projeto e de clientes, o ID do projeto (proj…) e um webhook no RevenueCat com a URL e o Authorization que a Conty mostra ao conectar. Acordo com cupom por creator e comissão ligados."
+  atualizacao="Na hora: cada cobrança chega pelo webhook do RevenueCat. Eventos de sandbox nunca viram venda."
 />
 
-<Note>
-  Este conector ainda não está disponível. O quadro acima descreve o que ele vai trazer; os detalhes podem mudar até o lançamento. Enquanto isso, a [API de eventos](/api/guias/eventos-de-conversao) já leva cadastros e compras do seu sistema para a Conty.
-</Note>
+## Como conectar
+
+O seu cargo precisa da permissão **Gerenciar integrações**. Se o conector não aparece na lista, ele ainda não foi liberado para a sua marca: fale com o seu contato na Conty.
+
+<Steps>
+  <Step title="Crie a chave no RevenueCat">
+    No projeto do app, abra **Project settings → API keys** e crie uma **chave secreta da API v2** com estas permissões:
+    - **Project configuration**: **Read only**.
+    - **Customer information**: **Read only** em **Customers**, **Subscriptions** e **Purchases**.
+  </Step>
+  <Step title="Copie o ID do projeto">
+    Ele começa com `proj` e aparece no endereço do painel do RevenueCat, depois de `/projects/`.
+  </Step>
+  <Step title="Conecte na Conty">
+    Abra **Plugins → Conectores → RevenueCat**, clique em **Conectar**, cole a chave e o ID do projeto e confirme.
+  </Step>
+  <Step title="Cadastre o webhook">
+    A Conty mostra a **URL do webhook** e o **Authorization** uma vez só. No RevenueCat, em **Integrations → Webhooks**, crie um webhook com essa URL e cole o Authorization em **Authorization header value**.
+  </Step>
+  <Step title="Confira">
+    A página do conector fica **Conectada**. Depois da primeira compra (de sandbox ou de produção), **Última cobrança** mostra a hora do evento.
+  </Step>
+</Steps>
+
+### Erros comuns
+
+- **"Falta marcar: …"**: a chave não tem uma das permissões acima. Edite a chave no RevenueCat e marque o que o aviso lista.
+- **Chave da API v1**: crie uma chave secreta da **v2**. Chaves da v1 e chaves públicas do app (`appl_…`, `goog_…`) não servem.
+- **ID do projeto não bate com a chave**: a chave é de outro projeto. Confira o `proj…` com o projeto da chave aberto.
+- **Webhook responde `401`**: o Authorization no RevenueCat está diferente do que a Conty mostrou. Se perdeu o valor, conecte de novo e atualize o webhook com a URL e o Authorization novos.
+
+O passo a passo completo, com o código do app para React Native, Swift, Kotlin e Flutter, está no guia [Vendas de assinatura com creators](/api/guias/vendas-de-assinatura).
