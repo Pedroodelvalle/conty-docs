@@ -314,7 +314,7 @@ O SDK nunca lança erro de API: todo método devolve `{ data, error }`. Em `crea
   </Step>
 
   <Step title="Acompanhe as candidaturas">
-    Com o acordo em `approved`, os creators se candidatam pelo app. Convidar creators pela chave ainda não existe: chega junto com a [busca de creators](/api/referencia/em-breve/buscar-creators). Até lá, o convite é feito no painel.
+    Com o acordo em `approved`, os creators se candidatam pelo app, e quem estava em `target_creator_ids[]` recebe o convite na publicação. Buscar creators novos e convidar alguém depois que o acordo está no ar chegam junto com a [busca de creators](/api/referencia/em-breve/buscar-creators).
 
     As candidaturas novas ficam na etapa `interested` do quadro. Leia as etapas em `GET /campaigns/{id}/stages` e liste os itens de uma etapa em `GET /campaigns/{id}/items`, com filtro e ordenação no servidor:
 
@@ -555,7 +555,7 @@ O SDK nunca lança erro de API: todo método devolve `{ data, error }`. Em `crea
 
 ## O que ainda fica no painel
 
-Convidar creators continua no painel por enquanto: chega junto com a [busca de creators](/api/referencia/em-breve/buscar-creators).
+Buscar creators novos e convidar alguém num acordo que já está no ar continuam no painel por enquanto: chegam junto com a [busca de creators](/api/referencia/em-breve/buscar-creators). O convite de quem já está em `target_creator_ids[]` sai pela API, na publicação.
 
 ## Cuidados para agentes
 

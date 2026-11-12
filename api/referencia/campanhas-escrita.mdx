@@ -42,7 +42,7 @@ As rotas que criam exigem o cabeçalho `Idempotency-Key`. Veja [Idempotência](/
 7. `POST /campaigns/{id}/renew` renova os prazos e `DELETE /campaigns/{id}` exclui.
 
 <Note>
-  Convidar creators pela chave ainda não existe: chega junto com a [busca de creators](/api/referencia/em-breve/buscar-creators). Até lá, o convite é feito no painel, e os creators também chegam por candidatura.
+  Para convidar creators, mande os ids deles em `target_creator_ids[]` no corpo do acordo: o convite sai quando o acordo vai ao ar. Os ids vêm de quem já trabalhou com a marca (quadro, missões, conversas). Buscar creators novos e convidar alguém num acordo que já está no ar chegam junto com a [busca de creators](/api/referencia/em-breve/buscar-creators).
 </Note>
 
 ## Só acordo

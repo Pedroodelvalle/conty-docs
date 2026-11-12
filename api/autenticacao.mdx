@@ -101,8 +101,8 @@ Ler não precisa de escopo: toda chave lê o que a marca vê no painel. Escrever
 
 | Escopo | O que libera |
 |---|---|
-| `campaigns:write` | Criar rascunho de acordo, editar, pausar, encerrar, arquivar e excluir, subir e anexar arquivo, e [operar o quadro](/api/referencia/quadro): candidaturas, entregas, prazos, briefing e remoção |
-| `campaigns:spend` | As ações que movem dinheiro da marca: publicar, renovar, editar acordo em `review` e subir o cachê do creator. Vale junto com `campaigns:write` |
+| `campaigns:write` | Criar rascunho de acordo, editar, pausar, encerrar, arquivar e excluir, subir e anexar arquivo, montar os cupons da campanha, e [operar o quadro](/api/referencia/quadro): candidaturas, entregas, prazos, briefing e remoção |
+| `campaigns:spend` | As ações que movem dinheiro da marca: publicar, renovar, editar acordo em `review`, subir o cachê do creator e depositar a verba de comissão dos cupons. Vale junto com `campaigns:write` |
 | `chat:write` | [Enviar mensagem ao creator](/api/referencia/mensagens) |
 
 `communities:write` e `ads:write` estão reservados: em breve, ainda sem rotas.
@@ -129,7 +129,8 @@ Uma chave sem escopos é só de leitura. `GET /me` devolve os escopos da chave e
 - publicar: `POST /campaigns` com `status: "review"` ou sem `status`, `PATCH /campaigns/{id}` com `status: "review"` e `POST /campaigns/{id}/status` com `status: "review"`;
 - renovar: `POST /campaigns/{id}/renew`;
 - editar acordo em `review`: ele está esperando saldo, e salvar a edição tenta pôr no ar e reservar a verba;
-- subir o cachê do creator: `PATCH .../applications/{application_id}/proposed-amount` e `PATCH .../creators/{creator_id}/scope-amount`.
+- subir o cachê do creator: `PATCH .../applications/{application_id}/proposed-amount` e `PATCH .../creators/{creator_id}/scope-amount`;
+- depositar a verba de comissão dos cupons: `POST /campaigns/{id}/coupon-commission/budget`.
 
 Dê `campaigns:spend` só para a integração que pode gastar a verba da marca.
 
@@ -160,7 +161,7 @@ Numa rota de escrita, a API confere nesta ordem:
 3. O cargo do dono da marca tem a permissão que o painel exige para a ação? Senão, `403 forbidden`.
 
 <Note>
-  **Chaves que já existiam** receberam `chat:write`, para continuar enviando mensagem como antes. Elas não têm `campaigns:write` nem `campaigns:spend`: para escrever em campanha, crie uma chave nova com esses escopos. Cupom e venda não usam escopo e seguem liberados só pela [disponibilidade](#disponibilidade) de cupons.
+  **Chaves que já existiam** receberam `chat:write`, para continuar enviando mensagem como antes. Elas não têm `campaigns:write` nem `campaigns:spend`: para escrever em campanha, crie uma chave nova com esses escopos. `/coupons` e `/conversion-events` não usam escopo e seguem liberados só pela [disponibilidade](#disponibilidade) de cupons. Os cupons de campanha (`/campaigns/{id}/coupon-pool`, `/coupons/bulk` e `/coupon-commission/budget`) usam `campaigns:write`.
 </Note>
 
 ## Criar uma chave
