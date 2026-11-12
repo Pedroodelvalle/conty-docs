@@ -1,0 +1,566 @@
+---
+title: "Agente cria e acompanha campanha"
+description: "Do rascunho à entrega aprovada: confira, crie e publique um acordo, aprove candidaturas, peça alteração e aprove entregas pela API ou pelo SDK @conty/node, com os webhooks."
+icon: "robot"
+keywords:
+  - agente
+  - criar campanha
+  - publicar
+  - acordo
+  - candidaturas
+  - "@conty/node"
+  - Idempotency-Key
+  - webhooks
+---
+
+Este guia leva um agente, ou o seu sistema, do zero até um acordo no ar, aprova uma candidatura, pede alteração no vídeo e aprova a entrega, e mostra como acompanhar tudo pelos webhooks sem consultar a API em intervalos. Cada passo tem a chamada em `curl` e no SDK `@conty/node`.
+
+<Note>
+  **Beta, ainda não publicado em produção.** As rotas de escrita e o cliente `createContyApi` do SDK estão em desenvolvimento e ainda não respondem em `https://api.appconty.com`. O contrato pode mudar até o lançamento. Acompanhe o [changelog](/api/changelog).
+</Note>
+
+## Antes de começar
+
+- Uma chave de API com os [escopos](/api/autenticacao#escopos-da-chave) que o agente precisa. `campaigns:write` monta e ajusta a campanha; `campaigns:spend` publica; `chat:write` responde ao creator. Um agente que só prepara rascunhos para uma pessoa aprovar fica sem `campaigns:spend`.
+- Um endpoint de [webhook](/api/webhooks/visao-geral) com os eventos `application.created`, `application.approved`, `application.rejected`, `mission.video_submitted` e `message.received` marcados.
+- Node 20 ou mais novo, se for usar o SDK:
+
+```bash
+npm i @conty/node
+```
+
+```javascript conty.mjs
+import { createContyApi } from "@conty/node";
+
+export const conty = createContyApi({ apiKey: process.env.CONTY_API_KEY });
+```
+
+O SDK nunca lança erro de API: todo método devolve `{ data, error }`. Em `create`, `renew` e `attachBriefingFile` ele manda o `Idempotency-Key` sozinho, o seu em `{ idempotencyKey }` ou um gerado, e repete a mesma chave nas retentativas.
+
+<Steps>
+  <Step title="Descubra o modelo da marca">
+    `GET /me` diz qual corpo a marca aceita e o que a chave pode fazer:
+
+    ```bash
+    curl https://api.appconty.com/public/v1/me \
+      -H "Authorization: Bearer $CONTY_API_KEY"
+    ```
+
+    ```json 200
+    {
+      "enterprise": { "id": "5e4d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c1b", "name": "Marca Exemplo" },
+      "api_key": {
+        "id": "7e6d5c4b-3a2f-4e1d-9c0b-8a7f6e5d4c3b",
+        "name": "Agente de campanhas",
+        "hint": "a9Xk",
+        "scopes": ["campaigns:write", "campaigns:spend", "chat:write"]
+      },
+      "campaign_model": "agreement"
+    }
+    ```
+
+    A API cria e edita só acordos. Com `campaign_model: "agreement"`, siga em frente. Com `"campaign"`, o modelo legado de campanha avulsa, as rotas de escrita respondem `422 unsupported_for_campaign_model`: fale com o time da Conty. O corpo completo está em [Criar e gerenciar campanhas](/api/referencia/campanhas-escrita).
+  </Step>
+
+  <Step title="Monte o corpo e confira">
+    `POST /campaigns/validate` confere o corpo sem gravar nada e aceita corpo incompleto. Use para o agente corrigir o que falta antes de criar.
+
+    <CodeGroup>
+
+    ```bash cURL
+    curl -X POST https://api.appconty.com/public/v1/campaigns/validate \
+      -H "Authorization: Bearer $CONTY_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "kind": "agreement",
+        "status": "draft",
+        "name": "Verão 2027",
+        "description": "Lançamento da linha de protetores.",
+        "objective": "branding",
+        "budget_cents": 500000,
+        "payment_type": "per_video",
+        "pay_per_video_cents": 80000,
+        "creators_limit": 5,
+        "start_date": "2027-01-10",
+        "end_date": "2027-02-28",
+        "usage_rights_duration": "90_days",
+        "deliverables": [
+          {
+            "key": "reels",
+            "network": "instagram",
+            "formats": ["reels"],
+            "campaign_format": "influenciadores",
+            "videos_count": 1,
+            "requires_review": true,
+            "requires_script_approval": true,
+            "script_delivery_date": "2027-01-20T23:59:59-03:00",
+            "delivery_date": "2027-01-30T23:59:59-03:00"
+          }
+        ],
+        "scope_options": [
+          { "name": "Só Reels", "items": [{ "deliverable_key": "reels", "quantity": 1 }] }
+        ],
+        "briefings": [
+          { "title": "Briefing Reels", "body": "Mostre o produto na praia.", "attachments": [] }
+        ]
+      }'
+    ```
+
+    ```javascript SDK
+    import { conty } from "./conty.mjs";
+
+    export const draft = {
+      kind: "agreement",
+      status: "draft",
+      name: "Verão 2027",
+      description: "Lançamento da linha de protetores.",
+      objective: "branding",
+      budget_cents: 500_000,
+      payment_type: "per_video",
+      pay_per_video_cents: 80_000,
+      creators_limit: 5,
+      start_date: "2027-01-10",
+      end_date: "2027-02-28",
+      usage_rights_duration: "90_days",
+      deliverables: [
+        {
+          key: "reels",
+          network: "instagram",
+          formats: ["reels"],
+          campaign_format: "influenciadores",
+          videos_count: 1,
+          requires_review: true,
+          requires_script_approval: true,
+          script_delivery_date: "2027-01-20T23:59:59-03:00",
+          delivery_date: "2027-01-30T23:59:59-03:00",
+        },
+      ],
+      scope_options: [{ name: "Só Reels", items: [{ deliverable_key: "reels", quantity: 1 }] }],
+      briefings: [{ title: "Briefing Reels", body: "Mostre o produto na praia.", attachments: [] }],
+    };
+
+    const { data: check, error } = await conty.campaigns.validate(draft);
+    if (error) throw error;
+
+    for (const issue of check.issues) {
+      console.log(issue.blocking ? "corrigir:" : "só impede publicar:", issue.path, issue.code);
+    }
+    ```
+
+    </CodeGroup>
+
+    ```json 200
+    {
+      "valid": true,
+      "can_publish": false,
+      "missing": [],
+      "issues": [
+        {
+          "path": "budget_cents",
+          "code": "insufficient_balance",
+          "message": "O saldo da marca não cobre esta campanha. Publicada, ela fica em review esperando saldo e só vai ao ar quando o saldo cobrir.",
+          "blocking": false
+        }
+      ],
+      "publish_cost_cents": 500000,
+      "balance_cents": 120000
+    }
+    ```
+
+    Leia assim:
+
+    - `valid: true`: o corpo pode ser criado com o `status` que você mandou.
+    - `issues[].blocking: true`: corrija antes de criar. `blocking: false`: o rascunho salva, e o problema só impede publicar.
+    - `can_publish: true`: o corpo iria ao ar agora, com saldo para o custo.
+
+    <Warning>
+      Sem `status` no corpo, `POST /campaigns` **publica**. Mande `"status": "draft"` enquanto o agente ainda está montando a campanha.
+    </Warning>
+  </Step>
+
+  <Step title="Crie o rascunho">
+    `POST /campaigns` exige `Idempotency-Key`. Gere a chave uma vez por campanha e guarde: se a resposta se perder, repetir a chamada com a mesma chave devolve a campanha já criada, com `Idempotent-Replayed: true`, em vez de criar outra.
+
+    <CodeGroup>
+
+    ```bash cURL
+    curl -X POST https://api.appconty.com/public/v1/campaigns \
+      -H "Authorization: Bearer $CONTY_API_KEY" \
+      -H "Content-Type: application/json" \
+      -H "Idempotency-Key: verao-2027-criar-1" \
+      -d @acordo.json
+    ```
+
+    ```javascript SDK
+    const { data: campaign, error } = await conty.campaigns.create(draft, {
+      idempotencyKey: "verao-2027-criar-1",
+    });
+    if (error) throw error;
+
+    console.log(campaign.id, campaign.status);
+    ```
+
+    </CodeGroup>
+
+    A resposta `201` é o objeto de `GET /campaigns/{id}`. Guarde os ids que nasceram com o acordo. Trecho da resposta:
+
+    ```json 201
+    {
+      "id": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f",
+      "kind": "agreement",
+      "name": "Verão 2027",
+      "status": "draft",
+      "blocks": [
+        { "id": "a1b2c3d4-5e6f-4a7b-8c9d-0e1f2a3b4c5d", "network": "instagram", "formats": ["reels"], "quantity": 1 }
+      ],
+      "scope_options": [
+        { "id": "b2c4d6e8-1a3f-4b5d-8c7e-9f0a1b2c3d4e", "name": "Só Reels" }
+      ],
+      "briefings": [
+        { "id": "3e7a9c1d-2b4f-4d6e-8a0c-5f1b3d7e9a2c", "title": "Briefing Reels", "in_use": false }
+      ]
+    }
+    ```
+  </Step>
+
+  <Step title="Ajuste o rascunho">
+    `PATCH /campaigns/{id}` é edição parcial: mande só o que muda. Para anexar um PDF ao briefing, use `POST /campaigns/{id}/briefings/attachments` com um link `https` que abre sem login.
+
+    <CodeGroup>
+
+    ```bash cURL
+    curl -X PATCH https://api.appconty.com/public/v1/campaigns/6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f \
+      -H "Authorization: Bearer $CONTY_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{ "end_date": "2027-03-15" }'
+    ```
+
+    ```javascript SDK
+    const { error } = await conty.campaigns.update(campaign.id, { end_date: "2027-03-15" });
+    if (error) throw error;
+    ```
+
+    ```bash Anexo
+    curl -X POST https://api.appconty.com/public/v1/campaigns/6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f/briefings/attachments \
+      -H "Authorization: Bearer $CONTY_API_KEY" \
+      -H "Content-Type: application/json" \
+      -H "Idempotency-Key: verao-2027-anexo-1" \
+      -d '{
+        "briefing_id": "3e7a9c1d-2b4f-4d6e-8a0c-5f1b3d7e9a2c",
+        "file_name": "guia.pdf",
+        "url": "https://exemplo.com/guia.pdf"
+      }'
+    ```
+
+    </CodeGroup>
+
+    Os outros jeitos de mandar arquivo estão em [Arquivos](/api/referencia/campanhas-escrita#arquivos).
+  </Step>
+
+  <Step title="Confira o custo e publique">
+    Publicar pede o escopo `campaigns:spend`. Antes, veja a conta que o painel mostra ao publicar:
+
+    ```bash
+    curl https://api.appconty.com/public/v1/campaigns/6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f/publish-cost \
+      -H "Authorization: Bearer $CONTY_API_KEY"
+    ```
+
+    ```json 200
+    {
+      "publish_cost_cents": 525000,
+      "budget_cents": 500000,
+      "usage_rights_fee_cents": 25000,
+      "balance_cents": 600000,
+      "shortfall_cents": 0,
+      "blocked_reason": null
+    }
+    ```
+
+    Com `shortfall_cents: 0` e `blocked_reason: null`, publique com `status: "review"`:
+
+    <CodeGroup>
+
+    ```bash cURL
+    curl -X POST https://api.appconty.com/public/v1/campaigns/6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f/status \
+      -H "Authorization: Bearer $CONTY_API_KEY" \
+      -H "Content-Type: application/json" \
+      -H "Idempotency-Key: verao-2027-publicar-1" \
+      -d '{ "status": "review" }'
+    ```
+
+    ```javascript SDK
+    const { data: published, error } = await conty.campaigns.setStatus(
+      campaign.id,
+      { status: "review" },
+      { idempotencyKey: "verao-2027-publicar-1" },
+    );
+    if (error?.code === "insufficient_scope") {
+      console.log("Esta chave só prepara o rascunho. Peça a publicação a quem tem campaigns:spend.");
+    } else if (error) {
+      throw error;
+    } else {
+      console.log(published.status);
+    }
+    ```
+
+    </CodeGroup>
+
+    Leia o `status` da resposta:
+
+    - `approved`: a campanha está no ar e a verba foi reservada.
+    - `review`: faltou saldo. Não é erro: a campanha fica esperando e vai para `approved` sozinha quando o saldo cobrir.
+
+    Sem `campaigns:spend`, a resposta é `403 insufficient_scope` com `details[0].required_scope = "campaigns:spend"`, e a campanha continua em rascunho.
+  </Step>
+
+  <Step title="Acompanhe as candidaturas">
+    Com o acordo em `approved`, os creators se candidatam pelo app. Convidar creators pela chave ainda não existe: chega junto com a [busca de creators](/api/referencia/em-breve/buscar-creators). Até lá, o convite é feito no painel.
+
+    As candidaturas novas ficam na etapa `interested` do quadro. Leia as etapas em `GET /campaigns/{id}/stages` e liste os itens de uma etapa em `GET /campaigns/{id}/items`, com filtro e ordenação no servidor:
+
+    <CodeGroup>
+
+    ```bash cURL
+    curl "https://api.appconty.com/public/v1/campaigns/6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f/items?stage=interested&sort=match&limit=20" \
+      -H "Authorization: Bearer $CONTY_API_KEY"
+    ```
+
+    ```javascript SDK
+    for await (const item of conty.campaigns.itemsAll(campaign.id, { stage: "interested", sort: "match" })) {
+      if (item.kind === "application") {
+        console.log(item.creator.name, item.status, item.is_compatible);
+      }
+    }
+    ```
+
+    </CodeGroup>
+
+    Cada candidatura traz `id`, `creator`, `status` (`pending`, `approved`, `rejected` ou `expired`), `mission_id`, `proposed_amount_cents`, `is_compatible` e `match_tags`. Os filtros e as etapas estão em [Campanhas e quadro](/api/referencia/campanhas#itens-de-uma-etapa).
+  </Step>
+
+  <Step title="Aprove a candidatura">
+    Aprovar abre a missão do creator. No acordo, diga a opção de escopo, o briefing e a data de entrega; sem eles, vale o que o creator escolheu e o padrão do acordo. Candidatura que não está `pending` responde `409 invalid_transition`.
+
+    <CodeGroup>
+
+    ```bash cURL
+    curl -X POST https://api.appconty.com/public/v1/campaigns/6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f/applications/0f4b8d2c-6a1e-4c3f-9b5d-2e7a4c1f8b63/approve \
+      -H "Authorization: Bearer $CONTY_API_KEY" \
+      -H "Content-Type: application/json" \
+      -H "Idempotency-Key: verao-2027-aprovar-0f4b8d2c" \
+      -d '{
+        "scope_option_id": "b2c4d6e8-1a3f-4b5d-8c7e-9f0a1b2c3d4e",
+        "briefing_id": "3e7a9c1d-2b4f-4d6e-8a0c-5f1b3d7e9a2c",
+        "delivery_date": "2027-01-30T23:59:59-03:00"
+      }'
+    ```
+
+    ```javascript SDK
+    const { data: application, error } = await conty.applications.approve(
+      campaign.id,
+      "0f4b8d2c-6a1e-4c3f-9b5d-2e7a4c1f8b63",
+      {
+        scope_option_id: "b2c4d6e8-1a3f-4b5d-8c7e-9f0a1b2c3d4e",
+        briefing_id: "3e7a9c1d-2b4f-4d6e-8a0c-5f1b3d7e9a2c",
+        delivery_date: "2027-01-30T23:59:59-03:00",
+      },
+    );
+    if (error?.code === "invalid_transition") {
+      console.log("A candidatura já foi decidida. Leia de novo o quadro.");
+    } else if (error) {
+      throw error;
+    }
+    ```
+
+    </CodeGroup>
+
+    A resposta é a candidatura, com a missão aberta em `mission_id`. Com agência no meio, o voto da marca é gravado e a candidatura segue `pending` até a agência decidir. O webhook `application.approved` sai quando a missão abre. Para aprovar várias de uma vez, use `POST /campaigns/{id}/applications/bulk`, que responde `202` com `job_id` (veja [Lotes](/api/referencia/quadro#lotes)).
+  </Step>
+
+  <Step title="Peça alteração na entrega">
+    Quando o creator envia o vídeo, sai o webhook `mission.video_submitted` e a missão vai para `em_analise`. Leia o conteúdo em `GET /missions/{id}`. Se precisa de ajuste, devolva com o `feedback`, que o creator recebe, e o prazo da alteração:
+
+    <CodeGroup>
+
+    ```bash cURL
+    curl -X POST https://api.appconty.com/public/v1/missions/2b9e4d7a-1c3f-4e5a-8b6d-9f0a1c2e3d4b/request-changes \
+      -H "Authorization: Bearer $CONTY_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "feedback": "Mostre o produto nos 3 primeiros segundos e cite o cupom.",
+        "change_deadline_at": "2027-02-02T23:59:59-03:00"
+      }'
+    ```
+
+    ```javascript SDK
+    const { data: mission, error } = await conty.missions.requestChanges(
+      "2b9e4d7a-1c3f-4e5a-8b6d-9f0a1c2e3d4b",
+      {
+        feedback: "Mostre o produto nos 3 primeiros segundos e cite o cupom.",
+        change_deadline_at: "2027-02-02T23:59:59-03:00",
+      },
+    );
+    if (error) throw error;
+
+    console.log(mission.status, mission.dates.change_deadline_at);
+    ```
+
+    </CodeGroup>
+
+    A missão vai para `recusado` (em alteração) e sai o webhook `mission.changes_requested`. Enquanto ela está em alteração, o prazo que vale é o `dates.change_deadline_at`; `PATCH /missions/{id}/deadline` só muda o prazo de missão em `fazendo` ou expirada por prazo.
+  </Step>
+
+  <Step title="Aprove a entrega">
+    Quando o creator reenvia, aprove com uma nota de 1 a 5 e, se quiser, uma mensagem. Conforme a campanha, aprovar pede `posted_at`, a data em que o post foi ao ar; sem ela, a resposta é `422 approval_posted_at_required`.
+
+    <CodeGroup>
+
+    ```bash cURL
+    curl -X POST https://api.appconty.com/public/v1/missions/2b9e4d7a-1c3f-4e5a-8b6d-9f0a1c2e3d4b/approve \
+      -H "Authorization: Bearer $CONTY_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "rating": 5,
+        "posted_at": "2027-02-04",
+        "approval_message": "Ficou ótimo, obrigado!"
+      }'
+    ```
+
+    ```javascript SDK
+    const { data: approved, error } = await conty.missions.approve(
+      "2b9e4d7a-1c3f-4e5a-8b6d-9f0a1c2e3d4b",
+      { rating: 5, posted_at: "2027-02-04", approval_message: "Ficou ótimo, obrigado!" },
+    );
+    if (error?.code === "approval_posted_at_required") {
+      console.log("Esta campanha pede a data do post para aprovar.");
+    } else if (error) {
+      throw error;
+    } else {
+      console.log(approved.status);
+    }
+    ```
+
+    </CodeGroup>
+
+    Entrega já aprovada ou fora da revisão responde `409`, nunca `200` sem efeito. Com agência no meio, o voto da marca é gravado e a missão segue em análise até o último lado. Para recusar de vez, use `POST /missions/{id}/reject`; as outras ações estão em [Operar o quadro](/api/referencia/quadro).
+  </Step>
+
+  <Step title="Ouça as candidaturas e as mensagens">
+    Daqui para a frente, deixe os webhooks avisarem. [Confira a assinatura](/api/webhooks/assinatura) de cada evento antes de processar.
+
+    | Evento | O que o agente faz |
+    |---|---|
+    | `application.created` | Um creator se candidatou. Leia a candidatura no [quadro](/api/referencia/campanhas#itens-de-uma-etapa) e decida |
+    | `application.approved` | O creator tem uma missão aberta em `data.mission.id`. Bom momento para criar o [cupom](/api/guias/cupom-por-creator) |
+    | `application.rejected` | A candidatura foi recusada |
+    | `mission.video_submitted` | O creator enviou ou reenviou o vídeo. Leia em `GET /missions/{id}` e aprove ou peça alteração |
+    | `message.received` | O creator mandou mensagem. O texto não vem no evento: leia a conversa e responda |
+
+    ```javascript webhook.mjs
+    import express from "express";
+
+    const API = "https://api.appconty.com/public/v1";
+    const headers = {
+      Authorization: `Bearer ${process.env.CONTY_API_KEY}`,
+      "Content-Type": "application/json",
+    };
+
+    const app = express();
+
+    app.post("/webhooks/conty", express.raw({ type: "application/json" }), async (req, res) => {
+      const event = JSON.parse(req.body.toString("utf8"));
+      res.sendStatus(200);
+
+      const { campaign, creator, conversation } = event.data;
+
+      if (event.type === "application.created") {
+        console.log(`Nova candidatura de ${creator.name} em ${campaign.name}`);
+      }
+
+      if (event.type === "message.received") {
+        const history = await fetch(`${API}/conversations/${conversation.id}/messages?limit=20`, {
+          headers,
+        }).then((response) => response.json());
+
+        const reply = await writeReply(history.data);
+
+        await fetch(`${API}/campaigns/${campaign.id}/creators/${creator.id}/messages`, {
+          method: "POST",
+          headers: { ...headers, "Idempotency-Key": `resposta-${event.id}` },
+          body: JSON.stringify({ content: reply }),
+        });
+      }
+    });
+
+    app.listen(3000);
+    ```
+
+    `writeReply` é a parte do seu agente que escreve a resposta. Usar o `id` do evento no `Idempotency-Key` impede resposta em dobro quando o mesmo evento chega duas vezes. Responder pede o escopo `chat:write`. Os payloads completos estão em [Candidaturas](/api/webhooks/eventos/candidaturas) e [Conversas](/api/webhooks/eventos/conversas).
+  </Step>
+
+  <Step title="Acompanhe e opere">
+    - Para ver quem está em cada etapa, leia o quadro como no guia [Acompanhar o quadro](/api/guias/acompanhar-quadro).
+    - Para pausar, retomar ou encerrar, use `POST /campaigns/{id}/status`: `paused` pausa, `approved` retoma a pausada, `completed` encerra e não volta.
+    - Para estender prazos, use `POST /campaigns/{id}/renew`, que pede `campaigns:spend`.
+
+    ```javascript SDK
+    const { error } = await conty.campaigns.setStatus(campaign.id, { status: "paused" });
+
+    if (error?.code === "blocking_missions") {
+      console.log("Há entregas em andamento:", error.details);
+    }
+    ```
+  </Step>
+  <Step title="Depois da entrega (opcional)">
+    Com a entrega aprovada, o agente pode fechar o ciclo. Os detalhes estão em [Entrega e pós-entrega](/api/referencia/entrega-e-pos-entrega).
+
+    **Cupom do creator.** Crie o cupom na missão. `Idempotency-Key` é obrigatório: repetir a mesma chave devolve o cupom já criado, com `Idempotent-Replayed: true`.
+
+    ```bash
+    curl -X POST https://api.appconty.com/public/v1/missions/2b9e4d7a-1c3f-4e5a-8b6d-9f0a1c2e3d4b/coupon \
+      -H "Authorization: Bearer $CONTY_API_KEY" \
+      -H "Content-Type: application/json" \
+      -H "Idempotency-Key: cupom-2b9e4d7a" \
+      -d '{ "code": "FULANA10", "discount_description": "10% off na primeira compra" }'
+    ```
+
+    **Link do post.** Se o creator não informou, grave o link publicado. Só vale depois da entrega aprovada; antes, `409 invalid_transition` com `details[].code = "mission_not_approved"`.
+
+    ```bash
+    curl -X PUT https://api.appconty.com/public/v1/missions/2b9e4d7a-1c3f-4e5a-8b6d-9f0a1c2e3d4b/post-url \
+      -H "Authorization: Bearer $CONTY_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{ "network": "instagram", "url": "https://www.instagram.com/reel/C9xYz12AbCd/" }'
+    ```
+
+    **Exportar.** Leve uma etapa do quadro para a sua planilha ou o seu sistema, em CSV ou JSON, até 2000 linhas:
+
+    ```bash
+    curl "https://api.appconty.com/public/v1/campaigns/6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f/export?stage=approved&format=json" \
+      -H "Authorization: Bearer $CONTY_API_KEY"
+    ```
+
+    ```json 200
+    {
+      "columns": [
+        { "key": "creator_name", "label": "Creator" },
+        { "key": "stage", "label": "Etapa" }
+      ],
+      "rows": [{ "creator_name": "Fulana Souza", "stage": "Aprovados" }],
+      "total": 1
+    }
+    ```
+  </Step>
+</Steps>
+
+## O que ainda fica no painel
+
+Convidar creators continua no painel por enquanto: chega junto com a [busca de creators](/api/referencia/em-breve/buscar-creators).
+
+## Cuidados para agentes
+
+- **Rascunho primeiro.** Crie com `status: "draft"`, confira com `validate` e `publish-cost`, e só então publique.
+- **Separe quem gasta.** Dê `campaigns:spend` só à chave que pode comprometer a verba da marca.
+- **Uma `Idempotency-Key` por operação.** Guarde a chave junto da tentativa e repita a mesma em caso de falha de rede. Trocar o corpo com a mesma chave responde `422 idempotency_key_reused`.
+- **Trate pelo `error.code`**, nunca pelo texto da mensagem. `409 invalid_transition` quer dizer que a campanha não está no status que o agente supôs: leia de novo antes de decidir.
+- **Respeite o limite** de 120 requisições por minuto por chave e o `Retry-After`.

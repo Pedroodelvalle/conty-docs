@@ -11,7 +11,7 @@ keywords:
   - filtros
 ---
 
-A chave lê as campanhas da marca como o painel mostra para o dono da marca: os mesmos status, rótulos, contagens e valores. Tudo é só leitura. O passo a passo de ponta a ponta está no guia [Acompanhar o quadro](/api/guias/acompanhar-quadro).
+A chave lê as campanhas da marca como o painel mostra para o dono da marca: os mesmos status, rótulos, contagens e valores. Esta página cobre a leitura; para criar, editar e publicar acordos, veja [Criar e gerenciar campanhas](/api/referencia/campanhas-escrita). O passo a passo de ponta a ponta está no guia [Acompanhar o quadro](/api/guias/acompanhar-quadro).
 
 ## Fluxo
 
@@ -69,7 +69,7 @@ Quando a marca é assistida por uma agência que não liberou ver preço, `money
   "kind": "agreement",
   "name": "Verão 2027",
   "status": "approved",
-  "platforms": ["reels_collab", "tiktok"],
+  "networks": ["instagram", "tiktok"],
   "start_date": "2026-11-01",
   "end_date": "2027-01-31",
   "created_at": "2026-10-21T14:30:00.000Z",
@@ -97,8 +97,8 @@ Quando a marca é assistida por uma agência que não liberou ver preço, `money
   `draft` (rascunho), `review` (em aprovação), `approved` (no ar), `paused`, `completed` ou `archived`.
 </ResponseField>
 
-<ResponseField name="platforms" type="string[]" required>
-  Formatos de entrega, um por bloco.
+<ResponseField name="networks" type="string[]" required>
+  Redes das entregas da campanha, sem repetir: `instagram`, `tiktok`, `youtube`, `x`, `ugc` (vídeo para a marca usar, sem post do creator) ou `repost`.
 </ResponseField>
 
 <ResponseField name="payment" type="object" required>
@@ -117,7 +117,11 @@ Quando a marca é assistida por uma agência que não liberou ver preço, `money
   Link da campanha no painel da marca.
 </ResponseField>
 
-O detalhe (`GET /campaigns/{id}`) soma `description`, `objective`, `review_chain` (quem revisa cada entrega, na ordem: `["brand"]` ou `["agency", "brand"]`), `requires` (`script`, `cover`, `caption`, `ad_code`, `product_shipping`), `blocks[]` (`id`, `platform`, `video_format`, `quantity`, `status`, `script_deadline`, `delivery_deadline`, `posting_date`) e `scope_options[]` (`id`, `name`, `items[]` com `block_id` e `quantity`, e `amount_cents`). Com `kind: "campaign"`, `scope_options` vem vazia.
+O detalhe (`GET /campaigns/{id}`) soma `description`, `objective`, `review_chain` (quem revisa cada entrega, na ordem: `["brand"]` ou `["agency", "brand"]`), `requires` (`script`, `cover`, `caption`, `ad_code`, `product_shipping`), `blocks[]` (`id`, `network`, `formats`, `quantity`, `status`, `script_deadline`, `delivery_deadline`, `posting_date`) e `scope_options[]` (`id`, `name`, `items[]` com `block_id` e `quantity`, e `amount_cents`). Com `kind: "campaign"`, `scope_options` vem vazia.
+
+<Note>
+  **Beta, ainda não publicado em produção.** O detalhe passa a trazer também `briefings[]`, os briefings do acordo: `id`, `title`, `body`, `in_use` (`true` quando algum creator recebeu o briefing) e `attachments[]` (`id`, `file_name`, `mime_type`, `size_bytes` e `url`, uma URL assinada válida por alguns minutos). Com `kind: "campaign"`, `briefings` vem vazia.
+</Note>
 
 ## Etapas do quadro
 
@@ -264,7 +268,7 @@ Os dois tipos trazem `status_label` e `status_tone` (`success`, `muted`, `info`,
 A projeção é uma lista fechada de campos. Campo novo no painel só aparece na API quando entra no contrato, com entrada no [changelog](/api/changelog).
 
 - **Contato do creator**: e-mail, telefone, documento e endereço. Do creator saem só `id`, `name`, `handles`, `profile_image_url` e `instagram_followers`.
-- **Ações e formulários**: aprovar, recusar, pedir alteração e os formulários do painel. A chave só lê.
+- **Formulários do painel.** Aprovar, recusar e pedir alteração pela chave estão em [Operar o quadro](/api/referencia/quadro) (beta).
 - Histórico de revisão, versões enviadas, nota interna, score de match, listas da marca e dados de anúncio.
 
 ## Erros

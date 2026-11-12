@@ -103,6 +103,8 @@ O payload nunca traz e-mail, telefone, documento, endereço, valor do cachê nem
 | `application.approved` | A marca aprovou a candidatura do creator na campanha | [Candidaturas](/api/webhooks/eventos/candidaturas) |
 | `application.rejected` | A marca ou a agência recusou a candidatura | [Candidaturas](/api/webhooks/eventos/candidaturas) |
 | `mission.accepted` | O creator aceitou o convite ou começou a missão | [Missões](/api/webhooks/eventos/missoes) |
+| `mission.product_delivered_by_carrier` | O rastreio dos Correios marcou o produto como entregue; o creator ainda não confirmou | [Missões](/api/webhooks/eventos/missoes#produto-enviado-pela-marca) |
+| `mission.product_received` | O creator confirmou no app que recebeu o produto | [Missões](/api/webhooks/eventos/missoes#produto-enviado-pela-marca) |
 | `mission.script_submitted` | O roteiro entrou na aprovação, inclusive o reenvio | [Missões](/api/webhooks/eventos/missoes) |
 | `mission.cover_submitted` | A capa foi enviada depois do vídeo | [Missões](/api/webhooks/eventos/missoes) |
 | `mission.caption_submitted` | A legenda foi enviada depois do vídeo | [Missões](/api/webhooks/eventos/missoes) |
@@ -113,6 +115,10 @@ O payload nunca traz e-mail, telefone, documento, endereço, valor do cachê nem
 | `mission.rejected` | A missão foi recusada de vez, pela marca ou pelo creator | [Missões](/api/webhooks/eventos/missoes) |
 | `mission.expired` | A missão expirou | [Missões](/api/webhooks/eventos/missoes) |
 | `mission.canceled` | A marca tirou o creator da campanha e a missão foi excluída | [Missões](/api/webhooks/eventos/missoes) |
+| `message.received` | O creator mandou uma mensagem, ou respondeu a uma, na conversa da campanha | [Conversas](/api/webhooks/eventos/conversas) |
+| `message.edited` | O creator editou uma mensagem que mandou | [Conversas](/api/webhooks/eventos/conversas) |
+| `message.reaction_added` | O creator reagiu a uma mensagem com um emoji | [Conversas](/api/webhooks/eventos/conversas) |
+| `message.reaction_removed` | O creator tirou a reação de uma mensagem | [Conversas](/api/webhooks/eventos/conversas) |
 | `webhook.test` | Você clicou em **Enviar teste** no painel | [Teste](/api/webhooks/eventos/teste) |
 
 ## Boas práticas

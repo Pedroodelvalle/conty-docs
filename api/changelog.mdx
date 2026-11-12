@@ -10,6 +10,127 @@ keywords:
 
 Toda mudança no contrato da API aparece aqui antes de entrar no ar. Enquanto a API estiver em beta, mudanças que quebram compatibilidade são possíveis, sempre anunciadas nesta página com o que muda e o que fazer.
 
+<Update label="Entrega e pós-entrega pela API (beta)" description="12 de novembro de 2026">
+  Envio de produto, post, cupom do creator, comentários, exportação e as leituras de resultado e rastreio da campanha. Ver [Entrega e pós-entrega](/api/referencia/entrega-e-pos-entrega).
+
+  <Note>
+    Em beta e **ainda não publicado em produção**: as rotas abaixo estão em desenvolvimento.
+  </Note>
+
+  **Entrega e post**
+  - `POST` e `GET /missions/{id}/product-shipment`: marca o envio do produto, com o código de rastreio (o dos Correios é normalizado; outras transportadoras são aceitas como vieram), e lê o estado: `shipped_at`, `received_at`, `received_photo_url` (assinada, 10 minutos), `carrier_status` e `carrier_delivered_at`. O recebimento é declarado pelo creator no app.
+  - `PUT /missions/{id}/post-url`: link do post, só depois da entrega aprovada (`409 invalid_transition` com `details[].code = "mission_not_approved"`). `PUT /missions/{id}/posted-at`: data do post, com o módulo de liberação de postagem (`403 module_disabled`).
+  - `POST /missions/{id}/post-check/accept` e `POST /post-checks/accept`: aceite da conferência do post.
+  - `GET /missions/{id}/script-file`, `GET /missions/{id}/delivery-download`, `POST /missions/{id}/notify` e `POST /missions/{id}/sync-metrics`.
+
+  **Cupons da campanha**
+  - `POST /missions/{id}/coupon`, `GET` e `POST /campaigns/{id}/coupon-pool`, `POST /campaigns/{id}/coupons/bulk` e `GET /campaigns/{id}/coupon-sales`. Criar cupom exige `Idempotency-Key`, e a repetição volta com `Idempotent-Replayed: true`.
+  - `POST /campaigns/{id}/coupon-commission/budget`: verba de comissão do cupom, com `campaigns:spend`.
+
+  **Comentários e exportação**
+  - `GET` e `POST /missions/{id}/comments`, nos canais `creator` e `agency`.
+  - `GET /campaigns/{id}/export`: qualquer etapa do `/stages`, em CSV ou JSON (`{ columns, rows, total }`), até 2000 linhas.
+
+  **Visões, resultados e rastreio**
+  - `GET /campaigns/{id}/counts`, `/segments`, `/suggestions`, `/results`, `/results/timeseries`, `/results/creators`, `/results/creators/{creator_id}/deliveries`, `/results/traffic`, `/results/traffic/events`, `/tracking`, `/creator-invoices` e `/ai-rubric`.
+  - `PUT /conversion-events`, `PUT /campaigns/{id}/tracking/destination`, `POST /campaigns/{id}/short-links`, `PUT /campaigns/{id}/ai-rubric` e `POST /campaigns/{id}/sync-metrics` (com `GET .../sync-metrics/jobs/{job_id}`).
+
+  **Webhooks**
+  - `mission.product_received`: o creator confirmou no app que recebeu o produto. Sai uma vez.
+  - `mission.product_delivered_by_carrier`: o rastreio dos Correios marcou o produto como entregue. Não é o recebimento: o creator ainda precisa confirmar.
+  - Os dois trazem `data.product` (`shipped_at`, `received_at`, `has_photo`, `tracking_code`), nunca a foto nem o endereço. Ver [Eventos de missão](/api/webhooks/eventos/missoes#produto-enviado-pela-marca).
+  - O rastreio automático dos Correios está em beta e desligado por padrão, **disponível sob ativação**. Sem ele, `carrier_status` fica `null` e `mission.product_delivered_by_carrier` não sai.
+</Update>
+
+<Update label="Quadro da campanha pela API (beta)" description="12 de novembro de 2026">
+  A chave passa a operar o quadro do acordo, com as mesmas transições e os mesmos avisos do painel. Ver [Operar o quadro](/api/referencia/quadro) e o guia [Agente cria e acompanha campanha](/api/guias/agente-cria-campanha).
+
+  <Note>
+    Em beta e **ainda não publicado em produção**: as rotas abaixo estão em desenvolvimento.
+  </Note>
+
+  **Candidaturas e creators**
+  - `POST /campaigns/{id}/applications/{application_id}/approve`, `/reject` e `/restore`, e `POST /campaigns/{id}/applications/bulk` (`approve` responde `202` com `job_id`; `reject` responde `200`).
+  - Contraproposta antes de aprovar: `PATCH .../proposed-deadline` e `PATCH .../proposed-amount`.
+  - No acordo, por creator: `PATCH /campaigns/{id}/creators/{creator_id}/scope-option`, `/briefing` e `/scope-amount`, e `POST /campaigns/{id}/creators/bulk/exclude`.
+
+  **Entregas**
+  - `POST /missions/{id}/approve`, `/request-changes` e `/reject`; `POST /missions/{id}/assets/{asset}/review` (roteiro, capa ou legenda) e `PATCH /missions/{id}/asset-version`; `POST /mission-combos/{id}/status`.
+  - Em lote: `POST /campaigns/{id}/missions/bulk-status` (pedir alteração ou recusar) e `POST /missions/approve-pending`.
+  - Conforme a campanha, aprovar a entrega pede `posted_at` (`422 approval_posted_at_required`).
+
+  **Prazo, briefing, remoção e reconvite**
+  - `PATCH /missions/{id}/deadline` e `POST /missions/bulk/deadline`: mudam `dates.delivery_deadline_at`, só com a missão em `fazendo` ou expirada por prazo. Durante uma alteração vale `change_deadline_at`.
+  - `POST /missions/{id}/send` e `POST /missions/bulk/send`; `DELETE /missions/{id}`, `POST /missions/bulk/remove` e `POST /missions/{id}/restore`; `GET /missions/{id}/reinvite-eligibility` e `POST /missions/{id}/reinvite`.
+
+  **Regras**
+  - Transição que não cabe responde `409 invalid_transition`, nunca `200` sem efeito.
+  - Subir cachê pede `campaigns:spend`. Ação que depende de um módulo não liberado responde `403 module_disabled`.
+  - Lotes respondem `202` com `job_id`; acompanhe em `GET /bulk-jobs/{id}` até `done` ou `failed`, com as falhas por item. A renovação por creator também.
+  - `GET /missions/{id}` traz `dates.delivery_deadline_at`.
+</Update>
+
+<Update label="Entrega por rede e formato" description="12 de novembro de 2026">
+  A entrega passa a ser descrita por rede e formato, no lugar do código de plataforma.
+
+  - **Leitura**: `Campaign.platforms` vira `networks` (as redes da campanha, sem repetir: `instagram`, `tiktok`, `youtube`, `x`, `ugc` ou `repost`). `blocks[]` do detalhe traz `network` e `formats` no lugar de `platform` e `video_format`. `block` da missão traz `network` no lugar de `platform`. Quem lê `platforms` ou `platform` precisa passar a ler os campos novos.
+  - **Escrita** (beta, ainda não publicada): cada item de `deliverables[]` usa `network`, `formats` e `key` no lugar de `platform`, `delivery_formats`, `instagram_formats`, `youtube_formats` e `platform_key`. `scope_options[].items[].deliverable_key` e `repost_source.deliverable_key` apontam para o `key`.
+  - Formatos por rede: `instagram` aceita `reels`, `collab`, `stories` e `feed`; `tiktok`, `video`; `youtube`, `long` e `shorts`; `x`, `post`, `thread` e `video`; `ugc`, `video` e `vertical`; `repost` não tem formato. Formato fora da rede responde `422 invalid_delivery_format`.
+  - Os webhooks não mudam: `data.mission.platform` continua igual.
+</Update>
+
+<Update label="Escrita de campanhas (beta)" description="12 de novembro de 2026">
+  A chave passa a criar e operar acordos, com as mesmas regras do painel. Ver [Criar e gerenciar campanhas](/api/referencia/campanhas-escrita) e o guia [Agente cria e acompanha campanha](/api/guias/agente-cria-campanha).
+
+  <Note>
+    Em beta e **ainda não publicado em produção**: as rotas abaixo estão em desenvolvimento. Esta entrada avisa o que muda antes de entrar no ar.
+  </Note>
+
+  **Campanhas**
+  - `POST /campaigns/validate`: confere o corpo sem gravar. Responde `valid`, `can_publish`, `missing`, `issues[]` (`path`, `code`, `message`, `blocking`), `publish_cost_cents` e `balance_cents`.
+  - `POST /campaigns` e `PATCH /campaigns/{id}`: criam e editam acordos com o corpo completo do painel: `deliverables[]`, `scope_options[]` e `briefings[]`. `kind` é opcional e só aceita `agreement`. Marca com `campaign_model: "campaign"` e campanha avulsa legada ficam só na leitura: escrita nelas responde `422 unsupported_for_campaign_model`. Sem `status`, a criação publica: mande `status: "draft"` para o rascunho.
+  - `POST /campaigns/{id}/status`: `review` publica, `approved` retoma a pausada, `paused` pausa, `completed` encerra, `archived` arquiva e `active` restaura a arquivada. Publicar sem saldo deixa a campanha em `review` até o saldo cobrir. Transição que não se aplica responde `409 invalid_transition`; entrega em andamento responde `409 blocking_missions`, e `force_close` encerra mesmo assim.
+  - `DELETE /campaigns/{id}`: exclui como o painel, que arquiva. A campanha continua legível com `status: "archived"` e volta com `status: "active"`. Com entrega em andamento, encerre antes com `force_close` no `/status`.
+  - `POST /campaigns/{id}/renew`: renova com datas novas, sempre em `blocks` ou `scope_options`. Com `creator_ids`, responde `202` com `job_id`.
+  - Leituras de apoio: `GET /campaigns/{id}/publish-cost`, `GET /campaigns/{id}/briefings` e `GET /campaigns/proposal-suggestions`.
+
+  - Convidar creators pela chave ainda não existe: chega junto com a busca de creators.
+
+  **Arquivos**
+  - `POST /uploads` devolve uma URL assinada para enviar o arquivo por `PUT` e o `upload_ref` para usar no corpo da campanha. `POST /uploads/import` busca o arquivo por link `https` ou `base64`. `POST /campaigns/{id}/briefings/attachments` anexa um arquivo a um briefing do acordo.
+  - `upload_ref` de outra marca ou de outra finalidade responde `422 invalid_upload_ref`.
+
+  **Escopos da chave**
+  - A chave ganha escopos de escrita, escolhidos na criação: `campaigns:write`, `campaigns:spend` e `chat:write`. `communities:write` e `ads:write` ficam reservados, em breve, ainda sem rotas. Ler não precisa de escopo. Ver [Escopos da chave](/api/autenticacao#escopos-da-chave).
+  - `campaigns:spend` é exigido para publicar, renovar e editar acordo em `review`.
+  - Sem o escopo, a API responde `403 insufficient_scope` com `details[0].required_scope`.
+  - **A rota de mensagem ao creator passa a exigir `chat:write`.** As chaves que já existem receberam `chat:write` e continuam enviando como antes: nada a fazer.
+  - **Criação de chave**: corpo inválido passa a responder `422 validation_failed`, com o campo em `details`, em vez de `400`. Se a sua automação cria chaves e trata o `400`, passe a tratar o `422`.
+
+  **Idempotência**
+  - Cabeçalho `Idempotency-Key`, de 1 a 255 caracteres: obrigatório em `POST /campaigns`, `/renew`, `/briefings/attachments` e `/uploads/import`; opcional em `PATCH /campaigns/{id}`, `POST /campaigns/{id}/status` e no envio de mensagem. Repetir a mesma chave com a mesma requisição em até 24 horas, por marca, devolve a primeira resposta com `Idempotent-Replayed: true`. Ver [Idempotência](/api/referencia/introducao#idempotência).
+  - Novos erros: `422 idempotency_key_required`, `422 idempotency_key_reused` e `409 idempotency_in_progress`.
+
+  **Campos novos em respostas que já existem**
+  - `GET /me` traz `api_key.scopes` e `campaign_model` (`agreement` ou `campaign`); a escrita exige `agreement`.
+  - `GET /campaigns/{id}` traz `briefings[]`, os briefings do acordo com os anexos em URL assinada.
+  - O envelope de erro aceita em `details[]` os campos `required_scope`, `code`, `counts` e `blocking_block_id`.
+  - Campos aditivos: quem só lê não precisa mudar nada.
+
+  **SDK**
+  - `@conty/node` ganha `createContyApi({ apiKey })`, com `conty.campaigns.validate`, `create`, `update`, `setStatus`, `remove`, `renew`, `publishCost` e `attachBriefingFile`, além das leituras.
+</Update>
+
+<Update label="Webhooks de conversa" description="11 de novembro de 2026">
+  Quatro eventos novos para o que o creator faz na conversa da campanha ou do acordo. Ver [Eventos de conversa](/api/webhooks/eventos/conversas).
+
+  - `message.received`: o creator mandou uma mensagem. Em reply, `data.message.reply_to_id` traz o `id` da mensagem respondida.
+  - `message.edited`: o creator editou uma mensagem, com `data.message.edited_at`.
+  - `message.reaction_added` e `message.reaction_removed`: o creator pôs ou tirou uma reação, com `data.reaction.emoji` e o `id` da mensagem reagida em `data.message.id`.
+  - Os eventos trazem `data.conversation.id`, o mesmo de `GET /conversations`, e nunca o texto da mensagem. Mensagem, edição e reação da marca, da agência, de DM fora de campanha e de comunidade não geram evento.
+  - Para receber, marque os eventos no endpoint em **Desenvolvedores → Webhooks**. Endpoints que já existem não passam a recebê-los sozinhos.
+</Update>
+
 <Update label="Vendas por RevenueCat e Asaas" description="11 de novembro de 2026">
   Conectores RevenueCat e Asaas: cada venda paga com o código de um creator, compra avulsa ou cobrança de assinatura, vira venda do cupom dele, com comissão. Ver [RevenueCat](/api/referencia/conectores/revenuecat) e [Asaas](/api/referencia/conectores/asaas).
 

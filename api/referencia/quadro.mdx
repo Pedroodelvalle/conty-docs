@@ -1,0 +1,184 @@
+---
+title: "Operar o quadro"
+sidebarTitle: "Operar o quadro"
+description: "Aprove e recuse candidaturas, revise entregas, mude prazos, envie o briefing, remova e reconvide creators e acompanhe os lotes, com as mesmas regras do quadro do painel."
+icon: "list-check"
+keywords:
+  - quadro
+  - candidatura
+  - aprovar entrega
+  - pedir alteração
+  - prazo
+  - lote
+  - bulk-jobs
+---
+
+<Note>
+  **Beta, ainda não publicado em produção.** As rotas desta página estão em desenvolvimento e ainda não respondem em `https://api.appconty.com`. O contrato pode mudar até o lançamento. Acompanhe o [changelog](/api/changelog).
+</Note>
+
+A chave opera o quadro do acordo pelo mesmo serviço do painel: as mesmas transições, os mesmos avisos ao creator e os mesmos webhooks. Para ler o quadro, veja [Campanhas e quadro](/api/referencia/campanhas#etapas-do-quadro) e [Missões](/api/referencia/missoes). O passo a passo está no guia [Agente cria e acompanha campanha](/api/guias/agente-cria-campanha). Envio de produto, post, cupom do creator, comentários e exportação estão em [Entrega e pós-entrega](/api/referencia/entrega-e-pos-entrega).
+
+## Fluxo
+
+1. **Candidatura.** O creator se candidata (`application.created`) e aparece na etapa `interested` de `GET /campaigns/{id}/items`. Você aprova ou recusa.
+2. **Missão.** Aprovar abre a missão do creator, com o escopo, o briefing e as datas. A missão começa em `fazendo`, ou espera o envio do briefing quando o acordo pede.
+3. **Entrega.** O creator envia o roteiro, a capa, a legenda e o vídeo, conforme a campanha pede. A missão vai para `em_analise`, e você aprova, pede alteração ou recusa de vez.
+
+Toda rota responde com o recurso relido: a candidatura no formato do item `application` de `GET /campaigns/{id}/items`, ou a missão no formato de `GET /missions/{id}`.
+
+## Regras
+
+- **Transição que não cabe responde `409 invalid_transition`**, nunca `200` sem efeito. Aprovar uma candidatura que não está `pending`, ou uma entrega já aprovada, é `409`. Leia de novo antes de decidir.
+- **Cadeia de revisão.** Com agência no meio, o voto da marca é gravado e a candidatura ou a missão segue até o último lado. Em lote, essas voltam em `awaiting_next_side_ids`.
+- **Prazo.** `PATCH /missions/{id}/deadline` muda `dates.delivery_deadline_at` e, se quiser, o prazo do roteiro. Só vale com a missão em `fazendo`, ou expirada por prazo com os termos aceitos; em outro status responde `409 invalid_transition`. Durante uma alteração pedida (missão em `recusado`), o prazo é o `dates.change_deadline_at`, definido em `change_deadline_at` no pedido de alteração, e não este.
+- **Data do post na aprovação.** Conforme a campanha, aprovar a entrega pede `posted_at`, quando o post foi ao ar. Sem ele, a resposta é `422 approval_posted_at_required`.
+- **Cachê pede `campaigns:spend`.** Subir o cachê, na contraproposta (`proposed-amount`) ou no acordo (`scope-amount`), compromete verba e pede `campaigns:spend` além de `campaigns:write`. O valor só sobe: igual ou menor responde `422 scope_amount_not_increased`.
+- **Módulo da ação.** Subir cachê e enviar o briefing antes de o creator começar dependem de um módulo liberado para a marca. Sem ele, `403 module_disabled`.
+- **Marca assistida.** Ação que o painel reserva à agência responde `403 forbidden`; ação que depende da liberação da agência responde `403 assisted_access_denied`.
+- **Uma marca não toca no que é de outra.** Candidatura de outra campanha, missão de outra marca ou id inexistente responde `404 not_found`. Em lote, um único id de fora recusa o lote inteiro com `404`, sem gravar nada.
+- **Campanha avulsa legada** é só leitura: escrita numa missão dela responde `422 unsupported_for_campaign_model`.
+- **Campanha finalizada** responde `410 campaign_finished`.
+
+Toda rota desta página pede o escopo `campaigns:write`. Veja [Escopos da chave](/api/autenticacao#escopos-da-chave).
+
+## Candidaturas
+
+| Rota | O que faz |
+|---|---|
+| `POST /campaigns/{id}/applications/{application_id}/approve` | Aprova e abre a missão. Aceita `scope_option_id`, `briefing_id`, `delivery_date`, `script_deadline` e `deliveries[]` (datas por bloco). Sem eles, vale o que o creator escolheu e o padrão do acordo |
+| `POST /campaigns/{id}/applications/{application_id}/reject` | Recusa e avisa o creator. `reason` opcional; com cadeia de revisão, a agência recebe o texto |
+| `POST /campaigns/{id}/applications/bulk` | Em lote: `action: "approve"` responde `202` com `job_id`; `action: "reject"` responde `200` com `succeeded_ids` e `failed`. Até 2000 candidaturas |
+| `POST /campaigns/{id}/applications/{application_id}/restore` | Desfaz a recusa ou a expiração, de volta para `interested` ou `pre_approved` (`destination`) |
+| `PATCH /campaigns/{id}/applications/{application_id}/proposed-deadline` | Contrapropõe a data de entrega ou o prazo do roteiro antes de aprovar. Fora da etapa em que o prazo é ajustável, `409 proposed_deadline_not_adjustable` |
+| `PATCH /campaigns/{id}/applications/{application_id}/proposed-amount` | Sobe o cachê proposto na pré-aprovação (`amount_cents`). Pede `campaigns:spend` e o módulo de subir cachê |
+
+```bash
+curl -X POST https://api.appconty.com/public/v1/campaigns/6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f/applications/0f4b8d2c-6a1e-4c3f-9b5d-2e7a4c1f8b63/approve \
+  -H "Authorization: Bearer $CONTY_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "scope_option_id": "5b8d0f2a-4c6e-4a1b-8d3f-7e9a1c3b5d70",
+    "briefing_id": "a8e2c4f6-0b1d-4e3a-9c5f-7d9b1e3a5c80",
+    "delivery_date": "2026-12-10T23:59:00-03:00"
+  }'
+```
+
+## Creators no acordo
+
+| Rota | O que faz |
+|---|---|
+| `PATCH /campaigns/{id}/creators/{creator_id}/scope-option` | Troca a opção de escopo do creator, criando e removendo as entregas. `changed: false` quando ele já estava nela. Depois do envio do conteúdo, `409 scope_option_locked` |
+| `PATCH /campaigns/{id}/creators/{creator_id}/briefing` | Troca o briefing do creator. `changed: false` quando ele já estava nele |
+| `PATCH /campaigns/{id}/creators/{creator_id}/scope-amount` | Sobe o cachê do creator (`amount_cents`) enquanto o repasse dele não existe. Responde `amount_cents` e `previous_amount_cents`. Pede `campaigns:spend` e o módulo de subir cachê |
+| `POST /campaigns/{id}/creators/bulk/exclude` | Tira até 1000 creators da campanha, removendo as entregas em aberto. Responde `202` com `job_id` |
+
+Em marca assistida, as quatro são só da agência (`403 forbidden`). O creator é avisado como no painel quando a entrega já foi enviada.
+
+## Entregas
+
+| Rota | O que faz |
+|---|---|
+| `POST /missions/{id}/approve` | Aprova o vídeo. `rating` (1 a 5), `posted_at` e `approval_message`, todos opcionais, salvo `posted_at` quando a campanha pede |
+| `POST /missions/{id}/request-changes` | Devolve para ajuste. `feedback` é obrigatório e vai para o creator; `change_deadline_at` é o prazo da alteração. Sai o webhook `mission.changes_requested` |
+| `POST /missions/{id}/reject` | Recusa de vez: o creator recebe `reason` (10 caracteres ou mais) e não é pago. `block_creator: true` impede que ele trabalhe de novo com a marca |
+| `POST /missions/{id}/assets/{asset}/review` | Revisa uma peça: `asset` é `script`, `cover` ou `caption`. `decision` é `approved`, `changes_requested` (com `reason`) ou `adjusted` (com `text`, onde o painel deixa a marca ajustar o texto) |
+| `PATCH /missions/{id}/asset-version` | Faz uma versão anterior da peça voltar a valer (`version_id`) |
+| `POST /mission-combos/{id}/status` | Decide um combo: `status: "approved"` aprova o combo inteiro; `status: "changes_requested"` pede alteração nas `mission_ids` citadas, com `feedback` |
+| `POST /campaigns/{id}/missions/bulk-status` | Pede alteração (`changes_requested`) ou recusa de vez (`rejected`) até 500 entregas, com o mesmo `feedback`. Responde na hora com `succeeded_ids`, `awaiting_next_side_ids` e `failed` |
+| `POST /missions/approve-pending` | Aprova em lote as peças que esperam a sua aprovação: `missions[]` com `mission_id` e `targets` (`script`, `cover`, `caption`, `delivery`). Responde `202` com `job_id` |
+
+Entrega que não está esperando a sua revisão responde `409` com o código do painel: `awaiting_review` (a peça anterior ainda não foi aprovada), `not_submitted` ou `not_applicable` (a campanha não exige essa aprovação). Missão encerrada à força responde `409 force_closed_mission`.
+
+```bash
+curl -X POST https://api.appconty.com/public/v1/missions/2b9e4d7a-1c3f-4e5a-8b6d-9f0a1c2e3d4b/request-changes \
+  -H "Authorization: Bearer $CONTY_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "feedback": "Mostre o produto nos 3 primeiros segundos e cite o cupom.",
+    "change_deadline_at": "2026-12-10T23:59:00-03:00"
+  }'
+```
+
+## Prazo, briefing, remoção e reconvite
+
+| Rota | O que faz |
+|---|---|
+| `PATCH /missions/{id}/deadline` | Muda `dates.delivery_deadline_at` (`delivery_date`, obrigatório) e o prazo do roteiro (`script_deadline`). Veja a regra de [prazo](#regras) |
+| `POST /missions/bulk/deadline` | O mesmo em até 2000 missões. Missão fora da regra falha no job, com o motivo em `GET /bulk-jobs/{id}` |
+| `POST /missions/{id}/send` | Envia o briefing da missão aprovada que espera envio, com `briefing_id` e as datas por entrega em `deliveries[]`. Já enviada, `409 already_sent`. Pede o módulo de briefing antes do envio |
+| `POST /missions/bulk/send` | O mesmo em lote, com as mesmas datas para todas |
+| `DELETE /missions/{id}` | Remove a missão de um creator convidado ou fazendo. Responde `204`. Em etapa que não deixa remover, `409 mission_not_removable` |
+| `POST /missions/bulk/remove` | Remove em lote |
+| `POST /missions/{id}/restore` | Desfaz a remoção, com datas novas opcionais |
+| `GET /missions/{id}/reinvite-eligibility` | Diz se dá para reconvidar (`can_reinvite`) e o motivo quando não (`reason`) |
+| `POST /missions/{id}/reinvite` | Abre um convite novo para o creator da missão expirada. Responde `201` com a missão nova. Pede plano ativo |
+
+Em marca assistida, mudar prazo, enviar o briefing e reconvidar são só da agência (`403 forbidden`).
+
+## Lotes
+
+As rotas de lote que processam em segundo plano respondem `202` com o id do lote:
+
+```json 202
+{ "job_id": "5d2a8c4e-1f3b-4a6d-9e0c-7b8a6f4d2c19", "total": 12 }
+```
+
+Acompanhe em `GET /bulk-jobs/{id}` até `status` ser `done` ou `failed`:
+
+```json 200
+{
+  "id": "5d2a8c4e-1f3b-4a6d-9e0c-7b8a6f4d2c19",
+  "action": "deadline",
+  "status": "done",
+  "total": 12,
+  "succeeded": 11,
+  "failed": 1,
+  "message": null,
+  "awaiting_briefing": null,
+  "failures": [
+    {
+      "id": "2b9e4d7a-1c3f-4e5a-8b6d-9f0a1c2e3d4b",
+      "code": "invalid_transition",
+      "message": "A entrega não está em revisão."
+    }
+  ],
+  "next_cursor": null
+}
+```
+
+- `status` é `queued`, `running`, `done` ou `failed`.
+- `failures[]` traz cada item que falhou, com `code` e `message`, paginado por `cursor` e `limit`.
+- `action` diz o lote: `approve_pending`, `send`, `remove`, `deadline`, `applications`, `group_applications`, `renew`, `group_renew` ou `exclude_creators`. A renovação por creator (`POST /campaigns/{id}/renew` com `creator_ids`) também se acompanha aqui.
+- Lote de outra marca ou inexistente responde `404 not_found`.
+
+## Idempotência
+
+`Idempotency-Key` é obrigatório nas rotas que abrem lote ou criam: `POST /campaigns/{id}/applications/bulk`, `POST /campaigns/{id}/creators/bulk/exclude`, `POST /missions/approve-pending`, `POST /missions/bulk/deadline`, `POST /missions/bulk/send`, `POST /missions/bulk/remove` e `POST /missions/{id}/reinvite`. Nas outras de escrita é opcional, salvo `DELETE /missions/{id}`, que não aceita. Veja [Idempotência](/api/referencia/introducao#idempotência).
+
+## Erros
+
+| Status | Código | Quando |
+|---|---|---|
+| 403 | `insufficient_scope` | Falta `campaigns:write`, ou `campaigns:spend` para subir cachê |
+| 403 | `module_disabled` | O módulo da ação não está liberado para a marca |
+| 403 | `forbidden` | O cargo do dono não tem a permissão do painel, ou a ação é só da agência |
+| 403 | `assisted_access_denied` | A agência não liberou a ação |
+| 404 | `not_found` | Candidatura, missão, combo ou lote de outra marca ou inexistente |
+| 409 | `invalid_transition` | A candidatura ou a missão não está no estado que a ação pede |
+| 409 | `awaiting_review`, `not_submitted`, `not_applicable` | A peça ainda não passou pela aprovação anterior, não foi enviada, ou a campanha não exige essa aprovação |
+| 409 | `force_closed_mission` | A missão foi encerrada à força |
+| 409 | `proposed_deadline_not_adjustable`, `proposed_amount_not_adjustable` | A candidatura está fora da etapa em que a contraproposta vale |
+| 409 | `scope_option_locked` | O creator já enviou conteúdo e o escopo não muda mais |
+| 409 | `scope_amount_reserved`, `scope_amount_already_approved` | O cachê do creator já está reservado ou aprovado |
+| 409 | `budget_exceeded`, `insufficient_balance` | A verba ou o saldo não cobrem a ação |
+| 409 | `already_sent` | O briefing da missão já foi enviado |
+| 409 | `mission_not_removable` | A etapa não deixa remover a missão |
+| 409 | `already_invited` | O creator já tem convite ou entrega em andamento na campanha |
+| 409 | `invalid_deadline` | Prazo inválido |
+| 410 | `campaign_finished` | A campanha foi finalizada |
+| 422 | `approval_posted_at_required` | A campanha pede a data do post para aprovar a entrega |
+| 422 | `scope_amount_not_increased` | O cachê novo é igual ou menor que o atual |
+| 422 | `delivery_before_script`, `script_deadline_required`, `invalid_date` | Datas inválidas |
+| 422 | `invalid_scope_option`, `invalid_briefing_assignment` | Escopo ou briefing que não é deste acordo |
+| 422 | `unsupported_for_campaign_model` | Missão de campanha avulsa legada |

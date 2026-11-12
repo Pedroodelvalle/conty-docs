@@ -91,10 +91,82 @@ A API pública, os webhooks e os cupons são liberados por marca pela Conty. Fal
 
 Nos tenants com planos, a marca sem plano ativo recebe `403 plan_required`. A chave não é revogada e volta a funcionar quando a marca assina.
 
+## Escopos da chave
+
+<Note>
+  **Beta, ainda não publicado em produção.** Os escopos chegam junto com a [escrita de campanhas](/api/referencia/campanhas-escrita) e ainda não valem em `https://api.appconty.com`.
+</Note>
+
+Ler não precisa de escopo: toda chave lê o que a marca vê no painel. Escrever precisa. Cada chave tem uma lista de escopos de escrita, escolhida na criação. A lista não muda depois: para trocar escopo, crie outra chave e revogue a antiga.
+
+| Escopo | O que libera |
+|---|---|
+| `campaigns:write` | Criar rascunho de acordo, editar, pausar, encerrar, arquivar e excluir, subir e anexar arquivo, e [operar o quadro](/api/referencia/quadro): candidaturas, entregas, prazos, briefing e remoção |
+| `campaigns:spend` | As ações que movem dinheiro da marca: publicar, renovar, editar acordo em `review` e subir o cachê do creator. Vale junto com `campaigns:write` |
+| `chat:write` | [Enviar mensagem ao creator](/api/referencia/mensagens) |
+
+`communities:write` e `ads:write` estão reservados: em breve, ainda sem rotas.
+
+Uma chave sem escopos é só de leitura. `GET /me` devolve os escopos da chave em `api_key.scopes`:
+
+```json
+{
+  "enterprise": { "id": "5e4d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c1b", "name": "Marca Exemplo" },
+  "api_key": {
+    "id": "7e6d5c4b-3a2f-4e1d-9c0b-8a7f6e5d4c3b",
+    "name": "Agente de campanhas",
+    "hint": "a9Xk",
+    "scopes": ["campaigns:write", "chat:write"]
+  },
+  "campaign_model": "agreement"
+}
+```
+
+### Por que publicar tem um escopo à parte
+
+`campaigns:write` sozinho deixa a integração montar e ajustar a campanha sem comprometer saldo. Só a chave com `campaigns:spend` consegue:
+
+- publicar: `POST /campaigns` com `status: "review"` ou sem `status`, `PATCH /campaigns/{id}` com `status: "review"` e `POST /campaigns/{id}/status` com `status: "review"`;
+- renovar: `POST /campaigns/{id}/renew`;
+- editar acordo em `review`: ele está esperando saldo, e salvar a edição tenta pôr no ar e reservar a verba;
+- subir o cachê do creator: `PATCH .../applications/{application_id}/proposed-amount` e `PATCH .../creators/{creator_id}/scope-amount`.
+
+Dê `campaigns:spend` só para a integração que pode gastar a verba da marca.
+
+### Quando falta o escopo
+
+A API responde `403 insufficient_scope`, com o escopo que falta em `details[0].required_scope`. Nada é gravado e nenhum saldo é reservado.
+
+```json 403
+{
+  "error": {
+    "code": "insufficient_scope",
+    "message": "Publicar campanha reserva saldo da marca e exige o escopo campaigns:spend.",
+    "details": [
+      {
+        "message": "A chave precisa do escopo campaigns:spend.",
+        "required_scope": "campaigns:spend"
+      }
+    ],
+    "request_id": "req_01JC8Z3K9W2Q4R6T8V0X2Z4B6D"
+  }
+}
+```
+
+Numa rota de escrita, a API confere nesta ordem:
+
+1. O recurso está liberado para a marca? Senão, `403` com o código da área, como `chat_disabled`.
+2. A chave tem o escopo? Senão, `403 insufficient_scope`.
+3. O cargo do dono da marca tem a permissão que o painel exige para a ação? Senão, `403 forbidden`.
+
+<Note>
+  **Chaves que já existiam** receberam `chat:write`, para continuar enviando mensagem como antes. Elas não têm `campaigns:write` nem `campaigns:spend`: para escrever em campanha, crie uma chave nova com esses escopos. Cupom e venda não usam escopo e seguem liberados só pela [disponibilidade](#disponibilidade) de cupons.
+</Note>
+
 ## Criar uma chave
 
 1. No painel, abra **Plugins → Integrações**.
-2. Clique em **Nova chave** e dê um nome.
+2. Clique em **Nova chave**, dê um nome e escolha os [escopos](#escopos-da-chave) de escrita que a integração precisa.
 3. Copie a chave na hora.
 
 <Warning>

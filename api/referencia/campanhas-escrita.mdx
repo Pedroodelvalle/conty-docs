@@ -1,0 +1,511 @@
+---
+title: "Criar e gerenciar campanhas"
+sidebarTitle: "Criar e gerenciar"
+description: "Confira, crie, edite, publique, pause, encerre, exclua e renove acordos pela chave e anexe arquivos, com as mesmas regras do painel."
+icon: "pen-to-square"
+keywords:
+  - criar campanha
+  - acordo
+  - publicar
+  - renovar
+  - briefing
+  - upload
+  - Idempotency-Key
+---
+
+<Note>
+  **Beta, ainda não publicado em produção.** As rotas desta página estão em desenvolvimento e ainda não respondem em `https://api.appconty.com`. O contrato pode mudar até o lançamento. Acompanhe o [changelog](/api/changelog).
+</Note>
+
+A chave cria e opera **acordos** pelo mesmo serviço do painel: as mesmas validações, as mesmas travas e os mesmos avisos aos creators. O passo a passo de ponta a ponta está no guia [Agente cria e acompanha campanha](/api/guias/agente-cria-campanha). Para ler campanhas e o quadro, veja [Campanhas e quadro](/api/referencia/campanhas).
+
+## O que a chave precisa
+
+| Ação | Escopo da chave |
+|---|---|
+| Conferir (`POST /campaigns/validate`) e as leituras de apoio | Nenhum |
+| Criar rascunho, editar, pausar, encerrar, arquivar, excluir, subir e anexar arquivo | `campaigns:write` |
+| Publicar, renovar e editar acordo em `review` | `campaigns:write` e `campaigns:spend` |
+
+Sem o escopo, a API responde `403 insufficient_scope` com o escopo que falta em `details[0].required_scope`. Além do escopo, o cargo do dono da marca precisa da mesma permissão que o painel exige para a ação (`403 forbidden`). Veja [Escopos da chave](/api/autenticacao#escopos-da-chave).
+
+As rotas que criam exigem o cabeçalho `Idempotency-Key`. Veja [Idempotência](/api/referencia/introducao#idempotência).
+
+## Fluxo
+
+1. `GET /me` diz se a marca trabalha com acordos (`campaign_model`) e os escopos da chave (`api_key.scopes`).
+2. `POST /campaigns/validate` confere o corpo sem gravar nada.
+3. `POST /campaigns` cria o acordo, em rascunho ou já publicando.
+4. `PATCH /campaigns/{id}` edita.
+5. `POST /campaigns/{id}/status` publica, pausa, retoma, encerra, arquiva e restaura.
+6. `GET /campaigns/{id}/items` e os [webhooks](/api/webhooks/visao-geral) `application.*` acompanham as candidaturas.
+7. `POST /campaigns/{id}/renew` renova os prazos e `DELETE /campaigns/{id}` exclui.
+
+<Note>
+  Convidar creators pela chave ainda não existe: chega junto com a [busca de creators](/api/referencia/em-breve/buscar-creators). Até lá, o convite é feito no painel, e os creators também chegam por candidatura.
+</Note>
+
+## Só acordo
+
+A API cria e edita só **acordos**: a campanha com várias entregas, opções de escopo e briefings. `GET /me` diz se a marca trabalha com acordos:
+
+```json
+{
+  "enterprise": { "id": "5e4d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c1b", "name": "Marca Exemplo" },
+  "api_key": {
+    "id": "7e6d5c4b-3a2f-4e1d-9c0b-8a7f6e5d4c3b",
+    "name": "Agente de campanhas",
+    "hint": "a9Xk",
+    "scopes": ["campaigns:write", "chat:write"]
+  },
+  "campaign_model": "agreement"
+}
+```
+
+- Com `campaign_model: "agreement"`, as rotas de escrita funcionam.
+- Com `campaign_model: "campaign"`, o modelo legado de campanha avulsa, as rotas de escrita respondem `422 unsupported_for_campaign_model`.
+- `kind` no corpo é opcional e só aceita `"agreement"`. Qualquer outro valor responde `422 unsupported_for_campaign_model`.
+- Campanha avulsa legada (`kind: "campaign"` na leitura) continua legível em `GET /campaigns` e `GET /campaigns/{id}`, mas só leitura: editar, mudar status, renovar, excluir ou anexar arquivo nela responde `422 unsupported_for_campaign_model`.
+- Campo fora do contrato responde `422 validation_failed`: o corpo é fechado.
+
+## Dinheiro, datas e status do corpo
+
+- Todo valor é inteiro em centavos, com sufixo `_cents`. Número com fração responde `422 validation_failed` com o campo em `details[0].path`.
+- Taxa em pontos-base: `affiliate_commission_bps: 1000` é 10%.
+- `status` aceita `draft` ou `review`. **Sem `status`, a campanha é publicada**: mande `"status": "draft"` para salvar só o rascunho.
+- `status: "review"`, ou sem `status`, compromete saldo da marca e pede o escopo `campaigns:spend`.
+
+## Corpo do acordo
+
+Obrigatórios: `name` (5 caracteres ou mais), `description`, `budget_cents` e `deliverables` (ao menos uma entrega, com `network` e `videos_count`).
+
+```json
+{
+  "kind": "agreement",
+  "status": "draft",
+  "name": "Verão 2027",
+  "description": "Lançamento da linha de protetores.",
+  "objective": "branding",
+  "budget_cents": 500000,
+  "payment_type": "per_video",
+  "pay_per_video_cents": 80000,
+  "creators_limit": 5,
+  "start_date": "2027-01-10",
+  "end_date": "2027-02-28",
+  "usage_rights_duration": "90_days",
+  "deliverables": [
+    {
+      "key": "reels",
+      "network": "instagram",
+      "formats": ["reels"],
+      "campaign_format": "influenciadores",
+      "videos_count": 1,
+      "requires_review": true,
+      "requires_script_approval": true,
+      "script_delivery_date": "2027-01-20T23:59:59-03:00",
+      "delivery_date": "2027-01-30T23:59:59-03:00"
+    },
+    {
+      "key": "stories",
+      "network": "instagram",
+      "formats": ["stories"],
+      "campaign_format": "influenciadores",
+      "videos_count": 3,
+      "requires_review": true,
+      "delivery_date": "2027-02-05T23:59:59-03:00"
+    }
+  ],
+  "scope_options": [
+    { "name": "Só Reels", "items": [{ "deliverable_key": "reels", "quantity": 1 }] },
+    {
+      "name": "Reels + Stories",
+      "items": [
+        { "deliverable_key": "reels", "quantity": 1 },
+        { "deliverable_key": "stories", "quantity": 3 }
+      ]
+    }
+  ],
+  "briefings": [
+    { "title": "Briefing Reels", "body": "Mostre o produto na praia.", "attachments": [] },
+    { "title": "Briefing Stories", "body": "Três stories do dia a dia.", "attachments": [] }
+  ]
+}
+```
+
+### Entregas
+
+Cada item de `deliverables[]` vira um bloco do acordo (`blocks[]` na leitura).
+
+<ParamField body="network" type="string" required>
+  Rede da entrega: `instagram`, `tiktok`, `youtube`, `x`, `ugc` (vídeo para a marca usar, sem post do creator) ou `repost` (o creator republica outra entrega).
+</ParamField>
+
+<ParamField body="formats" type="string[]">
+  Formato da entrega dentro da rede, veja a [tabela](#redes-e-formatos). Formato fora da rede responde `422 invalid_delivery_format`. Sem `formats`, vale o formato padrão da rede.
+</ParamField>
+
+<ParamField body="videos_count" type="integer" required>
+  Quantidade de conteúdos da entrega, de 1 a 100.
+</ParamField>
+
+<ParamField body="key" type="string">
+  Apelido da entrega dentro deste corpo, até 64 caracteres. É por ele que `scope_options[].items[].deliverable_key` e `repost_source.deliverable_key` apontam para uma entrega que ainda não tem id.
+</ParamField>
+
+<ParamField body="campaign_format" type="string">
+  `influenciadores`, `ugc`, `cortes`, `midia_paga` ou `afiliados`.
+</ParamField>
+
+<ParamField body="script_delivery_date, delivery_date" type="string">
+  Prazo do roteiro e prazo da entrega, em ISO 8601 com fuso: `2027-01-30T23:59:59-03:00`. A entrega não pode vencer antes do roteiro (`422 delivery_before_script`).
+</ParamField>
+
+<ParamField body="requires_review, requires_script_approval, requires_cover_approval, requires_caption_approval, requires_ad_code" type="boolean">
+  Aprovações que a entrega exige.
+</ParamField>
+
+<ParamField body="requires_product_shipping, shipping_item, shipping_location, delivery_deadline_by_brand" type="mixed">
+  Envio de produto, com o item e o local, e prazo de entrega definido pela marca para cada creator.
+</ParamField>
+
+<ParamField body="posting_schedule_type, specific_posting_date" type="string">
+  Agenda de postagem: `brand_decides` ou `specific_date`, com a data.
+</ParamField>
+
+<ParamField body="repost_source, repost_network" type="mixed">
+  Na entrega `repost`: a entrega de origem (`block_id` ou `deliverable_key`) e a rede do repost (`instagram`, `tiktok` ou `youtube`).
+</ParamField>
+
+A entrega aceita também `name`, `briefing`, `content_styles`, `hide_briefing_until_approved` e `stories_combo`.
+
+### Redes e formatos
+
+| `network` | `formats` |
+|---|---|
+| `instagram` | `reels`, `collab` (Reels em collab com a marca), `stories`, `feed` |
+| `tiktok` | `video` |
+| `youtube` | `long`, `shorts` |
+| `x` | `post`, `thread`, `video` |
+| `ugc` | `video`, `vertical` |
+| `repost` | Sem formato |
+
+A leitura devolve o mesmo par em `blocks[].network` e `blocks[].formats`, e as redes do acordo, sem repetir, em `networks`. Em `update_deliverables[]`, `formats` vai junto com `network`.
+
+### Opções de escopo
+
+Cada item de `scope_options[]` tem `name` (até 60 caracteres) e `items[]`, com ao menos um item. Cada item aponta para uma entrega por `deliverable_key` (entrega enviada neste mesmo corpo) ou por `block_id` (bloco que já existe, o `blocks[].id` da leitura) e diz a `quantity`, de 1 a 50. O escopo e o item aceitam prazos próprios em `script_delivery_date`, `delivery_date` e `specific_posting_date`.
+
+### Briefings
+
+Cada item de `briefings[]` tem `title` (até 80 caracteres), `body` e `attachments[]`. Cada briefing precisa de título único e de texto ou anexo (`422 invalid_briefing`). O anexo tem três formas:
+
+| Forma | Quando usar |
+|---|---|
+| `{ "upload_ref", "file_name", "mime_type", "size_bytes" }` | Arquivo novo, com o `upload_ref` de [`POST /uploads` ou `POST /uploads/import`](#arquivos) |
+| `{ "id" }` | Anexo que já existe no briefing, na edição |
+| `{ "copy_of" }` | Cópia de um anexo que já existe |
+
+### Pagamento
+
+| Campo | O que é |
+|---|---|
+| `payment_type` | `per_video`, `permuta` ou `affiliate` |
+| `pay_per_video_cents` | Valor por conteúdo |
+| `payment_split_model` | `equal`, `per_creator` ou `creator_proposal`. Com `creator_proposal`, `proposal_suggested_amounts_cents` traz os valores sugeridos (veja `GET /campaigns/proposal-suggestions`) |
+| `permuta_item`, `permuta_description`, `permuta_value_cents` | Produto da permuta |
+| `affiliate_commission_bps`, `affiliate_payer` | Comissão de afiliados e quem paga: `platform` ou `external` |
+| `payment_terms_days`, `payment_due_days` | Condições de pagamento, de 0 a 90 e de 1 a 90 dias |
+| `coupon_commission_bps`, `coupon_commission_budget_cents`, `coupon_mode`, `coupon_pool` | Cupom do creator: taxa, verba da comissão, modo (`per_creator` ou `campaign`) e lista de códigos |
+
+### Creators e direitos
+
+- Filtros de creator: `min_followers`, `max_followers`, `creator_locations[]` (`country`, `state`, `city`), `creator_niches[]` e `creators_limit`.
+- Direitos e prazos de uso: `usage_rights_duration` (`30_days`, `90_days`, `1_year` ou `<n>_days`), `exclusivity_duration` e `boost_duration`.
+- Comunidade: `community_id` e `is_community_exclusive`.
+- Creators-alvo do acordo: `target_creator_ids[]` e `target_terms[]`. Cada item de `target_terms` tem `creator_id`, `scope_option`, `briefing` e, se quiser, `script_delivery_date` e `delivery_date`.
+
+A lista completa de campos, com tipos e limites, está na página **Criar campanha**, na barra lateral, no schema `CreateCampaignBody`.
+
+## Conferir antes de criar
+
+`POST /campaigns/validate` recebe o mesmo corpo de `POST /campaigns`, aceita corpo incompleto e não grava nada. Responde sempre `200`; o resultado está no corpo:
+
+```json
+{
+  "valid": false,
+  "can_publish": false,
+  "missing": ["end_date"],
+  "issues": [
+    {
+      "path": "end_date",
+      "code": "end_date_required",
+      "message": "Informe a data de término da campanha.",
+      "blocking": true
+    }
+  ],
+  "publish_cost_cents": 500000,
+  "balance_cents": 120000
+}
+```
+
+<ResponseField name="valid" type="boolean" required>
+  `true` quando o corpo pode ser criado com o `status` enviado: nada faltando e nenhum problema que bloqueie.
+</ResponseField>
+
+<ResponseField name="can_publish" type="boolean" required>
+  `true` quando o corpo iria ao ar agora: `valid`, sem problema de publicação e com saldo para o custo.
+</ResponseField>
+
+<ResponseField name="missing" type="string[]" required>
+  Campos que ainda faltam para publicar.
+</ResponseField>
+
+<ResponseField name="issues" type="array" required>
+  Um item por problema, com `path`, `code`, `message` e `blocking`. `blocking: false` quer dizer que o corpo pode ser salvo como rascunho e o problema só impede publicar.
+</ResponseField>
+
+<ResponseField name="publish_cost_cents" type="integer | null" required>
+  Quanto a marca precisa ter disponível para publicar: verba mais taxa de direito de uso. `null` quando a marca não vê dinheiro ou a conta não usa carteira.
+</ResponseField>
+
+<ResponseField name="balance_cents" type="integer | null" required>
+  Saldo disponível da marca para publicar.
+</ResponseField>
+
+Um rascunho cujo custo passa do saldo responde `valid: true`, `can_publish: false` e um item em `issues` com `path: "budget_cents"`, `code: "insufficient_balance"` e `blocking: false`. A falta de saldo não bloqueia: publicado, o acordo fica em `review` esperando saldo.
+
+## Criar
+
+`POST /campaigns` exige `Idempotency-Key` e responde `201` com o mesmo objeto de `GET /campaigns/{id}`, já com `blocks[]`, `scope_options[]` e `briefings[]`. Guarde os ids: é com eles que você edita, renova e anexa arquivos.
+
+```bash
+curl -X POST https://api.appconty.com/public/v1/campaigns \
+  -H "Authorization: Bearer $CONTY_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: verao-2027-criar-1" \
+  -d @acordo.json
+```
+
+## Editar
+
+`PATCH /campaigns/{id}` é edição parcial: mande só o que muda. `Idempotency-Key` é opcional. A resposta é o objeto de `GET /campaigns/{id}`.
+
+```bash
+curl -X PATCH https://api.appconty.com/public/v1/campaigns/6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f \
+  -H "Authorization: Bearer $CONTY_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "name": "Verão 2027 (ajustado)", "end_date": "2027-03-15" }'
+```
+
+- **Entregas**: mudam por `add_deliverables[]` (mesmo formato da criação), `update_deliverables[]` (com `block_id`) e `remove_deliverables[]` (lista de `blocks[].id`).
+- **Publicar pela edição**: `status: "review"` publica o rascunho e pede `campaigns:spend`.
+- **Acordo em `review`**: está esperando saldo, e salvar qualquer edição nele tenta pôr no ar e reservar a verba, como o **Salvar alterações** do painel. Por isso editar acordo em `review` também pede `campaigns:spend`.
+- **Travas**: campo travado depois de publicar ou com creator contratado responde `409` com o código da trava, como `campaign_fields_locked`, `scope_value_locked`, `scope_option_in_use`, `briefing_in_use` e `group_block_in_use`.
+- **Avisos**: mudar termos ou briefing avisa os creators, como no painel.
+
+## Mudar o status
+
+`POST /campaigns/{id}/status` recebe `status` e, se precisar, `force_close`. `Idempotency-Key` é opcional. A resposta é o objeto de `GET /campaigns/{id}`.
+
+```bash
+curl -X POST https://api.appconty.com/public/v1/campaigns/6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f/status \
+  -H "Authorization: Bearer $CONTY_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "status": "paused" }'
+```
+
+| `status` | O que faz |
+|---|---|
+| `review` | Publica o rascunho. Pede `campaigns:spend` |
+| `approved` | Retoma a campanha pausada |
+| `paused` | Pausa |
+| `completed` | Encerra. É terminal, não volta |
+| `archived` | Arquiva |
+| `active` | Restaura a campanha arquivada. Só serve para isso |
+
+- **Publicar sem saldo não dá erro.** Sem saldo para a verba mais a taxa de direito de uso, a campanha fica em `review` esperando saldo e vai para `approved`, reservando a verba, quando o saldo cobrir. Confira antes em `GET /campaigns/{id}/publish-cost`.
+- Transição que não se aplica ao status atual responde `409 invalid_transition`, nunca `200` sem efeito.
+- Pausar ou encerrar com entrega em andamento responde `409 blocking_missions`, com as contagens por etapa em `details[].counts`. `"force_close": true` encerra mesmo assim, como o botão do painel.
+
+### Custo de publicar
+
+`GET /campaigns/{id}/publish-cost` devolve a conta que o painel mostra ao publicar:
+
+```json
+{
+  "publish_cost_cents": 525000,
+  "budget_cents": 500000,
+  "usage_rights_fee_cents": 25000,
+  "balance_cents": 600000,
+  "shortfall_cents": 0,
+  "blocked_reason": null
+}
+```
+
+`shortfall_cents` é quanto falta de saldo, e `0` quando o saldo cobre. `blocked_reason` traz o motivo que impede publicar além do saldo, quando houver. Tudo vem `null` quando a marca não vê dinheiro ou a conta não usa carteira.
+
+## Excluir
+
+`DELETE /campaigns/{id}` responde `204`. Excluir arquiva, como no painel: a campanha some da lista padrão, continua em `GET /campaigns/{id}` e em `GET /campaigns?status=archived` com `status: "archived"`, e volta com `"status": "active"` em `POST /campaigns/{id}/status`. As entregas e os convites dos creators não são apagados.
+
+- Acordo com entrega em andamento responde `409 blocking_missions`. Encerre antes com `force_close` em `POST /campaigns/{id}/status` e exclua depois.
+- Campanha já excluída responde `409 already_deleted`.
+
+## Renovar
+
+`POST /campaigns/{id}/renew` renova com datas novas. Exige `Idempotency-Key` e os escopos `campaigns:write` e `campaigns:spend`, porque renovar restaura entregas e recompromete verba.
+
+```bash
+curl -X POST https://api.appconty.com/public/v1/campaigns/6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f/renew \
+  -H "Authorization: Bearer $CONTY_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: verao-2027-renovar-1" \
+  -d '{
+    "end_date": "2027-04-30",
+    "blocks": [
+      { "block_id": "3e7a9c1d-2b4f-4d6e-8a0c-5f1b3d7e9a2c", "delivery_date": "2027-04-20T23:59:59-03:00" }
+    ]
+  }'
+```
+
+- As datas novas vão em `blocks[]` (por `block_id`) ou em `scope_options[]` (por `scope_option_id`). Um dos dois é obrigatório: só `end_date` responde `422`. Em `scope_options`, as datas valem para o escopo e para as entregas dele.
+- A renovação muda a data de término, o prazo das entregas em aberto e reabre as entregas expiradas dos blocos ou escopos citados.
+- A renovação não muda o status: campanha `completed` continua `completed`, e bloco encerrado não é renovado.
+- Com `creator_ids[]`, a renovação roda em lote só para esses creators e responde `202` com `{ "job_id", "total" }`. Sem eles, responde `200` com a campanha.
+- Em marca assistida, renovar por creator é só da agência (`403 forbidden`).
+
+## Leituras de apoio
+
+| Rota | O que traz |
+|---|---|
+| `GET /campaigns/{id}/publish-cost` | Custo de publicar e saldo da marca |
+| `GET /campaigns/{id}/briefings` | Briefings do acordo, com `id`, `title`, `body`, `in_use` e os anexos em URL assinada, válida por alguns minutos. Busca por título em `q`, `limit` de 1 a 50 e `cursor` |
+| `GET /campaigns/proposal-suggestions` | Valores que o painel sugere para o creator propor, a partir de `budget_cents` e `creators_limit`. Use no acordo com `payment_split_model: "creator_proposal"` |
+
+`GET /campaigns/{id}` também traz `briefings[]`, para você editar o que leu.
+
+## Arquivos
+
+O corpo da campanha recebe arquivo por `upload_ref`. Há dois jeitos de conseguir um, e um atalho para anexar direto a um briefing que já existe.
+
+| `purpose` | Onde o `upload_ref` entra |
+|---|---|
+| `briefing_attachment` | `briefings[].attachments[].upload_ref` do acordo |
+| `campaign_asset` | `brand_assets_urls` e `briefing_file_url` |
+| `cover` | `cover_url` |
+
+O `upload_ref` só vale para a marca da chave e para a finalidade pedida. Fora disso, ou com o arquivo ainda não enviado, a API responde `422 invalid_upload_ref`.
+
+### Enviar o arquivo por PUT
+
+`POST /uploads` devolve uma URL assinada. Mande o arquivo para ela com `PUT` e o mesmo `Content-Type`, antes de `expires_at`.
+
+```bash
+curl -X POST https://api.appconty.com/public/v1/uploads \
+  -H "Authorization: Bearer $CONTY_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "purpose": "briefing_attachment",
+    "file_name": "guia.pdf",
+    "mime_type": "application/pdf",
+    "size_bytes": 482113
+  }'
+```
+
+```json 201
+{
+  "upload_url": "https://conta.r2.cloudflarestorage.com/bucket/conty/campaign-assets/briefings/...",
+  "upload_ref": "r2:conty/campaign-assets/briefings/9d3f1b7c/4f2c7a1e.pdf",
+  "url": null,
+  "expires_at": "2026-10-21T14:30:00.000Z"
+}
+```
+
+```bash
+curl -X PUT "$UPLOAD_URL" \
+  -H "Content-Type: application/pdf" \
+  --data-binary @guia.pdf
+```
+
+`url` é a URL pública do arquivo depois do envio, e só vem para `cover`. Os tipos e o tamanho aceitos são os do painel, até 52428800 bytes.
+
+### Importar por link ou base64
+
+`POST /uploads/import` serve para quem não consegue enviar por `PUT`: a API busca o link `https` (ou recebe os bytes em `base64`), confere o formato e guarda. Exige `Idempotency-Key`.
+
+```bash
+curl -X POST https://api.appconty.com/public/v1/uploads/import \
+  -H "Authorization: Bearer $CONTY_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: verao-2027-guia-1" \
+  -d '{
+    "purpose": "briefing_attachment",
+    "file_name": "guia.pdf",
+    "url": "https://exemplo.com/guia.pdf"
+  }'
+```
+
+```json 201
+{
+  "upload_ref": "r2:conty/campaign-assets/briefings/9d3f1b7c/4f2c7a1e.pdf",
+  "url": null,
+  "file_name": "guia.pdf",
+  "mime_type": "application/pdf",
+  "size_bytes": 482113
+}
+```
+
+- `purpose` aceita `briefing_attachment` (PDF, JPG ou PNG) e `cover` (JPG ou PNG).
+- Mande `url` ou `base64`, um dos dois. O link precisa abrir sem login: link do Google Drive tem de estar aberto para qualquer pessoa com o link.
+- `file_name` é obrigatório em `briefing_attachment`.
+
+### Anexar a um briefing que já existe
+
+`POST /campaigns/{id}/briefings/attachments` busca o arquivo por `url` ou `base64` (PDF, JPG ou PNG) e anexa ao briefing do acordo, com a mesma trava de edição e o mesmo aviso aos creators do painel. Exige `Idempotency-Key`.
+
+```bash
+curl -X POST https://api.appconty.com/public/v1/campaigns/6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f/briefings/attachments \
+  -H "Authorization: Bearer $CONTY_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: verao-2027-anexo-1" \
+  -d '{
+    "briefing_id": "3e7a9c1d-2b4f-4d6e-8a0c-5f1b3d7e9a2c",
+    "file_name": "guia.pdf",
+    "url": "https://exemplo.com/guia.pdf"
+  }'
+```
+
+```json 201
+{
+  "briefing_title": "Briefing Reels",
+  "attachment": { "file_name": "guia.pdf", "mime_type": "application/pdf", "size_bytes": 482113 }
+}
+```
+
+`briefing_id` pode faltar quando o acordo tem um briefing só.
+
+## Erros
+
+Em todos os casos abaixo, nada é gravado. A lista completa de cada rota está na página dela, na barra lateral.
+
+| Status | Código | Quando |
+|---|---|---|
+| 403 | `insufficient_scope` | A chave não tem `campaigns:write`, ou a ação move dinheiro e falta `campaigns:spend`. O escopo vem em `details[0].required_scope` |
+| 403 | `forbidden` | O cargo do dono da marca não tem a permissão que o painel exige, ou a ação é só da agência |
+| 403 | `assisted_access_denied` | A agência que cuida da marca não liberou a ação |
+| 403 | `plan_required` | A marca está sem plano ativo |
+| 404 | `not_found` | Campanha, briefing ou bloco de outra marca ou inexistente |
+| 409 | `invalid_transition` | O `status` pedido não se aplica ao status atual |
+| 409 | `blocking_missions` | Há entregas em andamento. As contagens vêm em `details[].counts` |
+| 409 | `already_deleted` | A campanha já foi excluída |
+| 409 | `campaign_fields_locked` | O campo não muda mais depois de publicar ou com creator contratado |
+| 409 | `credit_line_overdue`, `billing_overdue` | Há saldo a prazo, fatura ou mensalidade em atraso |
+| 409 | `idempotency_in_progress` | Outra requisição com a mesma `Idempotency-Key` ainda está em andamento |
+| 422 | `validation_failed` | Campo inválido, campo fora do contrato ou valor com fração. O campo vem em `details[].path` |
+| 422 | `unsupported_for_campaign_model` | `kind` diferente de `agreement`, marca que não usa acordos, ou escrita em campanha avulsa legada |
+| 422 | `end_date_required` | Publicar sem data de término |
+| 422 | `brand_profile_incomplete` | Publicar sem logo e descrição no perfil da marca |
+| 422 | `invalid_upload_ref` | `upload_ref` de outra marca, de outra finalidade, ou arquivo ainda não enviado |
+| 422 | `invalid_delivery_format` | `formats` que a `network` da entrega não aceita |
+| 422 | `invalid_briefing` | Briefing sem título único, ou sem texto nem anexo |
+| 422 | `idempotency_key_required`, `idempotency_key_reused` | Falta o cabeçalho numa rota que cria, ou a chave já foi usada com outra requisição |

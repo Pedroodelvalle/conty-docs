@@ -6,6 +6,8 @@ icon: "clapperboard"
 keywords:
   - webhooks
   - mission.accepted
+  - mission.product_received
+  - mission.product_delivered_by_carrier
   - mission.video_submitted
   - mission.post_link_added
   - mission.approved
@@ -18,6 +20,8 @@ Todo evento usa o [envelope comum](/api/webhooks/visao-geral). O que muda de um 
 | Evento | Quando sai |
 |---|---|
 | `mission.accepted` | O creator aceitou o convite ou começou a missão |
+| `mission.product_delivered_by_carrier` | O rastreio dos Correios marcou o produto como entregue. Não é o recebimento |
+| `mission.product_received` | O creator confirmou no app que recebeu o produto |
 | `mission.script_submitted` | O roteiro entrou na aprovação, inclusive o reenvio |
 | `mission.cover_submitted` | A capa foi enviada depois do vídeo |
 | `mission.caption_submitted` | A legenda foi enviada depois do vídeo |
@@ -208,6 +212,84 @@ O link do post ficou confirmado na missão. Link recusado (post inacessível, de
     "creator": { "id": "8d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a", "name": "Fulana Souza", "handle": "@fulana" },
     "mission": { "id": "c3a2b1d0-e9f8-4a7b-9c6d-5e4f3a2b1c0d", "status": "aprovado", "platform": "instagram" },
     "post": { "url": "https://www.instagram.com/reel/DAbC123xYz/", "platform": "instagram", "by": "creator" }
+  }
+}
+```
+
+## Produto enviado pela marca
+
+Dois eventos acompanham o produto que a marca envia ao creator. Trazem `data.product`, com as datas, o rastreio e se há foto; nunca o endereço nem a foto.
+
+<Warning>
+  **Entregue pela transportadora não é recebido pelo creator.** `mission.product_delivered_by_carrier` diz que o rastreio marcou o produto como entregue. Só `mission.product_received` confirma que o creator recebeu: é ele quem declara no app. Use o segundo para liberar o próximo passo da missão.
+</Warning>
+
+<ResponseField name="data.product" type="object">
+  `shipped_at` (quando a marca marcou o envio), `received_at` (quando o creator confirmou, ou `null`), `has_photo` (se o creator mandou foto ao confirmar) e `tracking_code` (ou `null`). Em `mission.product_delivered_by_carrier`, também `carrier_status` (`delivered`) e `carrier_delivered_at`. Para ver a foto, use [`GET /missions/{id}/product-shipment`](/api/referencia/entrega-e-pos-entrega#envio-de-produto).
+</ResponseField>
+
+### mission.product_received
+
+O creator confirmou no app que recebeu o produto. Sai uma vez, na primeira confirmação.
+
+```json
+{
+  "id": "4d3c2b1a-0f9e-4d8c-8b7a-6f5e4d3c2b1a",
+  "type": "mission.product_received",
+  "created_at": "2026-11-14T16:20:41.512Z",
+  "tenant": "conty",
+  "summary": "BeConfident: Fulana Souza confirmou que recebeu o produto da campanha \"Outubro\".",
+  "data": {
+    "brand": { "id": "5e4d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c1b", "name": "BeConfident" },
+    "campaign": {
+      "id": "2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5",
+      "name": "Outubro",
+      "url": "https://appconty.com/campaigns/2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5"
+    },
+    "creator": { "id": "8d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a", "name": "Fulana Souza", "handle": "@fulana" },
+    "mission": { "id": "c3a2b1d0-e9f8-4a7b-9c6d-5e4f3a2b1c0d", "status": "fazendo", "platform": "instagram" },
+    "product": {
+      "shipped_at": "2026-11-10T14:30:00.000Z",
+      "received_at": "2026-11-14T16:20:40.000Z",
+      "has_photo": true,
+      "tracking_code": "BR123456789BR"
+    }
+  }
+}
+```
+
+### mission.product_delivered_by_carrier
+
+O rastreio automático dos Correios marcou o produto como entregue. O creator ainda precisa confirmar o recebimento; quando ele confirma, sai `mission.product_received`.
+
+<Note>
+  O rastreio automático dos Correios está em beta e desligado por padrão: fica disponível sob ativação, com o código dos Correios no envio. Sem ele, ou com código de outra transportadora, este evento não sai.
+</Note>
+
+```json
+{
+  "id": "5e4d3c2b-1a0f-4e9d-9c8b-7a6f5e4d3c2b",
+  "type": "mission.product_delivered_by_carrier",
+  "created_at": "2026-11-13T11:05:12.207Z",
+  "tenant": "conty",
+  "summary": "BeConfident: a transportadora marcou como entregue o produto de Fulana Souza da campanha \"Outubro\"; falta o creator confirmar o recebimento.",
+  "data": {
+    "brand": { "id": "5e4d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c1b", "name": "BeConfident" },
+    "campaign": {
+      "id": "2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5",
+      "name": "Outubro",
+      "url": "https://appconty.com/campaigns/2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5"
+    },
+    "creator": { "id": "8d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a", "name": "Fulana Souza", "handle": "@fulana" },
+    "mission": { "id": "c3a2b1d0-e9f8-4a7b-9c6d-5e4f3a2b1c0d", "status": "fazendo", "platform": "instagram" },
+    "product": {
+      "shipped_at": "2026-11-10T14:30:00.000Z",
+      "received_at": null,
+      "has_photo": false,
+      "tracking_code": "BR123456789BR",
+      "carrier_status": "delivered",
+      "carrier_delivered_at": "2026-11-13T10:47:00.000Z"
+    }
   }
 }
 ```
