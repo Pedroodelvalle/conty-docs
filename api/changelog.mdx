@@ -12,7 +12,7 @@ Toda mudança no contrato da API aparece aqui antes de entrar no ar. Enquanto a 
 
 <Update label="Permuta vira barter e idempotência mais segura" description="12 de novembro de 2026">
   <Warning>
-    **Mudança que quebra leitura.** Em `GET /campaigns` e `GET /campaigns/{id}`, `payment.type` passa a vir `barter` no lugar de `permuta` a partir do deploy desta versão da API (esta entrada é publicada junto com ele). Se o seu código compara `payment.type === "permuta"`, troque para `"barter"`. Os outros valores (`per_video`, `per_view`, `affiliate`) não mudam.
+    **Mudança que quebra leitura.** Em `GET /campaigns` e `GET /campaigns/{id}`, `payment.type` passa a vir `barter` no lugar de `permuta` a partir do deploy desta versão da API (esta entrada é publicada junto com ele). Se o seu código compara `payment.type === "permuta"`, troque para `"barter"`. Os outros valores (`per_video`, `per_view`, `affiliate`) não mudam. Os erros de produto seguem o mesmo nome: `barter_item_required` e `barter_product_not_allowed`.
   </Warning>
 
   **Escrita de campanhas (beta)**
