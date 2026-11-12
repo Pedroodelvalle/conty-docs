@@ -63,6 +63,38 @@
   },
   "redirects": [
     {
+      "source": "/api/referencia/conectores/google-ads",
+      "destination": "/api/referencia/conectores"
+    },
+    {
+      "source": "/api/referencia/conectores/tiktok-ads",
+      "destination": "/api/referencia/conectores"
+    },
+    {
+      "source": "/api/referencia/conectores/woocommerce",
+      "destination": "/api/referencia/conectores"
+    },
+    {
+      "source": "/api/referencia/conectores/hotmart",
+      "destination": "/api/referencia/conectores"
+    },
+    {
+      "source": "/api/referencia/conectores/kiwify",
+      "destination": "/api/referencia/conectores"
+    },
+    {
+      "source": "/api/referencia/conectores/kirvano",
+      "destination": "/api/referencia/conectores"
+    },
+    {
+      "source": "/api/referencia/conectores/stripe",
+      "destination": "/api/referencia/conectores"
+    },
+    {
+      "source": "/api/referencia/conectores/mercado-pago",
+      "destination": "/api/referencia/conectores"
+    },
+    {
       "source": "/api/referencia/em-breve/aprovar-candidatura",
       "destination": "/api/referencia/quadro"
     },
@@ -1041,15 +1073,7 @@
                       "api/referencia/conectores/revenuecat",
                       "api/referencia/conectores/asaas",
                       "api/referencia/conectores/shopify",
-                      "api/referencia/conectores/nuvemshop",
-                      "api/referencia/conectores/google-ads",
-                      "api/referencia/conectores/tiktok-ads",
-                      "api/referencia/conectores/woocommerce",
-                      "api/referencia/conectores/hotmart",
-                      "api/referencia/conectores/kiwify",
-                      "api/referencia/conectores/kirvano",
-                      "api/referencia/conectores/stripe",
-                      "api/referencia/conectores/mercado-pago"
+                      "api/referencia/conectores/nuvemshop"
                     ]
                   }
                 ]
