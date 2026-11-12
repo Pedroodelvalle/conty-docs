@@ -1,0 +1,91 @@
+---
+title: "Primeiros passos com a API"
+description: "O que liberar, qual chave usar e a primeira chamada, antes de seguir para os guias de cupom, vendas e eventos."
+icon: "rocket"
+keywords:
+  - api
+  - primeiros passos
+  - chave de api
+  - autenticação
+  - ck_live
+---
+
+A API serve para quando o seu sistema é quem sabe da venda: um checkout próprio, o Stripe, um ERP. Se a sua venda acontece numa plataforma com conector (Shopify, Nuvemshop, RevenueCat, Asaas), [use o conector](/api/guias): ele faz o mesmo sem código.
+
+## 1. Peça a liberação
+
+A API pública, os webhooks, os cupons e a comissão são liberados por marca pela Conty. Fale com o seu contato e diga o que a sua integração vai fazer:
+
+| Você quer | Precisa estar liberado |
+|---|---|
+| Ler campanhas e receber webhooks | API pública e webhooks |
+| Criar cupons e registrar vendas | API pública e cupons |
+| Pagar comissão aos creators pelas vendas | API pública, cupons e comissão do cupom |
+| Mandar eventos de conversão pelo SDK | API de eventos |
+
+Enquanto algo não está liberado, a chave funciona e a API responde `403` com o código do que falta (`open_api_disabled`, `coupons_disabled`). Detalhes em [Autenticação](/api/autenticacao#disponibilidade).
+
+## 2. Escolha a chave certa
+
+São dois tipos de chave, criadas em lugares diferentes em **Plugins → Integrações**:
+
+| Chave | Para quê | Onde criar | Guia |
+|---|---|---|---|
+| `ck_live_…` | API pública: cupons, vendas, campanhas, mensagens | **Plugins → Integrações → Nova chave** | [Autenticação](/api/autenticacao) |
+| `cpk_…` e `cev_…` | SDK de eventos: site, app e servidor | **Plugins → Integrações → Eventos** | [SDK](/api/sdk/visao-geral#criar-as-chaves) |
+
+As chaves secretas (`ck_live_` e `cev_`) aparecem uma vez só. Guarde no gerenciador de segredos do servidor e nunca no navegador nem no app.
+
+## 3. Faça a primeira chamada
+
+Toda chamada vai para `https://api.appconty.com/public/v1` com a chave no cabeçalho `Authorization`:
+
+<CodeGroup>
+```bash curl
+curl https://api.appconty.com/public/v1/me \
+  -H "Authorization: Bearer $CONTY_API_KEY"
+```
+
+```javascript Node.js
+const response = await fetch("https://api.appconty.com/public/v1/me", {
+  headers: { Authorization: `Bearer ${process.env.CONTY_API_KEY}` },
+});
+const body = await response.json();
+if (!response.ok) throw new Error(`${body.error.code}: ${body.error.message}`);
+console.log(body.enterprise.name);
+```
+</CodeGroup>
+
+A resposta traz a marca dona da chave:
+
+```json
+{
+  "enterprise": { "id": "5e4d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c1b", "name": "Marca Exemplo" },
+  "api_key": { "id": "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d", "name": "Integração loja", "hint": "0MmY" }
+}
+```
+
+O passo a passo com o primeiro webhook está no [Quickstart](/api/quickstart). Formato de erro, paginação e limite de requisições estão em [Introdução à referência](/api/referencia/introducao).
+
+## 4. Siga o guia do seu caso
+
+<CardGroup cols={2}>
+  <Card title="Cupom por creator" icon="ticket" href="/api/guias/cupom-por-creator">
+    Crie o cupom de cada creator aprovado. É o primeiro passo para registrar venda.
+  </Card>
+  <Card title="Registrar vendas pela API" icon="cart-shopping" href="/api/guias/registrar-vendas">
+    Mande cada venda e cada estorno do seu checkout.
+  </Card>
+  <Card title="Vendas sem conector" icon="repeat" href="/api/guias/vendas-sem-conector">
+    Mande cada cobrança de assinatura do Stripe ou do seu sistema.
+  </Card>
+  <Card title="Eventos de conversão" icon="bolt" href="/api/guias/eventos-de-conversao">
+    Cadastros, compras e outros eventos pelo SDK.
+  </Card>
+  <Card title="Acompanhar o quadro" icon="table-columns" href="/api/guias/acompanhar-quadro">
+    Leia campanhas, etapas e missões.
+  </Card>
+  <Card title="Webhooks" icon="webhook" href="/api/webhooks/visao-geral">
+    Saiba na hora quando um creator é aprovado ou entrega.
+  </Card>
+</CardGroup>

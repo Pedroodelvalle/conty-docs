@@ -1,0 +1,107 @@
+---
+title: "Como medir as vendas dos creators"
+description: "Escolha o caminho certo para levar as vendas, as assinaturas e os eventos do seu negócio para a Conty: com um conector, sem código, ou com a API."
+icon: "signs-post"
+keywords:
+  - guias
+  - conectores
+  - api
+  - vendas
+  - atribuição
+  - comissão
+---
+
+A Conty precisa saber o que cada creator gerou: quem vendeu, quanto, e se a venda foi cancelada depois. Esse dado chega por um de dois caminhos.
+
+<CardGroup cols={2}>
+  <Card title="Com conectores" icon="plug">
+    **Sem código.** Você liga a conta da loja, do meio de pagamento ou do analytics no painel da Conty, em **Plugins → Conectores**. A Conty lê os pedidos e as cobranças sozinha.
+  </Card>
+  <Card title="Com a API" icon="code">
+    **O seu sistema manda para a Conty.** Use quando a venda acontece num checkout próprio ou numa plataforma que ainda não tem conector. Você chama a API a cada venda ou evento.
+  </Card>
+</CardGroup>
+
+Na dúvida, comece pelo conector: se a sua plataforma tem um, ele resolve sem programar. A API fica para o que o conector não cobre.
+
+## Qual é o seu caso
+
+| Seu caso | Caminho | Guia |
+|---|---|---|
+| Loja na Shopify | Conector | [Shopify](/api/referencia/conectores/shopify) |
+| Loja na Nuvemshop | Conector | [Nuvemshop](/api/referencia/conectores/nuvemshop) |
+| Vendas no app (App Store e Google Play), assinatura ou compra avulsa, com RevenueCat | Conector | [RevenueCat](/api/referencia/conectores/revenuecat) |
+| Vendas no site cobradas pelo Asaas: compra avulsa, link de pagamento ou assinatura | Conector | [Asaas](/api/referencia/conectores/asaas) |
+| Impulsionar os vídeos dos creators como anúncio no Instagram | Conector | [Meta Ads](/api/referencia/conectores/meta-ads) |
+| Visitas e eventos do site que já estão no Google Analytics 4 ou no PostHog | Conector | [Google Analytics 4](/api/referencia/conectores/google-analytics) ou [PostHog](/api/referencia/conectores/posthog) |
+| Downloads do app na App Store | Conector | [App Store Connect](/api/referencia/conectores/app-store-connect) |
+| Vendas no site ou no app por checkout próprio, Stripe ou outra plataforma, compra avulsa ou assinatura | API | [Vendas sem conector](/api/guias/vendas-sem-conector) e [Registrar vendas pela API](/api/guias/registrar-vendas) |
+| Cadastros, compras e outros eventos do site ou do app, sem comissão | API (SDK) | [Eventos de conversão](/api/guias/eventos-de-conversao) |
+| Ler as campanhas e os creators no seu sistema | API | [Acompanhar o quadro](/api/guias/acompanhar-quadro) |
+| Criar, publicar e operar acordos por um agente ou pelo seu sistema (beta) | API | [Agente cria e acompanha campanha](/api/guias/agente-cria-campanha) |
+
+<Note>
+  **Venda tem comissão, evento não.** Venda (pelo conector de loja, de pagamento ou pela API de vendas) entra no cupom do creator e gera comissão. Evento (pelo SDK, pelo Google Analytics ou pelo PostHog) aparece em **Tráfego**, nos resultados da campanha, e serve para medir.
+</Note>
+
+## Com conectores
+
+Cada página de conector traz o que ele coleta, o que precisa antes, o passo a passo do painel e como conferir que funcionou.
+
+<CardGroup cols={2}>
+  <Card title="Shopify" icon="/images/conectores/shopify.svg" href="/api/referencia/conectores/shopify">
+    Pedidos da loja com o cupom do creator viram venda com comissão.
+  </Card>
+  <Card title="Nuvemshop" icon="/images/conectores/nuvemshop.png" href="/api/referencia/conectores/nuvemshop">
+    Pedidos da loja com o cupom do creator viram venda com comissão.
+  </Card>
+  <Card title="RevenueCat" icon="/images/conectores/revenuecat.svg" href="/api/referencia/conectores/revenuecat">
+    Compras no app, assinaturas e avulsas, viram venda no cupom do creator.
+  </Card>
+  <Card title="Asaas" icon="/images/conectores/asaas.png" href="/api/referencia/conectores/asaas">
+    Compras avulsas e assinaturas no Asaas viram venda no cupom do creator.
+  </Card>
+  <Card title="Meta Ads" icon="/images/conectores/meta.svg" href="/api/referencia/conectores/meta-ads">
+    Impulsione os vídeos aprovados como anúncio de parceria.
+  </Card>
+  <Card title="Google Analytics 4" icon="/images/conectores/google-analytics.svg" href="/api/referencia/conectores/google-analytics">
+    Sessões e eventos que cada creator trouxe para o site.
+  </Card>
+  <Card title="PostHog" icon="/images/conectores/posthog.svg" href="/api/referencia/conectores/posthog">
+    Visitas e eventos que cada creator trouxe para o site ou app.
+  </Card>
+  <Card title="App Store Connect" icon="/images/conectores/app-store-connect.svg" href="/api/referencia/conectores/app-store-connect">
+    Downloads do app que cada creator trouxe pela App Store.
+  </Card>
+</CardGroup>
+
+## Com a API
+
+Cada guia traz as chamadas prontas em `curl` e Node.js.
+
+<CardGroup cols={2}>
+  <Card title="Primeiros passos" icon="rocket" href="/api/guias/primeiros-passos">
+    Chave de API, primeira chamada e o que liberar antes.
+  </Card>
+  <Card title="Cupom por creator" icon="ticket" href="/api/guias/cupom-por-creator">
+    Crie o cupom de cada creator aprovado na campanha.
+  </Card>
+  <Card title="Registrar vendas pela API" icon="cart-shopping" href="/api/guias/registrar-vendas">
+    Mande cada venda e cada estorno do seu checkout.
+  </Card>
+  <Card title="Vendas sem conector" icon="repeat" href="/api/guias/vendas-sem-conector">
+    Mande cada compra avulsa e cada cobrança de assinatura do Stripe ou do seu sistema.
+  </Card>
+  <Card title="Eventos de conversão" icon="bolt" href="/api/guias/eventos-de-conversao">
+    Cadastros, compras e outros eventos pelo SDK.
+  </Card>
+  <Card title="Acompanhar o quadro" icon="table-columns" href="/api/guias/acompanhar-quadro">
+    Leia campanhas, etapas e missões no seu sistema.
+  </Card>
+  <Card title="Agente cria e acompanha campanha" icon="robot" href="/api/guias/agente-cria-campanha">
+    Do rascunho à publicação, com quadro e webhooks. Em beta.
+  </Card>
+  <Card title="Webhooks" icon="webhook" href="/api/webhooks/visao-geral">
+    Saiba na hora quando um creator é aprovado ou entrega.
+  </Card>
+</CardGroup>

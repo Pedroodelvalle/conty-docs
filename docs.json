@@ -63,6 +63,62 @@
   },
   "redirects": [
     {
+      "source": "/api/referencia/em-breve/aprovar-candidatura",
+      "destination": "/api/referencia/quadro"
+    },
+    {
+      "source": "/api/referencia/em-breve/aprovar-entrega",
+      "destination": "/api/referencia/entrega-e-pos-entrega"
+    },
+    {
+      "source": "/api/referencia/em-breve/criar-campanha",
+      "destination": "/api/referencia/campanhas-escrita"
+    },
+    {
+      "source": "/api/referencia/em-breve/pedir-alteracao",
+      "destination": "/api/referencia/entrega-e-pos-entrega"
+    },
+    {
+      "source": "/api/referencia/em-breve/recusar-creator",
+      "destination": "/api/referencia/quadro"
+    },
+    {
+      "source": "/api/guias/assinatura-sem-conector",
+      "destination": "/api/guias/vendas-sem-conector"
+    },
+    {
+      "source": "/api/guias/conectores/shopify",
+      "destination": "/api/referencia/conectores/shopify"
+    },
+    {
+      "source": "/api/guias/conectores/nuvemshop",
+      "destination": "/api/referencia/conectores/nuvemshop"
+    },
+    {
+      "source": "/api/guias/conectores/revenuecat",
+      "destination": "/api/referencia/conectores/revenuecat"
+    },
+    {
+      "source": "/api/guias/conectores/asaas",
+      "destination": "/api/referencia/conectores/asaas"
+    },
+    {
+      "source": "/api/guias/conectores/meta-ads",
+      "destination": "/api/referencia/conectores/meta-ads"
+    },
+    {
+      "source": "/api/guias/conectores/google-analytics",
+      "destination": "/api/referencia/conectores/google-analytics"
+    },
+    {
+      "source": "/api/guias/conectores/posthog",
+      "destination": "/api/referencia/conectores/posthog"
+    },
+    {
+      "source": "/api/guias/conectores/app-store-connect",
+      "destination": "/api/referencia/conectores/app-store-connect"
+    },
+    {
       "source": "/help-center/creators/inicio",
       "destination": "/help-center/creators/index"
     },
@@ -341,6 +397,10 @@
     {
       "source": "/help-center/lgpd",
       "destination": "/legal/lgpd"
+    },
+    {
+      "source": "/api/guias/vendas-de-assinatura",
+      "destination": "/api/guias"
     }
   ],
   "navigation": {
@@ -638,11 +698,21 @@
                 "tab": "Guias",
                 "groups": [
                   {
-                    "group": "Guias",
+                    "group": "Comece aqui",
                     "pages": [
+                      "api/guias/index"
+                    ]
+                  },
+                  {
+                    "group": "Com a API",
+                    "pages": [
+                      "api/guias/primeiros-passos",
                       "api/guias/cupom-por-creator",
+                      "api/guias/registrar-vendas",
+                      "api/guias/vendas-sem-conector",
+                      "api/guias/eventos-de-conversao",
                       "api/guias/acompanhar-quadro",
-                      "api/guias/eventos-de-conversao"
+                      "api/guias/agente-cria-campanha"
                     ]
                   }
                 ]
@@ -694,6 +764,7 @@
                     "pages": [
                       "api/webhooks/eventos/candidaturas",
                       "api/webhooks/eventos/missoes",
+                      "api/webhooks/eventos/conversas",
                       "api/webhooks/eventos/teste"
                     ]
                   },
@@ -731,7 +802,17 @@
                           "GET /coupons/{id}",
                           "PATCH /coupons/{id}",
                           "POST /coupons/{id}/assign",
-                          "POST /coupons/{id}/unassign"
+                          "POST /coupons/{id}/unassign",
+                          {
+                            "group": "Cupons da campanha",
+                            "pages": [
+                              "POST /missions/{id}/coupon",
+                              "GET /campaigns/{id}/coupon-pool",
+                              "POST /campaigns/{id}/coupon-pool",
+                              "POST /campaigns/{id}/coupons/bulk",
+                              "POST /campaigns/{id}/coupon-commission/budget"
+                            ]
+                          }
                         ]
                       },
                       {
@@ -740,7 +821,8 @@
                         "openapi": "api/openapi.json",
                         "pages": [
                           "PUT /coupons/{id}/sales/{external_id}",
-                          "GET /coupons/{id}/sales"
+                          "GET /coupons/{id}/sales",
+                          "GET /campaigns/{id}/coupon-sales"
                         ]
                       },
                       {
@@ -751,7 +833,26 @@
                           "api/referencia/campanhas",
                           "GET /campaigns",
                           "GET /campaigns/{id}",
-                          "api/referencia/em-breve/criar-campanha"
+                          "api/referencia/campanhas-escrita",
+                          "POST /campaigns/validate",
+                          "POST /campaigns",
+                          "PATCH /campaigns/{id}",
+                          "POST /campaigns/{id}/status",
+                          "DELETE /campaigns/{id}",
+                          "POST /campaigns/{id}/renew",
+                          "GET /campaigns/{id}/publish-cost",
+                          "GET /campaigns/{id}/briefings",
+                          "GET /campaigns/proposal-suggestions"
+                        ]
+                      },
+                      {
+                        "group": "Arquivos",
+                        "expanded": false,
+                        "openapi": "api/openapi.json",
+                        "pages": [
+                          "POST /uploads",
+                          "POST /uploads/import",
+                          "POST /campaigns/{id}/briefings/attachments"
                         ]
                       },
                       {
@@ -763,16 +864,77 @@
                         ]
                       },
                       {
-                        "group": "Quadro",
+                        "group": "Quadro da campanha",
                         "expanded": false,
                         "openapi": "api/openapi.json",
                         "pages": [
+                          "api/referencia/quadro",
                           "GET /campaigns/{id}/stages",
                           "GET /campaigns/{id}/items",
-                          "api/referencia/em-breve/aprovar-candidatura",
-                          "api/referencia/em-breve/recusar-creator",
-                          "api/referencia/em-breve/aprovar-entrega",
-                          "api/referencia/em-breve/pedir-alteracao"
+                          {
+                            "group": "Candidaturas",
+                            "expanded": false,
+                            "openapi": "api/openapi.json",
+                            "pages": [
+                              "POST /campaigns/{id}/applications/{application_id}/approve",
+                              "POST /campaigns/{id}/applications/{application_id}/reject",
+                              "POST /campaigns/{id}/applications/bulk",
+                              "POST /campaigns/{id}/applications/{application_id}/restore",
+                              "PATCH /campaigns/{id}/applications/{application_id}/proposed-deadline",
+                              "PATCH /campaigns/{id}/applications/{application_id}/proposed-amount"
+                            ]
+                          },
+                          {
+                            "group": "Creators no acordo",
+                            "expanded": false,
+                            "openapi": "api/openapi.json",
+                            "pages": [
+                              "PATCH /campaigns/{id}/creators/{creator_id}/scope-option",
+                              "PATCH /campaigns/{id}/creators/{creator_id}/briefing",
+                              "PATCH /campaigns/{id}/creators/{creator_id}/scope-amount",
+                              "POST /campaigns/{id}/creators/bulk/exclude"
+                            ]
+                          },
+                          {
+                            "group": "Exportar e visões",
+                            "expanded": false,
+                            "openapi": "api/openapi.json",
+                            "pages": [
+                              "GET /campaigns/{id}/export",
+                              "GET /campaigns/{id}/counts",
+                              "GET /campaigns/{id}/segments",
+                              "GET /campaigns/{id}/suggestions"
+                            ]
+                          },
+                          {
+                            "group": "Resultados",
+                            "expanded": false,
+                            "openapi": "api/openapi.json",
+                            "pages": [
+                              "GET /campaigns/{id}/results",
+                              "GET /campaigns/{id}/results/timeseries",
+                              "GET /campaigns/{id}/results/creators",
+                              "GET /campaigns/{id}/results/creators/{creator_id}/deliveries",
+                              "GET /campaigns/{id}/results/traffic",
+                              "GET /campaigns/{id}/results/traffic/events",
+                              "PUT /conversion-events",
+                              "POST /campaigns/{id}/sync-metrics",
+                              "GET /campaigns/{id}/sync-metrics/jobs/{job_id}"
+                            ]
+                          },
+                          {
+                            "group": "Rastreio e operação",
+                            "expanded": false,
+                            "openapi": "api/openapi.json",
+                            "pages": [
+                              "GET /campaigns/{id}/tracking",
+                              "PUT /campaigns/{id}/tracking/destination",
+                              "POST /campaigns/{id}/short-links",
+                              "GET /campaigns/{id}/creator-invoices",
+                              "GET /campaigns/{id}/ai-rubric",
+                              "PUT /campaigns/{id}/ai-rubric"
+                            ]
+                          }
                         ]
                       },
                       {
@@ -781,7 +943,68 @@
                         "openapi": "api/openapi.json",
                         "pages": [
                           "api/referencia/missoes",
-                          "GET /missions/{id}"
+                          "GET /missions/{id}",
+                          {
+                            "group": "Revisar entrega",
+                            "pages": [
+                              "POST /missions/{id}/approve",
+                              "POST /missions/{id}/request-changes",
+                              "POST /missions/{id}/reject",
+                              "POST /missions/{id}/assets/{asset}/review",
+                              "PATCH /missions/{id}/asset-version",
+                              "POST /mission-combos/{id}/status"
+                            ]
+                          },
+                          {
+                            "group": "Prazo e briefing",
+                            "pages": [
+                              "PATCH /missions/{id}/deadline",
+                              "POST /missions/{id}/send"
+                            ]
+                          },
+                          {
+                            "group": "Remover, restaurar e reconvidar",
+                            "pages": [
+                              "DELETE /missions/{id}",
+                              "POST /missions/{id}/restore",
+                              "GET /missions/{id}/reinvite-eligibility",
+                              "POST /missions/{id}/reinvite"
+                            ]
+                          },
+                          {
+                            "group": "Produto e post",
+                            "pages": [
+                              "api/referencia/entrega-e-pos-entrega",
+                              "GET /missions/{id}/product-shipment",
+                              "POST /missions/{id}/product-shipment",
+                              "PUT /missions/{id}/post-url",
+                              "PUT /missions/{id}/posted-at",
+                              "POST /missions/{id}/post-check/accept",
+                              "GET /missions/{id}/script-file",
+                              "GET /missions/{id}/delivery-download",
+                              "POST /missions/{id}/notify",
+                              "POST /missions/{id}/sync-metrics"
+                            ]
+                          },
+                          {
+                            "group": "Comentários",
+                            "pages": [
+                              "GET /missions/{id}/comments",
+                              "POST /missions/{id}/comments"
+                            ]
+                          },
+                          {
+                            "group": "Ações em lote",
+                            "pages": [
+                              "POST /campaigns/{id}/missions/bulk-status",
+                              "POST /missions/approve-pending",
+                              "POST /missions/bulk/deadline",
+                              "POST /missions/bulk/send",
+                              "POST /missions/bulk/remove",
+                              "POST /post-checks/accept",
+                              "GET /bulk-jobs/{id}"
+                            ]
+                          }
                         ]
                       },
                       {
@@ -815,18 +1038,18 @@
                       "api/referencia/conectores/posthog",
                       "api/referencia/conectores/google-analytics",
                       "api/referencia/conectores/app-store-connect",
+                      "api/referencia/conectores/revenuecat",
+                      "api/referencia/conectores/asaas",
+                      "api/referencia/conectores/shopify",
+                      "api/referencia/conectores/nuvemshop",
                       "api/referencia/conectores/google-ads",
                       "api/referencia/conectores/tiktok-ads",
-                      "api/referencia/conectores/shopify",
                       "api/referencia/conectores/woocommerce",
-                      "api/referencia/conectores/nuvemshop",
                       "api/referencia/conectores/hotmart",
                       "api/referencia/conectores/kiwify",
                       "api/referencia/conectores/kirvano",
                       "api/referencia/conectores/stripe",
-                      "api/referencia/conectores/mercado-pago",
-                      "api/referencia/conectores/asaas",
-                      "api/referencia/conectores/revenuecat"
+                      "api/referencia/conectores/mercado-pago"
                     ]
                   }
                 ]

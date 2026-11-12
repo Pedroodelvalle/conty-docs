@@ -224,3 +224,17 @@ Com taxa maior que zero, a marca separa uma verba de comissão na campanha, no p
 <ResponseField name="updated_at" type="string" required>
   Última atualização da venda.
 </ResponseField>
+
+## Cupons da campanha
+
+Além do cupom avulso, dá para trabalhar com cupom direto no acordo:
+
+| Rota | Para quê |
+| --- | --- |
+| `POST /missions/{id}/coupon` | Gera ou liga o cupom do creator daquela missão |
+| `GET` e `POST /campaigns/{id}/coupon-pool` | Lista e adiciona códigos ao pool da campanha, que ainda não têm creator |
+| `POST /campaigns/{id}/coupons/bulk` | Gera cupons em lote para os creators da campanha |
+| `POST /campaigns/{id}/coupon-commission/budget` | Deposita a verba de comissão dos cupons (exige `campaigns:spend`) |
+| `GET /campaigns/{id}/coupon-sales` | Vendas dos cupons da campanha, na seção Vendas |
+
+As rotas que criam exigem `Idempotency-Key`; repetir com a mesma chave devolve o mesmo resultado, com o cabeçalho `Idempotent-Replayed: true`. Veja também [Entrega e pós-entrega](/api/referencia/entrega-e-pos-entrega).

@@ -49,11 +49,14 @@ A chave já identifica a sua marca; não há cabeçalho extra. Para criar, guard
 | Status | Significado |
 |---|---|
 | `200` | Deu certo |
-| `201` | Recurso criado (por exemplo, cupom ou venda nova) |
+| `201` | Recurso criado (por exemplo, cupom, venda ou campanha nova) |
+| `202` | Pedido aceito para processar em lote (renovação por creator) |
+| `204` | Deu certo, sem corpo (campanha excluída) |
+| `400` | Regra de negócio não atendida em algumas rotas de campanha (por exemplo `delivery_date_required`) |
 | `401` | Chave ausente, malformada, revogada ou desconhecida |
-| `403` | A API pública não está liberada para a sua conta, ou a marca está sem plano ativo |
+| `403` | A API pública não está liberada para a sua conta, a marca está sem plano ativo, ou a chave não tem o escopo ou a permissão que a ação exige |
 | `404` | Rota inexistente, ou recurso que não existe ou é de outra marca |
-| `409` | Conflito com o estado atual (cupom já existe, código em uso, cupom cancelado, cupom de outro creator) |
+| `409` | Conflito com o estado atual (cupom já existe, código em uso, cupom cancelado, cupom de outro creator, transição de status que não se aplica, campo travado) |
 | `422` | Entrada inválida, ou a operação não é permitida para o recurso |
 | `429` | Limite de requisições atingido |
 | `500` | Erro inesperado do nosso lado |
@@ -150,6 +153,50 @@ async function fetchWithRetry(url, init, attempts = 3) {
   O limite é contado por região da nossa rede, então é aproximado: em rajadas vindas de lugares diferentes, ele pode deixar passar um pouco mais ou cortar um pouco antes. Planeje a integração para ficar abaixo de 120 por minuto. Use `limit=100` nas listas e os [webhooks](/api/webhooks/visao-geral) em vez de consultar a API em intervalos.
 </Note>
 
+## Idempotência
+
+<Note>
+  **Beta, ainda não publicado em produção.** O cabeçalho `Idempotency-Key` chega junto com a [escrita de campanhas](/api/referencia/campanhas-escrita).
+</Note>
+
+Mande o cabeçalho `Idempotency-Key` nas rotas de escrita para poder repetir a chamada sem executar duas vezes. É o que protege contra criar duas campanhas quando a rede cai no meio da resposta.
+
+```bash
+curl -X POST https://api.appconty.com/public/v1/campaigns \
+  -H "Authorization: Bearer $CONTY_API_KEY" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: verao-2027-criar-1" \
+  -d @campanha.json
+```
+
+| Rota | `Idempotency-Key` |
+|---|---|
+| `POST /campaigns` | Obrigatório |
+| `POST /campaigns/{id}/renew` | Obrigatório |
+| `POST /campaigns/{id}/briefings/attachments` | Obrigatório |
+| `POST /uploads/import` | Obrigatório |
+| Rotas de lote do quadro e `POST /missions/{id}/reinvite` | Obrigatório. Veja [Operar o quadro](/api/referencia/quadro#idempotência) |
+| `PATCH /campaigns/{id}` | Opcional |
+| `POST /campaigns/{id}/status` | Opcional |
+| `POST /campaigns/{id}/creators/{creator_id}/messages` | Opcional. Vira o `client_ref` quando ele não vem |
+
+Como funciona:
+
+- A chave tem de 1 a 255 caracteres. Use um valor que identifique a operação no seu sistema, ou um UUID gerado uma vez e guardado junto da tentativa.
+- Repetir a mesma chave, na mesma rota e com o mesmo corpo, em até **24 horas**, devolve a primeira resposta, com o mesmo status e o cabeçalho `Idempotent-Replayed: true`, sem executar de novo.
+- A chave vale **por marca** e só devolve a resposta guardada para a mesma chave de API que fez a primeira chamada. A mesma `Idempotency-Key` mandada por outra chave de API da marca responde `422 idempotency_key_reused`.
+- Só resposta de sucesso (`2xx`) é guardada. Se a chamada voltou `4xx`, nada foi feito: corrija e repita com a mesma chave.
+- Se a chamada voltou `5xx` ou caiu no meio, ela pode ter tido efeito, e a chave fica marcada como falha. Repetir com ela responde `409 idempotency_key_failed`. Confira o recurso (por exemplo, liste as campanhas) e, se for repetir, use uma chave nova.
+- Depois de 24 horas a chave é esquecida, e a mesma chamada executa de novo.
+
+| Status | `code` | Quando acontece | O que fazer |
+|---|---|---|---|
+| 422 | `idempotency_key_required` | A rota exige o cabeçalho e ele não veio | Mande `Idempotency-Key` |
+| 422 | `idempotency_key_reused` | A chave já foi usada com outra rota, outro corpo ou outra chave de API | Gere uma chave nova para a operação nova |
+| 409 | `idempotency_in_progress` | Outra requisição com a mesma chave ainda está em andamento | Espere o `Retry-After` (2 segundos) e repita |
+| 409 | `idempotency_key_failed` | A primeira requisição com essa chave falhou no meio (`5xx`) e pode ter tido efeito | Confira o recurso antes de repetir e, se for repetir, use uma chave nova |
+| 422 | `validation_failed` | A chave passa de 255 caracteres (`details[0].path = "Idempotency-Key"`) | Encurte a chave |
+
 ## Erros
 
 Todo erro tem o mesmo envelope:
@@ -176,7 +223,7 @@ Todo erro tem o mesmo envelope:
 </ResponseField>
 
 <ResponseField name="error.details" type="array">
-  Detalhes, quando existem. Em `validation_failed`, um item por campo com `path` e `message`. Em `coupon_exists`, o `coupon_id` do cupom ativo.
+  Detalhes, quando existem. Em `validation_failed`, um item por campo com `path` e `message`. Em `coupon_exists`, o `coupon_id` do cupom ativo. Com a escrita de campanhas (beta): em `insufficient_scope`, o `required_scope` que falta na chave; em `blocking_missions`, `counts` com as entregas em andamento por etapa; e, quando há, `code` com a regra do campo e `blocking_block_id` com o bloco do acordo que impede a ação.
 </ResponseField>
 
 <ResponseField name="error.request_id" type="string" required>
@@ -201,7 +248,30 @@ Todo erro tem o mesmo envelope:
 | 429 | `rate_limited` | Mais de 120 requisições por minuto na chave | Espere o `Retry-After` e tente de novo |
 | 500 | `internal_error` | Erro inesperado do nosso lado | Tente de novo com espera; se persistir, mande o `request_id` |
 
-Erros `4xx` não melhoram se você repetir a mesma chamada, exceto o `429`. Erros `5xx` e falha de rede podem ser repetidos com espera crescente: o registro de venda, por exemplo, é idempotente pelo `external_id`.
+### Erros da escrita de campanhas
+
+Em beta, ainda não publicados em produção. A lista completa por rota está em [Criar e gerenciar campanhas](/api/referencia/campanhas-escrita#erros).
+
+| Status | `code` | Quando acontece | O que fazer |
+|---|---|---|---|
+| 403 | `insufficient_scope` | A chave não tem o escopo que a ação exige | Crie uma chave com o escopo de `details[0].required_scope` |
+| 403 | `forbidden` | O cargo do dono da marca não tem a permissão do painel para a ação | Ajuste o cargo no painel |
+| 403 | `assisted_access_denied` | A agência que cuida da marca não liberou a ação | Fale com a agência |
+| 409 | `invalid_transition` | O `status` pedido não se aplica ao status atual da campanha | Leia a campanha e escolha a transição certa |
+| 409 | `blocking_missions` | Há entregas em andamento | Espere, ou mande `force_close` |
+| 409 | `campaign_fields_locked` | O campo não muda mais depois de publicar ou com creator contratado | Crie uma campanha nova para mudar esse campo |
+| 409 | `idempotency_in_progress` | Outra requisição com a mesma `Idempotency-Key` está em andamento | Espere o `Retry-After` e repita |
+| 409 | `idempotency_key_failed` | A requisição anterior com a mesma `Idempotency-Key` falhou no meio e pode ter tido efeito | Confira o recurso e, se for repetir, use uma chave nova |
+| 422 | `unsupported_for_campaign_model` | `kind` diferente de `agreement`, marca que não usa acordos, ou escrita em campanha avulsa legada | Confira `campaign_model` em `GET /me`; a API escreve só em acordo |
+| 422 | `invalid_upload_ref` | `upload_ref` de outra marca, de outra finalidade, ou arquivo ainda não enviado | Gere o `upload_ref` com a chave e a finalidade certas |
+| 422 | `end_date_required` | Publicar sem data de término | Mande `end_date` |
+| 422 | `idempotency_key_required` | A rota exige `Idempotency-Key` | Mande o cabeçalho |
+| 422 | `idempotency_key_reused` | A `Idempotency-Key` já foi usada com outra requisição ou por outra chave de API | Gere uma chave nova |
+| 403 | `module_disabled` | A ação depende de um módulo que não está liberado para a marca | Fale com o time da Conty |
+| 422 | `invalid_delivery_format` | Formato de entrega fora da rede (`formats` que `network` não aceita) | Veja a tabela de [redes e formatos](/api/referencia/campanhas-escrita#redes-e-formatos) |
+| 422 | `approval_posted_at_required` | A campanha pede a data do post para aprovar a entrega | Mande `posted_at` |
+
+Erros `4xx` não melhoram se você repetir a mesma chamada, exceto o `429` e o `409 idempotency_in_progress`. Erros `5xx` e falha de rede podem ser repetidos com espera crescente, mas numa rota com `Idempotency-Key` um `5xx` marca a chave como falha: confira o recurso e repita com uma chave nova, ou a repetição responde `409 idempotency_key_failed`. O registro de venda, por exemplo, é idempotente pelo `external_id`. o registro de venda, por exemplo, é idempotente pelo `external_id`.
 
 ```javascript
 async function conty(path, init = {}) {

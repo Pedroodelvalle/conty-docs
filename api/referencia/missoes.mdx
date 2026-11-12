@@ -15,6 +15,21 @@ A missão é o trabalho de um creator numa campanha: as entregas (roteiro, capa,
 
 O id da missão chega no `data.mission.id` dos [eventos de missão](/api/webhooks/eventos/missoes) e no `mission_id` do [cupom](/api/referencia/cupons).
 
+## O que dá para fazer numa missão
+
+Todas as ações sobre uma missão ficam neste tópico, no menu ao lado:
+
+| Grupo | O que faz |
+| --- | --- |
+| Revisar entrega | Aprovar, pedir alteração ou recusar a entrega; revisar roteiro, capa e legenda; escolher a versão |
+| Prazo e briefing | Mudar o prazo de entrega e enviar o briefing ao creator |
+| Remover, restaurar e reconvidar | Tirar o creator da campanha, desfazer a remoção e convidar de novo |
+| Produto e post | Envio e recebimento do produto, link e data do post, conferência do post, avisos e downloads ([Entrega e pós-entrega](/api/referencia/entrega-e-pos-entrega)) |
+| Comentários | Conversa sobre a entrega, com o creator ou com a agência |
+| Ações em lote | As mesmas decisões para várias missões de uma vez, acompanhadas em `GET /bulk-jobs/{id}` |
+
+As regras de estado (quando cada ação vale e o `409 invalid_transition`) estão em [Operar o quadro](/api/referencia/quadro).
+
 ## O objeto Mission
 
 ```json
@@ -23,7 +38,7 @@ O id da missão chega no `data.mission.id` dos [eventos de missão](/api/webhook
   "id": "2b9e4d7a-1c3f-4e5a-8b6d-9f0a1c2e3d4b",
   "campaign_id": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f",
   "campaign": { "id": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f", "kind": "agreement", "name": "Verão 2027" },
-  "block": { "id": "3e7a9c1d-2b4f-4d6e-8a0c-5f1b3d7e9a2c", "platform": "reels_collab" },
+  "block": { "id": "3e7a9c1d-2b4f-4d6e-8a0c-5f1b3d7e9a2c", "network": "instagram" },
   "creator": {
     "id": "9d3f1b7c-5e2a-4c8d-a6b1-2f3e4d5c6b7a",
     "name": "Ana Souza",
@@ -54,6 +69,7 @@ O id da missão chega no `data.mission.id` dos [eventos de missão](/api/webhook
     "first_submitted_at": "2026-11-12T20:40:00.000Z",
     "approved_at": null,
     "script_deadline_at": "2026-11-10T23:59:59.000Z",
+    "delivery_deadline_at": "2026-11-20T23:59:59.000Z",
     "change_deadline_at": null
   },
   "payment_amount_cents": 50000,
@@ -77,7 +93,7 @@ O id da missão chega no `data.mission.id` dos [eventos de missão](/api/webhook
 </ResponseField>
 
 <ResponseField name="block" type="object | null" required>
-  O bloco da campanha em que está a missão (`id` e `platform`). `null` quando a campanha tem `kind: "campaign"`.
+  O bloco da campanha em que está a missão: `id` e `network` (a rede da entrega). `null` quando a campanha tem `kind: "campaign"`.
 </ResponseField>
 
 <ResponseField name="creator" type="object" required>
@@ -117,7 +133,7 @@ O id da missão chega no `data.mission.id` dos [eventos de missão](/api/webhook
 </ResponseField>
 
 <ResponseField name="dates" type="object" required>
-  `accepted_at`, `sent_at`, `first_submitted_at`, `approved_at`, `script_deadline_at` e `change_deadline_at`, em ISO 8601.
+  `accepted_at`, `sent_at`, `first_submitted_at`, `approved_at`, `script_deadline_at`, `delivery_deadline_at` (prazo de entrega do vídeo, o que [`PATCH /missions/{id}/deadline`](/api/referencia/quadro#prazo-briefing-remoção-e-reconvite) muda) e `change_deadline_at` (prazo da alteração pedida), em ISO 8601.
 </ResponseField>
 
 <ResponseField name="payment_amount_cents" type="integer | null" required>
@@ -134,7 +150,7 @@ O id da missão chega no `data.mission.id` dos [eventos de missão](/api/webhook
 
 ## O que nunca sai
 
-Contato e documento do creator, ações (aprovar, pedir alteração, recusar), formulários, versões anteriores, histórico de revisão e dados de anúncio. A chave só lê.
+Contato e documento do creator, formulários, versões anteriores, histórico de revisão e dados de anúncio. Para aprovar, pedir alteração, recusar e mudar prazo, veja [Operar o quadro](/api/referencia/quadro) (beta).
 
 ## Erros
 

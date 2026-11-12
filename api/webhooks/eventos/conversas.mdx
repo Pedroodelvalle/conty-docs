@@ -1,0 +1,176 @@
+---
+title: "Eventos de conversa"
+sidebarTitle: "Conversas"
+description: "Eventos enviados quando o creator manda, responde, edita ou reage a uma mensagem na conversa da campanha."
+icon: "messages"
+keywords:
+  - webhooks
+  - message.received
+  - message.edited
+  - message.reaction_added
+  - message.reaction_removed
+  - chat
+  - mensagem
+  - reply
+  - reação
+---
+
+Todo evento usa o [envelope comum](/api/webhooks/visao-geral). O que muda de um para outro é o `type`, o `summary` e os blocos `message` e `reaction` dentro de `data`.
+
+| Evento | Quando sai |
+|---|---|
+| `message.received` | O creator mandou uma mensagem, ou respondeu a uma (`reply_to_id`) |
+| `message.edited` | O creator editou uma mensagem que mandou |
+| `message.reaction_added` | O creator reagiu a uma mensagem com um emoji |
+| `message.reaction_removed` | O creator tirou a reação que tinha posto |
+
+Só sai evento para o que o **creator** faz numa **conversa de campanha ou acordo** da marca. Mensagem, edição e reação da própria marca, da agência, de DM fora de campanha, de comunidade e de sala interna não geram evento.
+
+<Note>
+  O texto da mensagem não vem no evento, como nos outros webhooks. Para ler a conversa, use [`GET /conversations/{id}/messages`](/api/referencia/conversas) com `data.conversation.id`.
+</Note>
+
+## Campos comuns de `data`
+
+<ResponseField name="data.brand" type="object" required>
+  A marca dona da conversa: `id` e `name`.
+</ResponseField>
+
+<ResponseField name="data.campaign" type="object" required>
+  A campanha, ou o acordo quando a conversa é de um acordo: `id`, `name` e `url` (link no painel, ou `null`). O `id` é o mesmo de `GET /campaigns/{id}` e do `campaign_id` de `GET /conversations`.
+</ResponseField>
+
+<ResponseField name="data.creator" type="object" required>
+  O creator: `id`, `name` e `handle` (o @ na rede da campanha, ou `null` quando a conversa é do acordo inteiro).
+</ResponseField>
+
+<ResponseField name="data.mission" type="object | null" required>
+  A missão (`id`, `status`, `platform`) quando a conversa é de uma missão, ou `null`.
+</ResponseField>
+
+<ResponseField name="data.conversation" type="object" required>
+  A conversa: `id`, o mesmo de `GET /conversations`.
+</ResponseField>
+
+<ResponseField name="data.message" type="object" required>
+  A mensagem: `id` sempre; `kind` (`text`, `audio`, `image`, `video` ou `file`), `created_at` e `reply_to_id` em `message.received`; `edited_at` em `message.edited`. Nas reações, `id` é a mensagem que recebeu a reação.
+</ResponseField>
+
+<ResponseField name="data.reaction" type="object">
+  Só nas reações: `emoji`.
+</ResponseField>
+
+## message.received
+
+O creator mandou uma mensagem na conversa da campanha. Quando ela responde a outra mensagem (reply), `data.message.reply_to_id` traz o `id` da mensagem respondida e o `summary` diz "respondeu"; senão, `reply_to_id` vem `null`.
+
+```json
+{
+  "id": "7b6a5f4e-3d2c-4b1a-8f0e-9d8c7b6a5f4e",
+  "type": "message.received",
+  "created_at": "2026-11-11T22:57:59.512Z",
+  "tenant": "conty",
+  "summary": "Marca Exemplo: Fulana Souza respondeu a uma mensagem na conversa da campanha \"Outubro\".",
+  "data": {
+    "brand": { "id": "5e4d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c1b", "name": "Marca Exemplo" },
+    "campaign": {
+      "id": "2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5",
+      "name": "Outubro",
+      "url": "https://appconty.com/campaigns/2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5"
+    },
+    "creator": { "id": "8d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a", "name": "Fulana Souza", "handle": "@fulana" },
+    "mission": null,
+    "conversation": { "id": "0f1e2d3c-4b5a-4697-8a8b-9c0d1e2f3a4b" },
+    "message": {
+      "id": "6a5b4c3d-2e1f-4a0b-9c8d-7e6f5a4b3c2d",
+      "kind": "text",
+      "created_at": "2026-11-11T22:57:58.207Z",
+      "reply_to_id": "2c3d4e5f-6a7b-4c8d-9e0f-1a2b3c4d5e6f"
+    }
+  }
+}
+```
+
+## message.edited
+
+O creator editou uma mensagem que mandou. Vem o `id` da mensagem e quando ela foi editada, sem o texto antigo nem o novo.
+
+```json
+{
+  "id": "1f0e9d8c-7b6a-4f5e-8d4c-3b2a1f0e9d8c",
+  "type": "message.edited",
+  "created_at": "2026-11-11T22:57:59.837Z",
+  "tenant": "conty",
+  "summary": "Marca Exemplo: Fulana Souza editou uma mensagem na conversa da campanha \"Outubro\".",
+  "data": {
+    "brand": { "id": "5e4d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c1b", "name": "Marca Exemplo" },
+    "campaign": {
+      "id": "2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5",
+      "name": "Outubro",
+      "url": "https://appconty.com/campaigns/2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5"
+    },
+    "creator": { "id": "8d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a", "name": "Fulana Souza", "handle": "@fulana" },
+    "mission": null,
+    "conversation": { "id": "0f1e2d3c-4b5a-4697-8a8b-9c0d1e2f3a4b" },
+    "message": { "id": "9e8d7c6b-5a4f-4e3d-8c2b-1a0f9e8d7c6b", "edited_at": "2026-11-11T22:57:58.889Z" }
+  }
+}
+```
+
+## message.reaction_added
+
+O creator reagiu a uma mensagem da conversa. `data.message.id` é a mensagem que recebeu a reação.
+
+```json
+{
+  "id": "3b2a1f0e-9d8c-4b7a-a6f5-e4d3c2b1a0f9",
+  "type": "message.reaction_added",
+  "created_at": "2026-11-11T22:57:59.640Z",
+  "tenant": "conty",
+  "summary": "Marca Exemplo: Fulana Souza reagiu com 👍 a uma mensagem na conversa da campanha \"Outubro\".",
+  "data": {
+    "brand": { "id": "5e4d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c1b", "name": "Marca Exemplo" },
+    "campaign": {
+      "id": "2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5",
+      "name": "Outubro",
+      "url": "https://appconty.com/campaigns/2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5"
+    },
+    "creator": { "id": "8d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a", "name": "Fulana Souza", "handle": "@fulana" },
+    "mission": null,
+    "conversation": { "id": "0f1e2d3c-4b5a-4697-8a8b-9c0d1e2f3a4b" },
+    "message": { "id": "2c3d4e5f-6a7b-4c8d-9e0f-1a2b3c4d5e6f" },
+    "reaction": { "emoji": "👍" }
+  }
+}
+```
+
+## message.reaction_removed
+
+O creator tirou a reação. Mesmo formato de `message.reaction_added`, com o emoji que saiu.
+
+```json
+{
+  "id": "5d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a",
+  "type": "message.reaction_removed",
+  "created_at": "2026-11-11T22:57:59.730Z",
+  "tenant": "conty",
+  "summary": "Marca Exemplo: Fulana Souza tirou a reação 👍 de uma mensagem na conversa da campanha \"Outubro\".",
+  "data": {
+    "brand": { "id": "5e4d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c1b", "name": "Marca Exemplo" },
+    "campaign": {
+      "id": "2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5",
+      "name": "Outubro",
+      "url": "https://appconty.com/campaigns/2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5"
+    },
+    "creator": { "id": "8d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a", "name": "Fulana Souza", "handle": "@fulana" },
+    "mission": null,
+    "conversation": { "id": "0f1e2d3c-4b5a-4697-8a8b-9c0d1e2f3a4b" },
+    "message": { "id": "2c3d4e5f-6a7b-4c8d-9e0f-1a2b3c4d5e6f" },
+    "reaction": { "emoji": "👍" }
+  }
+}
+```
+
+<Tip>
+  Para um agente que responde ao creator: ouça `message.received`, leia as últimas mensagens com `GET /conversations/{id}/messages` e responda com `POST /campaigns/{id}/creators/{creator_id}/messages`.
+</Tip>
