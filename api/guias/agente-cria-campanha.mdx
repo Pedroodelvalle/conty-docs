@@ -561,6 +561,6 @@ Buscar creators novos e convidar alguém num acordo que já está no ar continua
 
 - **Rascunho primeiro.** Crie com `status: "draft"`, confira com `validate` e `publish-cost`, e só então publique.
 - **Separe quem gasta.** Dê `campaigns:spend` só à chave que pode comprometer a verba da marca.
-- **Uma `Idempotency-Key` por operação.** Guarde a chave junto da tentativa e repita a mesma em caso de falha de rede. Trocar o corpo com a mesma chave responde `422 idempotency_key_reused`.
+- **Uma `Idempotency-Key` por operação.** Guarde a chave junto da tentativa e repita a mesma em caso de falha de rede. Trocar o corpo com a mesma chave responde `422 idempotency_key_reused`. Se a resposta foi `5xx`, a chamada pode ter tido efeito e a mesma chave passa a responder `409 idempotency_key_failed`: confira a campanha antes e, se for repetir, use uma chave nova.
 - **Trate pelo `error.code`**, nunca pelo texto da mensagem. `409 invalid_transition` quer dizer que a campanha não está no status que o agente supôs: leia de novo antes de decidir.
 - **Respeite o limite** de 120 requisições por minuto por chave e o `Retry-After`.

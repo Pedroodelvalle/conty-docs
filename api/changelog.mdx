@@ -10,6 +10,21 @@ keywords:
 
 Toda mudança no contrato da API aparece aqui antes de entrar no ar. Enquanto a API estiver em beta, mudanças que quebram compatibilidade são possíveis, sempre anunciadas nesta página com o que muda e o que fazer.
 
+<Update label="Permuta vira barter e idempotência mais segura" description="12 de novembro de 2026">
+  <Warning>
+    **Mudança que quebra leitura.** Em `GET /campaigns` e `GET /campaigns/{id}`, `payment.type` passa a vir `barter` no lugar de `permuta`, já em produção. Se o seu código compara `payment.type === "permuta"`, troque para `"barter"`. Os outros valores (`per_video`, `per_view`, `affiliate`) não mudam.
+  </Warning>
+
+  **Escrita de campanhas (beta)**
+  - `POST /campaigns` e `PATCH /campaigns/{id}`: `payment_type` aceita `per_video`, `barter` ou `affiliate`, e os campos do produto passam a ser `barter_item`, `barter_description` e `barter_value_cents` (antes `permuta_item`, `permuta_description` e `permuta_value_cents`). Ver [Pagamento](/api/referencia/campanhas-escrita#pagamento).
+  - `PATCH /campaigns/{id}` em acordo fora do rascunho que muda `budget_cents`, `usage_rights_duration`, `payment_type` ou `coupon_commission_budget_cents` passa a pedir `campaigns:spend`, porque subir a verba compromete saldo da marca. Sem o escopo, `403 insufficient_scope`. Ver [Escopos da chave](/api/autenticacao#por-que-publicar-tem-um-escopo-à-parte).
+
+  **Idempotência**
+  - Novo erro `409 idempotency_key_failed` em toda rota que aceita `Idempotency-Key`: se a primeira chamada com a chave voltou `5xx` ou caiu no meio, ela pode ter tido efeito, e repetir com a mesma chave responde esse erro. Confira o recurso e, se for repetir, use uma chave nova.
+  - A resposta guardada só volta para a mesma chave de API que fez a primeira chamada. A mesma `Idempotency-Key` mandada por outra chave de API da marca responde `422 idempotency_key_reused`.
+  - Ver [Idempotência](/api/referencia/introducao#idempotência).
+</Update>
+
 <Update label="Entrega e pós-entrega pela API (beta)" description="12 de novembro de 2026">
   Envio de produto, post, cupom do creator, comentários, exportação e as leituras de resultado e rastreio da campanha. Ver [Entrega e pós-entrega](/api/referencia/entrega-e-pos-entrega).
 

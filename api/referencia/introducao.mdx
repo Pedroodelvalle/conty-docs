@@ -184,15 +184,17 @@ Como funciona:
 
 - A chave tem de 1 a 255 caracteres. Use um valor que identifique a operação no seu sistema, ou um UUID gerado uma vez e guardado junto da tentativa.
 - Repetir a mesma chave, na mesma rota e com o mesmo corpo, em até **24 horas**, devolve a primeira resposta, com o mesmo status e o cabeçalho `Idempotent-Replayed: true`, sem executar de novo.
-- A chave vale **por marca**, não por chave de API: duas chaves de API da mesma marca que mandam o mesmo `Idempotency-Key` contam como a mesma operação.
-- Só resposta de sucesso (`2xx`) é guardada. Se a chamada falhou, corrija e repita com a mesma chave.
+- A chave vale **por marca** e só devolve a resposta guardada para a mesma chave de API que fez a primeira chamada. A mesma `Idempotency-Key` mandada por outra chave de API da marca responde `422 idempotency_key_reused`.
+- Só resposta de sucesso (`2xx`) é guardada. Se a chamada voltou `4xx`, nada foi feito: corrija e repita com a mesma chave.
+- Se a chamada voltou `5xx` ou caiu no meio, ela pode ter tido efeito, e a chave fica marcada como falha. Repetir com ela responde `409 idempotency_key_failed`. Confira o recurso (por exemplo, liste as campanhas) e, se for repetir, use uma chave nova.
 - Depois de 24 horas a chave é esquecida, e a mesma chamada executa de novo.
 
 | Status | `code` | Quando acontece | O que fazer |
 |---|---|---|---|
 | 422 | `idempotency_key_required` | A rota exige o cabeçalho e ele não veio | Mande `Idempotency-Key` |
-| 422 | `idempotency_key_reused` | A chave já foi usada com outra rota ou outro corpo | Gere uma chave nova para a operação nova |
+| 422 | `idempotency_key_reused` | A chave já foi usada com outra rota, outro corpo ou outra chave de API | Gere uma chave nova para a operação nova |
 | 409 | `idempotency_in_progress` | Outra requisição com a mesma chave ainda está em andamento | Espere o `Retry-After` (2 segundos) e repita |
+| 409 | `idempotency_key_failed` | A primeira requisição com essa chave falhou no meio (`5xx`) e pode ter tido efeito | Confira o recurso antes de repetir e, se for repetir, use uma chave nova |
 | 422 | `validation_failed` | A chave passa de 255 caracteres (`details[0].path = "Idempotency-Key"`) | Encurte a chave |
 
 ## Erros
@@ -259,16 +261,17 @@ Em beta, ainda não publicados em produção. A lista completa por rota está em
 | 409 | `blocking_missions` | Há entregas em andamento | Espere, ou mande `force_close` |
 | 409 | `campaign_fields_locked` | O campo não muda mais depois de publicar ou com creator contratado | Crie uma campanha nova para mudar esse campo |
 | 409 | `idempotency_in_progress` | Outra requisição com a mesma `Idempotency-Key` está em andamento | Espere o `Retry-After` e repita |
+| 409 | `idempotency_key_failed` | A requisição anterior com a mesma `Idempotency-Key` falhou no meio e pode ter tido efeito | Confira o recurso e, se for repetir, use uma chave nova |
 | 422 | `unsupported_for_campaign_model` | `kind` diferente de `agreement`, marca que não usa acordos, ou escrita em campanha avulsa legada | Confira `campaign_model` em `GET /me`; a API escreve só em acordo |
 | 422 | `invalid_upload_ref` | `upload_ref` de outra marca, de outra finalidade, ou arquivo ainda não enviado | Gere o `upload_ref` com a chave e a finalidade certas |
 | 422 | `end_date_required` | Publicar sem data de término | Mande `end_date` |
 | 422 | `idempotency_key_required` | A rota exige `Idempotency-Key` | Mande o cabeçalho |
-| 422 | `idempotency_key_reused` | A `Idempotency-Key` já foi usada com outra requisição | Gere uma chave nova |
+| 422 | `idempotency_key_reused` | A `Idempotency-Key` já foi usada com outra requisição ou por outra chave de API | Gere uma chave nova |
 | 403 | `module_disabled` | A ação depende de um módulo que não está liberado para a marca | Fale com o time da Conty |
 | 422 | `invalid_delivery_format` | Formato de entrega fora da rede (`formats` que `network` não aceita) | Veja a tabela de [redes e formatos](/api/referencia/campanhas-escrita#redes-e-formatos) |
 | 422 | `approval_posted_at_required` | A campanha pede a data do post para aprovar a entrega | Mande `posted_at` |
 
-Erros `4xx` não melhoram se você repetir a mesma chamada, exceto o `429` e o `409 idempotency_in_progress`. Erros `5xx` e falha de rede podem ser repetidos com espera crescente: o registro de venda, por exemplo, é idempotente pelo `external_id`.
+Erros `4xx` não melhoram se você repetir a mesma chamada, exceto o `429` e o `409 idempotency_in_progress`. Erros `5xx` e falha de rede podem ser repetidos com espera crescente, mas numa rota com `Idempotency-Key` um `5xx` marca a chave como falha: confira o recurso e repita com uma chave nova, ou a repetição responde `409 idempotency_key_failed`. O registro de venda, por exemplo, é idempotente pelo `external_id`. o registro de venda, por exemplo, é idempotente pelo `external_id`.
 
 ```javascript
 async function conty(path, init = {}) {

@@ -232,6 +232,7 @@
                   "coupon_mode_campaign",
                   "conversation_closed",
                   "idempotency_in_progress",
+                  "idempotency_key_failed",
                   "coupon_campaign_mismatch",
                   "sale_occurred_at_out_of_range",
                   "validation_failed",
@@ -1064,9 +1065,10 @@
             "type": "string",
             "enum": [
               "per_video",
-              "permuta",
+              "barter",
               "affiliate"
-            ]
+            ],
+            "description": "per_video paga um valor fixo por conteúdo, barter paga só com produto (barter_item, barter_value_cents, barter_description) e affiliate paga só comissão sobre vendas."
           },
           "affiliate_commission_bps": {
             "type": [
@@ -1090,14 +1092,6 @@
           "bonus_every_views": {
             "type": "integer",
             "minimum": 1000
-          },
-          "permuta_description": {
-            "type": "string",
-            "minLength": 1
-          },
-          "permuta_item": {
-            "type": "string",
-            "minLength": 1
           },
           "points_per_delivery": {
             "type": "integer",
@@ -1447,6 +1441,14 @@
               "$ref": "#/components/schemas/CampaignBriefingInput"
             }
           },
+          "barter_item": {
+            "type": "string",
+            "minLength": 1
+          },
+          "barter_description": {
+            "type": "string",
+            "minLength": 1
+          },
           "budget_cents": {
             "type": "integer",
             "minimum": 0,
@@ -1486,7 +1488,7 @@
             "maximum": 2147483647,
             "description": "Valor em centavos, inteiro."
           },
-          "permuta_value_cents": {
+          "barter_value_cents": {
             "type": "integer",
             "minimum": 0,
             "maximum": 2147483647,
@@ -2282,7 +2284,7 @@
               "integer",
               "null"
             ],
-            "description": "Valor por conteúdo. Nulo também em per_view e na permuta pura. Em centavos. Nulo quando money_visible é false.",
+            "description": "Valor por conteúdo. Nulo também em per_view e em barter. Em centavos. Nulo quando money_visible é false.",
             "example": 50000
           },
           "per_view": {
@@ -2327,11 +2329,11 @@
         "enum": [
           "per_view",
           "per_video",
-          "permuta",
+          "barter",
           "affiliate",
           null
         ],
-        "description": "per_video paga um valor fixo por conteúdo, per_view paga pelas visualizações, permuta paga só com produto e affiliate paga só comissão sobre vendas, direto da marca ao creator, fora da plataforma.",
+        "description": "per_video paga um valor fixo por conteúdo, per_view paga pelas visualizações, barter paga só com produto e affiliate paga só comissão sobre vendas, direto da marca ao creator, fora da plataforma.",
         "example": "per_video"
       },
       "CampaignPerView": {
@@ -2428,7 +2430,7 @@
           "description"
         ],
         "additionalProperties": false,
-        "description": "Produto da permuta. Nulo quando a campanha não oferece produto."
+        "description": "Produto da campanha (barter ou produto junto do pagamento). Nulo quando a campanha não oferece produto."
       },
       "CampaignRequires": {
         "type": "object",
@@ -2849,9 +2851,10 @@
             "type": "string",
             "enum": [
               "per_video",
-              "permuta",
+              "barter",
               "affiliate"
-            ]
+            ],
+            "description": "per_video paga um valor fixo por conteúdo, barter paga só com produto (barter_item, barter_value_cents, barter_description) e affiliate paga só comissão sobre vendas."
           },
           "affiliate_commission_bps": {
             "type": [
@@ -2875,14 +2878,6 @@
           "bonus_every_views": {
             "type": "integer",
             "minimum": 1000
-          },
-          "permuta_description": {
-            "type": "string",
-            "minLength": 1
-          },
-          "permuta_item": {
-            "type": "string",
-            "minLength": 1
           },
           "points_per_delivery": {
             "type": "integer",
@@ -3232,6 +3227,14 @@
               "$ref": "#/components/schemas/CampaignBriefingInput"
             }
           },
+          "barter_item": {
+            "type": "string",
+            "minLength": 1
+          },
+          "barter_description": {
+            "type": "string",
+            "minLength": 1
+          },
           "budget_cents": {
             "type": "integer",
             "minimum": 0,
@@ -3271,7 +3274,7 @@
             "maximum": 2147483647,
             "description": "Valor em centavos, inteiro."
           },
-          "permuta_value_cents": {
+          "barter_value_cents": {
             "type": "integer",
             "minimum": 0,
             "maximum": 2147483647,
@@ -3526,9 +3529,10 @@
             "type": "string",
             "enum": [
               "per_video",
-              "permuta",
+              "barter",
               "affiliate"
-            ]
+            ],
+            "description": "per_video paga um valor fixo por conteúdo, barter paga só com produto (barter_item, barter_value_cents, barter_description) e affiliate paga só comissão sobre vendas."
           },
           "affiliate_commission_bps": {
             "type": [
@@ -3555,20 +3559,6 @@
               "null"
             ],
             "minimum": 1000
-          },
-          "permuta_description": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "minLength": 1
-          },
-          "permuta_item": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "minLength": 1
           },
           "points_per_delivery": {
             "type": [
@@ -3937,6 +3927,20 @@
               "$ref": "#/components/schemas/CampaignBriefingInput"
             }
           },
+          "barter_item": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1
+          },
+          "barter_description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1
+          },
           "budget_cents": {
             "type": "integer",
             "minimum": 0,
@@ -3988,7 +3992,7 @@
             "maximum": 2147483647,
             "description": "Valor em centavos, inteiro."
           },
-          "permuta_value_cents": {
+          "barter_value_cents": {
             "type": [
               "integer",
               "null"
@@ -12069,7 +12073,7 @@
             }
           },
           "409": {
-            "description": "coupon_exists: Este creator já tem um cupom ativo nesta campanha. coupon_code_taken: Este código já está em uso por outro cupom ativo da marca. coupon_mode_campaign: Esta campanha usa um cupom único. Não dá para vincular cupom por creator. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes.",
+            "description": "coupon_exists: Este creator já tem um cupom ativo nesta campanha. coupon_code_taken: Este código já está em uso por outro cupom ativo da marca. coupon_mode_campaign: Esta campanha usa um cupom único. Não dá para vincular cupom por creator. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova.",
             "content": {
               "application/json": {
                 "schema": {
@@ -13310,7 +13314,7 @@
             }
           },
           "409": {
-            "description": "idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. insufficient_balance: O saldo da marca não cobre esta campanha. Adicione saldo para veicular. credit_line_overdue: Há saldo a prazo ou fatura do mês em atraso. Quite o valor para publicar campanhas e pedir saldo novo. billing_overdue: Há mensalidade do plano em atraso. Pague no Financeiro para criar campanhas e depositar. brand_account_rejected: A conta da empresa foi recusada. Campanhas pagas ficam bloqueadas, e a permuta segue liberada. brand_tier_locked: A marca tem contrato ativo ou saldo a prazo em aberto. Encerre o contrato e quite o saldo antes de mudar o porte. usage_rights_fee_legacy_balance_only: A taxa de direito de uso sai só do saldo antigo, na conta da Conty, e ele não cobre o valor. O saldo da conta da empresa não paga essa taxa: fale com o suporte para acertar o saldo antigo.",
+            "description": "idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova. insufficient_balance: O saldo da marca não cobre esta campanha. Adicione saldo para veicular. credit_line_overdue: Há saldo a prazo ou fatura do mês em atraso. Quite o valor para publicar campanhas e pedir saldo novo. billing_overdue: Há mensalidade do plano em atraso. Pague no Financeiro para criar campanhas e depositar. brand_account_rejected: A conta da empresa foi recusada. Campanhas pagas ficam bloqueadas, e a permuta segue liberada. brand_tier_locked: A marca tem contrato ativo ou saldo a prazo em aberto. Encerre o contrato e quite o saldo antes de mudar o porte. usage_rights_fee_legacy_balance_only: A taxa de direito de uso sai só do saldo antigo, na conta da Conty, e ele não cobre o valor. O saldo da conta da empresa não paga essa taxa: fale com o suporte para acertar o saldo antigo.",
             "content": {
               "application/json": {
                 "schema": {
@@ -13479,7 +13483,7 @@
           "Campanhas"
         ],
         "summary": "Editar campanha",
-        "description": "Edição parcial com as mesmas travas do painel: campo travado depois de publicar ou com creator contratado responde 409 com o código da trava, e mudar termos ou briefing avisa os creators como no painel. As entregas mudam por add_deliverables, update_deliverables e remove_deliverables. status review publica o rascunho e pede o escopo campaigns:spend. Campanha avulsa legada (kind campaign na leitura) não é editada pela API: responde 422 unsupported_for_campaign_model. Acordo em review está esperando saldo, e salvar qualquer edição nele tenta pôr no ar e reservar a verba, como o Salvar alterações do painel: por isso editar acordo em review também pede campaigns:spend. Idempotency-Key é opcional. A resposta é o objeto de GET /campaigns/{id}.",
+        "description": "Edição parcial com as mesmas travas do painel: campo travado depois de publicar ou com creator contratado responde 409 com o código da trava, e mudar termos ou briefing avisa os creators como no painel. As entregas mudam por add_deliverables, update_deliverables e remove_deliverables. status review publica o rascunho e pede o escopo campaigns:spend. Campanha avulsa legada (kind campaign na leitura) não é editada pela API: responde 422 unsupported_for_campaign_model. Acordo em review está esperando saldo, e salvar qualquer edição nele tenta pôr no ar e reservar a verba, como o Salvar alterações do painel: por isso editar acordo em review também pede campaigns:spend. Fora do rascunho, mudar budget_cents, usage_rights_duration, payment_type ou coupon_commission_budget_cents também pede campaigns:spend, porque subir a verba compromete saldo da marca. Idempotency-Key é opcional. A resposta é o objeto de GET /campaigns/{id}.",
         "parameters": [
           {
             "schema": {
@@ -13579,7 +13583,7 @@
             }
           },
           "409": {
-            "description": "idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. insufficient_balance: O saldo da marca não cobre esta campanha. Adicione saldo para veicular. credit_line_overdue: Há saldo a prazo ou fatura do mês em atraso. Quite o valor para publicar campanhas e pedir saldo novo. billing_overdue: Há mensalidade do plano em atraso. Pague no Financeiro para criar campanhas e depositar. brand_account_rejected: A conta da empresa foi recusada. Campanhas pagas ficam bloqueadas, e a permuta segue liberada. brand_tier_locked: A marca tem contrato ativo ou saldo a prazo em aberto. Encerre o contrato e quite o saldo antes de mudar o porte. usage_rights_fee_legacy_balance_only: A taxa de direito de uso sai só do saldo antigo, na conta da Conty, e ele não cobre o valor. O saldo da conta da empresa não paga essa taxa: fale com o suporte para acertar o saldo antigo. campaign_fields_locked: Essa ação não pode ser feita, crie uma nova campanha para executar essa ação client_locked: O acordo já tem creator convidado ou participando, então o cliente não pode mudar. Crie um acordo novo para o outro cliente. managed_by_group: Esta campanha faz parte de um acordo. Edite o acordo para alterar este campo. scope_value_locked: O acordo já tem creator contratado ou convite pendente: o valor do escopo não pode mudar. Crie um acordo novo para negociar outro valor. scope_option_locked: O creator já enviou conteúdo e o escopo não pode mais ser trocado. scope_option_in_use: Essa opção de escopo já tem creators e não pode ser alterada. briefing_in_use: Esse briefing está atribuído a creators. Troque o briefing deles antes de remover. group_block_in_use: Esta entrega já tem candidatura, creator ou cachê negociado e não pode ser removida do acordo. group_block_in_scope_option: Esta entrega faz parte de uma opção de escopo. Tire a entrega das opções de escopo antes de remover. budget_exceeded: O orçamento da campanha já está totalmente comprometido. Aumente o orçamento para continuar convidando criadores.",
+            "description": "idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova. insufficient_balance: O saldo da marca não cobre esta campanha. Adicione saldo para veicular. credit_line_overdue: Há saldo a prazo ou fatura do mês em atraso. Quite o valor para publicar campanhas e pedir saldo novo. billing_overdue: Há mensalidade do plano em atraso. Pague no Financeiro para criar campanhas e depositar. brand_account_rejected: A conta da empresa foi recusada. Campanhas pagas ficam bloqueadas, e a permuta segue liberada. brand_tier_locked: A marca tem contrato ativo ou saldo a prazo em aberto. Encerre o contrato e quite o saldo antes de mudar o porte. usage_rights_fee_legacy_balance_only: A taxa de direito de uso sai só do saldo antigo, na conta da Conty, e ele não cobre o valor. O saldo da conta da empresa não paga essa taxa: fale com o suporte para acertar o saldo antigo. campaign_fields_locked: Essa ação não pode ser feita, crie uma nova campanha para executar essa ação client_locked: O acordo já tem creator convidado ou participando, então o cliente não pode mudar. Crie um acordo novo para o outro cliente. managed_by_group: Esta campanha faz parte de um acordo. Edite o acordo para alterar este campo. scope_value_locked: O acordo já tem creator contratado ou convite pendente: o valor do escopo não pode mudar. Crie um acordo novo para negociar outro valor. scope_option_locked: O creator já enviou conteúdo e o escopo não pode mais ser trocado. scope_option_in_use: Essa opção de escopo já tem creators e não pode ser alterada. briefing_in_use: Esse briefing está atribuído a creators. Troque o briefing deles antes de remover. group_block_in_use: Esta entrega já tem candidatura, creator ou cachê negociado e não pode ser removida do acordo. group_block_in_scope_option: Esta entrega faz parte de uma opção de escopo. Tire a entrega das opções de escopo antes de remover. budget_exceeded: O orçamento da campanha já está totalmente comprometido. Aumente o orçamento para continuar convidando criadores.",
             "content": {
               "application/json": {
                 "schema": {
@@ -13906,7 +13910,7 @@
             }
           },
           "409": {
-            "description": "idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. insufficient_balance: O saldo da marca não cobre esta campanha. Adicione saldo para veicular. credit_line_overdue: Há saldo a prazo ou fatura do mês em atraso. Quite o valor para publicar campanhas e pedir saldo novo. billing_overdue: Há mensalidade do plano em atraso. Pague no Financeiro para criar campanhas e depositar. brand_account_rejected: A conta da empresa foi recusada. Campanhas pagas ficam bloqueadas, e a permuta segue liberada. brand_tier_locked: A marca tem contrato ativo ou saldo a prazo em aberto. Encerre o contrato e quite o saldo antes de mudar o porte. usage_rights_fee_legacy_balance_only: A taxa de direito de uso sai só do saldo antigo, na conta da Conty, e ele não cobre o valor. O saldo da conta da empresa não paga essa taxa: fale com o suporte para acertar o saldo antigo. invalid_transition: Transição de estado inválida. invalid_status: Esta missão não pode mais ser alterada. blocking_missions: A campanha tem entregas em andamento e não pode ser excluída. force_close_unavailable: Encerrar com pendências não está disponível aqui: o repasse aos criadores não passa pela plataforma.",
+            "description": "idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova. insufficient_balance: O saldo da marca não cobre esta campanha. Adicione saldo para veicular. credit_line_overdue: Há saldo a prazo ou fatura do mês em atraso. Quite o valor para publicar campanhas e pedir saldo novo. billing_overdue: Há mensalidade do plano em atraso. Pague no Financeiro para criar campanhas e depositar. brand_account_rejected: A conta da empresa foi recusada. Campanhas pagas ficam bloqueadas, e a permuta segue liberada. brand_tier_locked: A marca tem contrato ativo ou saldo a prazo em aberto. Encerre o contrato e quite o saldo antes de mudar o porte. usage_rights_fee_legacy_balance_only: A taxa de direito de uso sai só do saldo antigo, na conta da Conty, e ele não cobre o valor. O saldo da conta da empresa não paga essa taxa: fale com o suporte para acertar o saldo antigo. invalid_transition: Transição de estado inválida. invalid_status: Esta missão não pode mais ser alterada. blocking_missions: A campanha tem entregas em andamento e não pode ser excluída. force_close_unavailable: Encerrar com pendências não está disponível aqui: o repasse aos criadores não passa pela plataforma.",
             "content": {
               "application/json": {
                 "schema": {
@@ -14043,7 +14047,7 @@
             }
           },
           "409": {
-            "description": "idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. campaign_fields_locked: Essa ação não pode ser feita, crie uma nova campanha para executar essa ação",
+            "description": "idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova. campaign_fields_locked: Essa ação não pode ser feita, crie uma nova campanha para executar essa ação",
             "content": {
               "application/json": {
                 "schema": {
@@ -14399,7 +14403,7 @@
             }
           },
           "409": {
-            "description": "idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. campaign_fields_locked: Essa ação não pode ser feita, crie uma nova campanha para executar essa ação",
+            "description": "idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova. campaign_fields_locked: Essa ação não pode ser feita, crie uma nova campanha para executar essa ação",
             "content": {
               "application/json": {
                 "schema": {
@@ -14504,7 +14508,7 @@
             }
           },
           "409": {
-            "description": "idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes.",
+            "description": "idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova.",
             "content": {
               "application/json": {
                 "schema": {
@@ -15276,7 +15280,7 @@
             }
           },
           "409": {
-            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. invalid_deadline: Prazo de alteração inválido. budget_exceeded: O orçamento da campanha já está totalmente comprometido. Aumente o orçamento para continuar convidando criadores. insufficient_balance: O saldo da marca não cobre esta campanha. Adicione saldo para veicular.",
+            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova. invalid_deadline: Prazo de alteração inválido. budget_exceeded: O orçamento da campanha já está totalmente comprometido. Aumente o orçamento para continuar convidando criadores. insufficient_balance: O saldo da marca não cobre esta campanha. Adicione saldo para veicular.",
             "content": {
               "application/json": {
                 "schema": {
@@ -15426,7 +15430,7 @@
             }
           },
           "409": {
-            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes.",
+            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova.",
             "content": {
               "application/json": {
                 "schema": {
@@ -15573,7 +15577,7 @@
             }
           },
           "409": {
-            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes.",
+            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova.",
             "content": {
               "application/json": {
                 "schema": {
@@ -15723,7 +15727,7 @@
             }
           },
           "409": {
-            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. invalid_deadline: Prazo de alteração inválido.",
+            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova. invalid_deadline: Prazo de alteração inválido.",
             "content": {
               "application/json": {
                 "schema": {
@@ -15873,7 +15877,7 @@
             }
           },
           "409": {
-            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. invalid_deadline: Prazo de alteração inválido. proposed_deadline_not_adjustable: Só dá para ajustar os prazos que você propôs enquanto a candidatura espera a decisão do outro lado.",
+            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova. invalid_deadline: Prazo de alteração inválido. proposed_deadline_not_adjustable: Só dá para ajustar os prazos que você propôs enquanto a candidatura espera a decisão do outro lado.",
             "content": {
               "application/json": {
                 "schema": {
@@ -16023,7 +16027,7 @@
             }
           },
           "409": {
-            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. proposed_amount_not_adjustable: Só dá para aumentar o cachê que você propôs enquanto a candidatura espera a decisão do outro lado. budget_exceeded: O orçamento da campanha já está totalmente comprometido. Aumente o orçamento para continuar convidando criadores.",
+            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova. proposed_amount_not_adjustable: Só dá para aumentar o cachê que você propôs enquanto a candidatura espera a decisão do outro lado. budget_exceeded: O orçamento da campanha já está totalmente comprometido. Aumente o orçamento para continuar convidando criadores.",
             "content": {
               "application/json": {
                 "schema": {
@@ -16173,7 +16177,7 @@
             }
           },
           "409": {
-            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. scope_option_locked: O creator já enviou conteúdo e o escopo não pode mais ser trocado.",
+            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova. scope_option_locked: O creator já enviou conteúdo e o escopo não pode mais ser trocado.",
             "content": {
               "application/json": {
                 "schema": {
@@ -16323,7 +16327,7 @@
             }
           },
           "409": {
-            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes.",
+            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova.",
             "content": {
               "application/json": {
                 "schema": {
@@ -16473,7 +16477,7 @@
             }
           },
           "409": {
-            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. scope_amount_reserved: O pagamento deste creator já foi reservado, então o cachê não muda mais. scope_amount_already_approved: Este creator já tem entrega em andamento ou aprovada neste acordo, então o valor do acordo não muda. Reconvide sem alterar o valor. budget_exceeded: O orçamento da campanha já está totalmente comprometido. Aumente o orçamento para continuar convidando criadores. insufficient_balance: O saldo da marca não cobre esta campanha. Adicione saldo para veicular.",
+            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova. scope_amount_reserved: O pagamento deste creator já foi reservado, então o cachê não muda mais. scope_amount_already_approved: Este creator já tem entrega em andamento ou aprovada neste acordo, então o valor do acordo não muda. Reconvide sem alterar o valor. budget_exceeded: O orçamento da campanha já está totalmente comprometido. Aumente o orçamento para continuar convidando criadores. insufficient_balance: O saldo da marca não cobre esta campanha. Adicione saldo para veicular.",
             "content": {
               "application/json": {
                 "schema": {
@@ -16611,7 +16615,7 @@
             }
           },
           "409": {
-            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes.",
+            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova.",
             "content": {
               "application/json": {
                 "schema": {
@@ -16748,7 +16752,7 @@
             }
           },
           "409": {
-            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes.",
+            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova.",
             "content": {
               "application/json": {
                 "schema": {
@@ -16873,7 +16877,7 @@
             }
           },
           "409": {
-            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes.",
+            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova.",
             "content": {
               "application/json": {
                 "schema": {
@@ -16998,7 +17002,7 @@
             }
           },
           "409": {
-            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes.",
+            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova.",
             "content": {
               "application/json": {
                 "schema": {
@@ -17123,7 +17127,7 @@
             }
           },
           "409": {
-            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes.",
+            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova.",
             "content": {
               "application/json": {
                 "schema": {
@@ -17248,7 +17252,7 @@
             }
           },
           "409": {
-            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes.",
+            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova.",
             "content": {
               "application/json": {
                 "schema": {
@@ -17386,7 +17390,7 @@
             }
           },
           "409": {
-            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. awaiting_review: Este item ainda não passou pela aprovação anterior. not_submitted: O criador ainda não enviou este item para revisão. not_applicable: Esta campanha não exige a aprovação desta etapa. force_closed_mission: Esta entrega foi encerrada junto com a campanha e não pode voltar. Convide o criador numa campanha nova.",
+            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova. awaiting_review: Este item ainda não passou pela aprovação anterior. not_submitted: O criador ainda não enviou este item para revisão. not_applicable: Esta campanha não exige a aprovação desta etapa. force_closed_mission: Esta entrega foi encerrada junto com a campanha e não pode voltar. Convide o criador numa campanha nova.",
             "content": {
               "application/json": {
                 "schema": {
@@ -17524,7 +17528,7 @@
             }
           },
           "409": {
-            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. awaiting_review: Este item ainda não passou pela aprovação anterior. not_submitted: O criador ainda não enviou este item para revisão. not_applicable: Esta campanha não exige a aprovação desta etapa. force_closed_mission: Esta entrega foi encerrada junto com a campanha e não pode voltar. Convide o criador numa campanha nova.",
+            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova. awaiting_review: Este item ainda não passou pela aprovação anterior. not_submitted: O criador ainda não enviou este item para revisão. not_applicable: Esta campanha não exige a aprovação desta etapa. force_closed_mission: Esta entrega foi encerrada junto com a campanha e não pode voltar. Convide o criador numa campanha nova.",
             "content": {
               "application/json": {
                 "schema": {
@@ -17662,7 +17666,7 @@
             }
           },
           "409": {
-            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. awaiting_review: Este item ainda não passou pela aprovação anterior. not_submitted: O criador ainda não enviou este item para revisão. not_applicable: Esta campanha não exige a aprovação desta etapa. force_closed_mission: Esta entrega foi encerrada junto com a campanha e não pode voltar. Convide o criador numa campanha nova.",
+            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova. awaiting_review: Este item ainda não passou pela aprovação anterior. not_submitted: O criador ainda não enviou este item para revisão. not_applicable: Esta campanha não exige a aprovação desta etapa. force_closed_mission: Esta entrega foi encerrada junto com a campanha e não pode voltar. Convide o criador numa campanha nova.",
             "content": {
               "application/json": {
                 "schema": {
@@ -17816,7 +17820,7 @@
             }
           },
           "409": {
-            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. awaiting_review: Este item ainda não passou pela aprovação anterior. not_submitted: O criador ainda não enviou este item para revisão. not_applicable: Esta campanha não exige a aprovação desta etapa. force_closed_mission: Esta entrega foi encerrada junto com a campanha e não pode voltar. Convide o criador numa campanha nova.",
+            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova. awaiting_review: Este item ainda não passou pela aprovação anterior. not_submitted: O criador ainda não enviou este item para revisão. not_applicable: Esta campanha não exige a aprovação desta etapa. force_closed_mission: Esta entrega foi encerrada junto com a campanha e não pode voltar. Convide o criador numa campanha nova.",
             "content": {
               "application/json": {
                 "schema": {
@@ -17954,7 +17958,7 @@
             }
           },
           "409": {
-            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes.",
+            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova.",
             "content": {
               "application/json": {
                 "schema": {
@@ -18092,7 +18096,7 @@
             }
           },
           "409": {
-            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. awaiting_review: Este item ainda não passou pela aprovação anterior. not_submitted: O criador ainda não enviou este item para revisão. not_applicable: Esta campanha não exige a aprovação desta etapa. force_closed_mission: Esta entrega foi encerrada junto com a campanha e não pode voltar. Convide o criador numa campanha nova.",
+            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova. awaiting_review: Este item ainda não passou pela aprovação anterior. not_submitted: O criador ainda não enviou este item para revisão. not_applicable: Esta campanha não exige a aprovação desta etapa. force_closed_mission: Esta entrega foi encerrada junto com a campanha e não pode voltar. Convide o criador numa campanha nova.",
             "content": {
               "application/json": {
                 "schema": {
@@ -18230,7 +18234,7 @@
             }
           },
           "409": {
-            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. invalid_deadline: Prazo de alteração inválido. force_closed_mission: Esta entrega foi encerrada junto com a campanha e não pode voltar. Convide o criador numa campanha nova.",
+            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova. invalid_deadline: Prazo de alteração inválido. force_closed_mission: Esta entrega foi encerrada junto com a campanha e não pode voltar. Convide o criador numa campanha nova.",
             "content": {
               "application/json": {
                 "schema": {
@@ -18378,7 +18382,7 @@
             }
           },
           "409": {
-            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. invalid_deadline: Prazo de alteração inválido. already_sent: Esta entrega já foi enviada ao creator.",
+            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova. invalid_deadline: Prazo de alteração inválido. already_sent: Esta entrega já foi enviada ao creator.",
             "content": {
               "application/json": {
                 "schema": {
@@ -18516,7 +18520,7 @@
             }
           },
           "409": {
-            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. invalid_deadline: Prazo de alteração inválido.",
+            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova. invalid_deadline: Prazo de alteração inválido.",
             "content": {
               "application/json": {
                 "schema": {
@@ -18748,7 +18752,7 @@
             }
           },
           "409": {
-            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. invalid_deadline: Prazo de alteração inválido. already_invited: Este criador já tem um convite ou entrega em andamento nesta campanha. Aguarde a conclusão para convidar novamente. budget_exceeded: O orçamento da campanha já está totalmente comprometido. Aumente o orçamento para continuar convidando criadores.",
+            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova. invalid_deadline: Prazo de alteração inválido. already_invited: Este criador já tem um convite ou entrega em andamento nesta campanha. Aguarde a conclusão para convidar novamente. budget_exceeded: O orçamento da campanha já está totalmente comprometido. Aumente o orçamento para continuar convidando criadores.",
             "content": {
               "application/json": {
                 "schema": {
@@ -19075,7 +19079,7 @@
             }
           },
           "409": {
-            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes.",
+            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova.",
             "content": {
               "application/json": {
                 "schema": {
@@ -19213,7 +19217,7 @@
             }
           },
           "409": {
-            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. no_product: Esta campanha não tem produto para enviar. shipping_disabled: Esta campanha não tem envio físico do produto. already_received: O creator já confirmou o recebimento do produto.",
+            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova. no_product: Esta campanha não tem produto para enviar. shipping_disabled: Esta campanha não tem envio físico do produto. already_received: O creator já confirmou o recebimento do produto.",
             "content": {
               "application/json": {
                 "schema": {
@@ -19444,7 +19448,7 @@
             }
           },
           "409": {
-            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes.",
+            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova.",
             "content": {
               "application/json": {
                 "schema": {
@@ -19592,7 +19596,7 @@
             }
           },
           "409": {
-            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes.",
+            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova.",
             "content": {
               "application/json": {
                 "schema": {
@@ -19730,7 +19734,7 @@
             }
           },
           "409": {
-            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes.",
+            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova.",
             "content": {
               "application/json": {
                 "schema": {
@@ -19867,7 +19871,7 @@
             }
           },
           "409": {
-            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. coupon_exists: Este creator já tem um cupom ativo nesta campanha. coupon_code_taken: Este código já está em uso por outro cupom ativo da marca. coupon_canceled: Cupom cancelado não pode ser alterado. coupon_assigned: Este cupom está vinculado a outro creator. Desvincule-o antes de vincular a outro. coupon_mode_campaign: Esta campanha usa um cupom único. Não dá para vincular cupom por creator.",
+            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova. coupon_exists: Este creator já tem um cupom ativo nesta campanha. coupon_code_taken: Este código já está em uso por outro cupom ativo da marca. coupon_canceled: Cupom cancelado não pode ser alterado. coupon_assigned: Este cupom está vinculado a outro creator. Desvincule-o antes de vincular a outro. coupon_mode_campaign: Esta campanha usa um cupom único. Não dá para vincular cupom por creator.",
             "content": {
               "application/json": {
                 "schema": {
@@ -20120,7 +20124,7 @@
             }
           },
           "409": {
-            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes.",
+            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova.",
             "content": {
               "application/json": {
                 "schema": {
@@ -20839,7 +20843,7 @@
             }
           },
           "409": {
-            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes.",
+            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova.",
             "content": {
               "application/json": {
                 "schema": {
@@ -20976,7 +20980,7 @@
             }
           },
           "409": {
-            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes.",
+            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova.",
             "content": {
               "application/json": {
                 "schema": {
@@ -21123,7 +21127,7 @@
             }
           },
           "409": {
-            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes.",
+            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova.",
             "content": {
               "application/json": {
                 "schema": {
@@ -21657,7 +21661,7 @@
             }
           },
           "409": {
-            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes.",
+            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova.",
             "content": {
               "application/json": {
                 "schema": {
@@ -21785,7 +21789,7 @@
             }
           },
           "409": {
-            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes.",
+            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova.",
             "content": {
               "application/json": {
                 "schema": {
@@ -21913,7 +21917,7 @@
             }
           },
           "409": {
-            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes.",
+            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova.",
             "content": {
               "application/json": {
                 "schema": {
@@ -22289,7 +22293,7 @@
             }
           },
           "409": {
-            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes.",
+            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova.",
             "content": {
               "application/json": {
                 "schema": {
@@ -22436,7 +22440,7 @@
             }
           },
           "409": {
-            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes.",
+            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova.",
             "content": {
               "application/json": {
                 "schema": {
@@ -23460,7 +23464,7 @@
             }
           },
           "409": {
-            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes.",
+            "description": "invalid_transition: Transição de estado inválida. idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova.",
             "content": {
               "application/json": {
                 "schema": {
@@ -24525,7 +24529,7 @@
             }
           },
           "409": {
-            "description": "idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes.",
+            "description": "idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova.",
             "content": {
               "application/json": {
                 "schema": {
@@ -24795,7 +24799,7 @@
             }
           },
           "409": {
-            "description": "idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. conversation_closed: A conversa com o creator está encerrada.",
+            "description": "idempotency_in_progress: Uma requisição com esta Idempotency-Key ainda está em andamento. Tente de novo em instantes. idempotency_key_failed: A requisição anterior com esta Idempotency-Key falhou no meio e pode ter tido efeito. Confira o estado do recurso antes de repetir e, se for repetir, use uma Idempotency-Key nova. conversation_closed: A conversa com o creator está encerrada.",
             "content": {
               "application/json": {
                 "schema": {

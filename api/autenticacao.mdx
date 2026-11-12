@@ -102,7 +102,7 @@ Ler não precisa de escopo: toda chave lê o que a marca vê no painel. Escrever
 | Escopo | O que libera |
 |---|---|
 | `campaigns:write` | Criar rascunho de acordo, editar, pausar, encerrar, arquivar e excluir, subir e anexar arquivo, montar os cupons da campanha, e [operar o quadro](/api/referencia/quadro): candidaturas, entregas, prazos, briefing e remoção |
-| `campaigns:spend` | As ações que movem dinheiro da marca: publicar, renovar, editar acordo em `review`, subir o cachê do creator e depositar a verba de comissão dos cupons. Vale junto com `campaigns:write` |
+| `campaigns:spend` | As ações que movem dinheiro da marca: publicar, renovar, editar acordo em `review`, mudar verba, pagamento ou direito de uso de acordo publicado, subir o cachê do creator e depositar a verba de comissão dos cupons. Vale junto com `campaigns:write` |
 | `chat:write` | [Enviar mensagem ao creator](/api/referencia/mensagens) |
 
 `communities:write` e `ads:write` estão reservados: em breve, ainda sem rotas.
@@ -129,6 +129,7 @@ Uma chave sem escopos é só de leitura. `GET /me` devolve os escopos da chave e
 - publicar: `POST /campaigns` com `status: "review"` ou sem `status`, `PATCH /campaigns/{id}` com `status: "review"` e `POST /campaigns/{id}/status` com `status: "review"`;
 - renovar: `POST /campaigns/{id}/renew`;
 - editar acordo em `review`: ele está esperando saldo, e salvar a edição tenta pôr no ar e reservar a verba;
+- mexer no dinheiro de acordo publicado: `PATCH /campaigns/{id}` fora do rascunho que muda `budget_cents`, `usage_rights_duration`, `payment_type` ou `coupon_commission_budget_cents`, porque subir a verba compromete saldo da marca;
 - subir o cachê do creator: `PATCH .../applications/{application_id}/proposed-amount` e `PATCH .../creators/{creator_id}/scope-amount`;
 - depositar a verba de comissão dos cupons: `POST /campaigns/{id}/coupon-commission/budget`.
 

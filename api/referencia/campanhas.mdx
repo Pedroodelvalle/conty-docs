@@ -102,7 +102,7 @@ Quando a marca é assistida por uma agência que não liberou ver preço, `money
 </ResponseField>
 
 <ResponseField name="payment" type="object" required>
-  `type` é `per_video` (valor fixo por conteúdo), `per_view` (pelas visualizações) ou `permuta` (só produto). `per_view` traz `amount_per_1000_views_cents`, `min_cents`, `max_cents`, `bonus_every_views` e `bonus_cap_cents`, ou `null`. `product` traz `item`, `value_cents` e `description`, ou `null`. Na permuta pura, `amount_per_content_cents` é `null`.
+  `type` é `per_video` (valor fixo por conteúdo), `per_view` (pelas visualizações), `barter` (permuta, só produto) ou `affiliate` (só comissão sobre vendas). `per_view` traz `amount_per_1000_views_cents`, `min_cents`, `max_cents`, `bonus_every_views` e `bonus_cap_cents`, ou `null`. `product` traz `item`, `value_cents` e `description`, ou `null`. Na permuta pura, `amount_per_content_cents` é `null`.
 </ResponseField>
 
 <ResponseField name="creators_limit" type="integer | null" required>

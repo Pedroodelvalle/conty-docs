@@ -25,7 +25,7 @@ A chave cria e opera **acordos** pelo mesmo serviço do painel: as mesmas valida
 |---|---|
 | Conferir (`POST /campaigns/validate`) e as leituras de apoio | Nenhum |
 | Criar rascunho, editar, pausar, encerrar, arquivar, excluir, subir e anexar arquivo | `campaigns:write` |
-| Publicar, renovar e editar acordo em `review` | `campaigns:write` e `campaigns:spend` |
+| Publicar, renovar, editar acordo em `review` e, fora do rascunho, mudar `budget_cents`, `usage_rights_duration`, `payment_type` ou `coupon_commission_budget_cents` | `campaigns:write` e `campaigns:spend` |
 
 Sem o escopo, a API responde `403 insufficient_scope` com o escopo que falta em `details[0].required_scope`. Além do escopo, o cargo do dono da marca precisa da mesma permissão que o painel exige para a ação (`403 forbidden`). Veja [Escopos da chave](/api/autenticacao#escopos-da-chave).
 
@@ -209,10 +209,10 @@ Cada item de `briefings[]` tem `title` (até 80 caracteres), `body` e `attachmen
 
 | Campo | O que é |
 |---|---|
-| `payment_type` | `per_video`, `permuta` ou `affiliate` |
+| `payment_type` | `per_video`, `barter` ou `affiliate` |
 | `pay_per_video_cents` | Valor por conteúdo |
 | `payment_split_model` | `equal`, `per_creator` ou `creator_proposal`. Com `creator_proposal`, `proposal_suggested_amounts_cents` traz os valores sugeridos (veja `GET /campaigns/proposal-suggestions`) |
-| `permuta_item`, `permuta_description`, `permuta_value_cents` | Produto da permuta |
+| `barter_item`, `barter_description`, `barter_value_cents` | Produto da permuta (`barter`) |
 | `affiliate_commission_bps`, `affiliate_payer` | Comissão de afiliados e quem paga: `platform` ou `external` |
 | `payment_terms_days`, `payment_due_days` | Condições de pagamento, de 0 a 90 e de 1 a 90 dias |
 | `coupon_commission_bps`, `coupon_commission_budget_cents`, `coupon_mode`, `coupon_pool` | Cupom do creator: taxa, verba da comissão, modo (`per_creator` ou `campaign`) e lista de códigos |
@@ -300,6 +300,7 @@ curl -X PATCH https://api.appconty.com/public/v1/campaigns/6c1e8f2a-3b4d-4a5c-9e
 - **Entregas**: mudam por `add_deliverables[]` (mesmo formato da criação), `update_deliverables[]` (com `block_id`) e `remove_deliverables[]` (lista de `blocks[].id`).
 - **Publicar pela edição**: `status: "review"` publica o rascunho e pede `campaigns:spend`.
 - **Acordo em `review`**: está esperando saldo, e salvar qualquer edição nele tenta pôr no ar e reservar a verba, como o **Salvar alterações** do painel. Por isso editar acordo em `review` também pede `campaigns:spend`.
+- **Dinheiro fora do rascunho**: em acordo já publicado, mudar `budget_cents`, `usage_rights_duration`, `payment_type` ou `coupon_commission_budget_cents` também pede `campaigns:spend`, porque subir a verba compromete saldo da marca. No rascunho, `campaigns:write` basta.
 - **Travas**: campo travado depois de publicar ou com creator contratado responde `409` com o código da trava, como `campaign_fields_locked`, `scope_value_locked`, `scope_option_in_use`, `briefing_in_use` e `group_block_in_use`.
 - **Avisos**: mudar termos ou briefing avisa os creators, como no painel.
 
@@ -501,6 +502,7 @@ Em todos os casos abaixo, nada é gravado. A lista completa de cada rota está n
 | 409 | `campaign_fields_locked` | O campo não muda mais depois de publicar ou com creator contratado |
 | 409 | `credit_line_overdue`, `billing_overdue` | Há saldo a prazo, fatura ou mensalidade em atraso |
 | 409 | `idempotency_in_progress` | Outra requisição com a mesma `Idempotency-Key` ainda está em andamento |
+| 409 | `idempotency_key_failed` | A requisição anterior com a mesma `Idempotency-Key` falhou no meio (`5xx`) e pode ter tido efeito. Confira a campanha e, se for repetir, use uma chave nova |
 | 422 | `validation_failed` | Campo inválido, campo fora do contrato ou valor com fração. O campo vem em `details[].path` |
 | 422 | `unsupported_for_campaign_model` | `kind` diferente de `agreement`, marca que não usa acordos, ou escrita em campanha avulsa legada |
 | 422 | `end_date_required` | Publicar sem data de término |
@@ -508,4 +510,4 @@ Em todos os casos abaixo, nada é gravado. A lista completa de cada rota está n
 | 422 | `invalid_upload_ref` | `upload_ref` de outra marca, de outra finalidade, ou arquivo ainda não enviado |
 | 422 | `invalid_delivery_format` | `formats` que a `network` da entrega não aceita |
 | 422 | `invalid_briefing` | Briefing sem título único, ou sem texto nem anexo |
-| 422 | `idempotency_key_required`, `idempotency_key_reused` | Falta o cabeçalho numa rota que cria, ou a chave já foi usada com outra requisição |
+| 422 | `idempotency_key_required`, `idempotency_key_reused` | Falta o cabeçalho numa rota que cria, ou a chave já foi usada com outra requisição ou por outra chave de API |
