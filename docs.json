@@ -63,6 +63,26 @@
   },
   "redirects": [
     {
+      "source": "/api/referencia/em-breve/aprovar-candidatura",
+      "destination": "/api/referencia/quadro"
+    },
+    {
+      "source": "/api/referencia/em-breve/aprovar-entrega",
+      "destination": "/api/referencia/entrega-e-pos-entrega"
+    },
+    {
+      "source": "/api/referencia/em-breve/criar-campanha",
+      "destination": "/api/referencia/campanhas-escrita"
+    },
+    {
+      "source": "/api/referencia/em-breve/pedir-alteracao",
+      "destination": "/api/referencia/entrega-e-pos-entrega"
+    },
+    {
+      "source": "/api/referencia/em-breve/recusar-creator",
+      "destination": "/api/referencia/quadro"
+    },
+    {
       "source": "/api/guias/assinatura-sem-conector",
       "destination": "/api/guias/vendas-sem-conector"
     },
