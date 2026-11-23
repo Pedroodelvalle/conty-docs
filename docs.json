@@ -744,7 +744,8 @@
                       "api/guias/vendas-sem-conector",
                       "api/guias/eventos-de-conversao",
                       "api/guias/acompanhar-quadro",
-                      "api/guias/agente-cria-campanha"
+                      "api/guias/agente-cria-campanha",
+                      "api/guias/agencia-operar-clientes"
                     ]
                   }
                 ]
@@ -820,7 +821,8 @@
                         "expanded": false,
                         "openapi": "api/openapi.json",
                         "pages": [
-                          "GET /me"
+                          "GET /me",
+                          "GET /brands"
                         ]
                       },
                       {

@@ -10,6 +10,8 @@ keywords:
   - mission.product_delivered_by_carrier
   - mission.video_submitted
   - mission.post_link_added
+  - mission.ad_code_submitted
+  - código do anúncio
   - mission.approved
   - mission.changes_requested
   - mission.rejected
@@ -27,6 +29,7 @@ Todo evento usa o [envelope comum](/api/webhooks/visao-geral). O que muda de um 
 | `mission.caption_submitted` | A legenda foi enviada depois do vídeo |
 | `mission.video_submitted` | O vídeo (ou a entrega em outro formato) foi enviado ou reenviado |
 | `mission.post_link_added` | O link do post foi confirmado na missão |
+| `mission.ad_code_submitted` | O creator gravou o código do anúncio na missão aprovada |
 | `mission.changes_requested` | A marca ou a agência pediu para refazer o roteiro, o vídeo, a capa ou a legenda |
 | `mission.approved` | A entrega foi aprovada e a missão está concluída |
 | `mission.rejected` | A missão foi recusada de vez, pela marca ou pelo creator |
@@ -50,6 +53,10 @@ Todo evento usa o [envelope comum](/api/webhooks/visao-geral). O que muda de um 
 <ResponseField name="data.mission" type="object" required>
   A missão: `id`, `status` e `platform` (`instagram`, `tiktok`, `youtube`, `x` ou `null`). Em `mission.rejected`, também `rejected_by`.
 </ResponseField>
+
+<Tip>
+  Agência recebe neste mesmo formato os eventos dos clientes cobertos pelo endpoint dela, com o cliente em `data.brand`. Veja [Operar clientes como agência](/api/guias/agencia-operar-clientes#webhook-da-agência).
+</Tip>
 
 ## Envios do creator
 
@@ -212,6 +219,37 @@ O link do post ficou confirmado na missão. Link recusado (post inacessível, de
     "creator": { "id": "8d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a", "name": "Fulana Souza", "handle": "@fulana" },
     "mission": { "id": "c3a2b1d0-e9f8-4a7b-9c6d-5e4f3a2b1c0d", "status": "aprovado", "platform": "instagram" },
     "post": { "url": "https://www.instagram.com/reel/DAbC123xYz/", "platform": "instagram", "by": "creator" }
+  }
+}
+```
+
+## Código do anúncio
+
+### mission.ad_code_submitted
+
+Na campanha que pede código de anúncio, o creator grava na missão aprovada o código de autorização do post, para a marca impulsionar como anúncio. O evento sai quando o código gravado é novo e não vazio. Gravar o mesmo código de novo, ou apagar o código, não gera evento. Trocar por outro código gera um evento novo.
+
+<ResponseField name="data.ad_code.code" type="string" required>
+  O código do anúncio, como o creator gravou, sem espaço nas pontas.
+</ResponseField>
+
+```json
+{
+  "id": "4b3a2c1d-0e9f-4a8b-9c7d-6e5f4a3b2c1d",
+  "type": "mission.ad_code_submitted",
+  "created_at": "2026-11-23T16:28:09.893Z",
+  "tenant": "conty",
+  "summary": "Marca Exemplo: Fulana Souza enviou o código do anúncio da campanha \"Outubro\".",
+  "data": {
+    "brand": { "id": "5e4d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c1b", "name": "Marca Exemplo" },
+    "campaign": {
+      "id": "2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5",
+      "name": "Outubro",
+      "url": "https://appconty.com/campaigns/2b7e1f0a-9c8d-4e3f-a2b1-c0d9e8f7a6b5"
+    },
+    "creator": { "id": "8d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a", "name": "Fulana Souza", "handle": "@fulana" },
+    "mission": { "id": "c3a2b1d0-e9f8-4a7b-9c6d-5e4f3a2b1c0d", "status": "aprovado", "platform": "instagram" },
+    "ad_code": { "code": "OUTUBRO-AD-0042" }
   }
 }
 ```

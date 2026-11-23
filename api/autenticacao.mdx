@@ -9,7 +9,7 @@ keywords:
   - autenticação
 ---
 
-Toda chamada à API leva uma chave de API no cabeçalho `Authorization`, no esquema Bearer. A chave já identifica a sua marca; não há cabeçalho extra.
+Toda chamada à API leva uma chave de API no cabeçalho `Authorization`, no esquema Bearer. A chave da marca já identifica a sua marca; não há cabeçalho extra. A chave de agência indica o cliente no cabeçalho `X-Conty-Brand-Id`: veja [Chave de agência](#chave-de-agência).
 
 ## Formato da chave
 
@@ -90,6 +90,26 @@ A API pública, os webhooks e os cupons são liberados por marca pela Conty. Fal
 ```
 
 Nos tenants com planos, a marca sem plano ativo recebe `403 plan_required`. A chave não é revogada e volta a funcionar quando a marca assina.
+
+## Chave de agência
+
+A chave criada no painel de uma agência opera os clientes vinculados a ela. Em cada chamada, mande o ID da empresa do cliente no cabeçalho `X-Conty-Brand-Id`. A API responde sobre o cliente, com as permissões que a agência tem nele no painel e os escopos da chave. `GET /brands` lista os clientes, e `GET /me` descreve a empresa dona da chave. As duas ignoram o cabeçalho, mesmo com um ID inválido.
+
+```bash
+curl "https://api.appconty.com/public/v1/campaigns" \
+  -H "Authorization: Bearer $CONTY_API_KEY" \
+  -H "X-Conty-Brand-Id: 5e4d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c1b"
+```
+
+| Situação | Resposta |
+|---|---|
+| Chave de agência sem o cabeçalho numa rota de marca | `403 forbidden` |
+| ID que não é de cliente vinculado à agência, cliente excluído ou valor que não é UUID | `403 brand_not_managed` |
+| ID de cliente bloqueado | `403 brand_blocked` |
+| Chave de marca com o ID de outra marca, ou chamando `GET /brands` | `403 agency_only` |
+| Chave de marca com o ID da própria marca | O cabeçalho é ignorado |
+
+Onde achar o ID de cada cliente e o passo a passo completo estão em [Operar clientes como agência](/api/guias/agencia-operar-clientes).
 
 ## Escopos da chave
 

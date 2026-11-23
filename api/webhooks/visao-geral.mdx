@@ -38,6 +38,10 @@ Webhook é a Conty avisando o seu sistema. Em vez de consultar a API de tempos e
 
 Cada marca pode ter até 5 endpoints. Um endpoint pode ser pausado sem ser apagado: pausado, ele não recebe nada.
 
+<Note>
+  **Agência.** O endpoint da agência cobre sempre a própria agência, mais os clientes listados em `brand_ids` (até 50). Sem a lista, ou com `[]`, cobre só a agência; cliente novo só entra editando o endpoint, e cliente que sai da agência para de gerar eventos. A tela do painel ainda não tem o seletor de clientes: enquanto isso, a Conty grava os clientes cobertos. Veja [Operar clientes como agência](/api/guias/agencia-operar-clientes#webhook-da-agência).
+</Note>
+
 ## A requisição
 
 Toda entrega é um `POST` com corpo JSON e estes cabeçalhos:
@@ -90,7 +94,7 @@ O corpo tem sempre o mesmo envelope:
 </ResponseField>
 
 <ResponseField name="data" type="object" required>
-  O contexto do evento: `brand`, `campaign`, `creator`, `mission` e, conforme o tipo, `submission` ou `post`.
+  O contexto do evento: `brand`, `campaign`, `creator`, `mission` e, conforme o tipo, `submission`, `post` ou `ad_code`.
 </ResponseField>
 
 O payload nunca traz e-mail, telefone, documento, endereço, valor do cachê nem o conteúdo enviado (texto do roteiro, legenda ou arquivo de mídia).
@@ -110,6 +114,7 @@ O payload nunca traz e-mail, telefone, documento, endereço, valor do cachê nem
 | `mission.caption_submitted` | A legenda foi enviada depois do vídeo | [Missões](/api/webhooks/eventos/missoes) |
 | `mission.video_submitted` | O vídeo (ou a entrega em outro formato) foi enviado ou reenviado | [Missões](/api/webhooks/eventos/missoes) |
 | `mission.post_link_added` | O link do post foi confirmado na missão | [Missões](/api/webhooks/eventos/missoes) |
+| `mission.ad_code_submitted` | O creator gravou o código do anúncio na missão aprovada | [Missões](/api/webhooks/eventos/missoes#código-do-anúncio) |
 | `mission.changes_requested` | A marca ou a agência pediu para refazer parte do conteúdo | [Missões](/api/webhooks/eventos/missoes) |
 | `mission.approved` | A entrega foi aprovada e a missão está concluída | [Missões](/api/webhooks/eventos/missoes) |
 | `mission.rejected` | A missão foi recusada de vez, pela marca ou pelo creator | [Missões](/api/webhooks/eventos/missoes) |
