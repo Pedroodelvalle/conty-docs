@@ -20,10 +20,16 @@
       "apiKey": {
         "type": "http",
         "scheme": "bearer",
-        "description": "Chave de API da marca, no formato ck_live_<token>."
+        "description": "Chave de API da marca ou da agência, no formato ck_live_<token>. A chave de agência indica o cliente no cabeçalho X-Conty-Brand-Id."
       }
     },
     "schemas": {
+      "BrandContextHeader": {
+        "type": "string",
+        "format": "uuid",
+        "description": "Id do cliente que a chave da agência vai operar (veja GET /brands). Chave de agência sem ele recebe 403 nas rotas de marca. Chave de marca: omita ou envie o próprio id.",
+        "example": "11111111-1111-4111-8111-111111111111"
+      },
       "Me": {
         "type": "object",
         "properties": {
@@ -223,6 +229,9 @@
                   "insufficient_scope",
                   "chat_forbidden",
                   "forbidden",
+                  "brand_not_managed",
+                  "agency_only",
+                  "brand_blocked",
                   "module_disabled",
                   "not_found",
                   "coupon_exists",
@@ -334,6 +343,66 @@
             "request_id": "req_01JABCDEF"
           }
         }
+      },
+      "BrandList": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Brand"
+            },
+            "description": "Itens da página."
+          },
+          "has_more": {
+            "type": "boolean",
+            "description": "Se existe uma próxima página.",
+            "example": false
+          },
+          "next_cursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Cursor da próxima página, ou nulo na última.",
+            "example": null
+          }
+        },
+        "required": [
+          "data",
+          "has_more",
+          "next_cursor"
+        ]
+      },
+      "Brand": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Id da marca. Vai em X-Conty-Brand-Id."
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Nome da marca."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "blocked"
+            ],
+            "description": "Status da conta da marca: active ou blocked."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "status"
+        ]
       },
       "Coupon": {
         "type": "object",
@@ -1140,6 +1209,13 @@
             ],
             "maxLength": 64
           },
+          "invoice_instructions": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 2000
+          },
           "tracking_pixel_id": {
             "type": "string",
             "format": "uuid"
@@ -1398,6 +1474,9 @@
                 "type": "boolean"
               },
               "requires_ad_code": {
+                "type": "boolean"
+              },
+              "allows_script_file": {
                 "type": "boolean"
               },
               "requires_product_shipping": {
@@ -2926,6 +3005,13 @@
             ],
             "maxLength": 64
           },
+          "invoice_instructions": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 2000
+          },
           "tracking_pixel_id": {
             "type": "string",
             "format": "uuid"
@@ -3184,6 +3270,9 @@
                 "type": "boolean"
               },
               "requires_ad_code": {
+                "type": "boolean"
+              },
+              "allows_script_file": {
                 "type": "boolean"
               },
               "requires_product_shipping": {
@@ -3620,6 +3709,13 @@
             ],
             "maxLength": 64
           },
+          "invoice_instructions": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 2000
+          },
           "tracking_pixel_id": {
             "type": [
               "string",
@@ -3884,6 +3980,9 @@
                 "type": "boolean"
               },
               "requires_ad_code": {
+                "type": "boolean"
+              },
+              "allows_script_file": {
                 "type": "boolean"
               },
               "requires_product_shipping": {
@@ -4936,7 +5035,9 @@
           "content.adjusting",
           "content.release",
           "content.approved",
-          "content.published"
+          "content.published",
+          "content.analyticsReview",
+          "content.analyticsResend"
         ],
         "description": "Id da etapa do quadro, como /stages devolve.",
         "example": "approved"
@@ -9648,7 +9749,9 @@
                     "content.adjusting",
                     "content.release",
                     "content.approved",
-                    "content.published"
+                    "content.published",
+                    "content.analyticsReview",
+                    "content.analyticsResend"
                   ],
                   "description": "Id da etapa do quadro, como /stages devolve.",
                   "example": "approved"
@@ -11935,7 +12038,17 @@
         "description": "Mídia da mensagem, ou nulo na mensagem de texto e na apagada. Imagem, áudio e vídeo vêm com link público; arquivo vem com link assinado que expira em 1 hora, e buscar a página de novo renova o link."
       }
     },
-    "parameters": {}
+    "parameters": {
+      "BrandContextHeader": {
+        "schema": {
+          "$ref": "#/components/schemas/BrandContextHeader"
+        },
+        "required": false,
+        "description": "Id do cliente que a chave da agência vai operar (veja GET /brands). Chave de agência sem ele recebe 403 nas rotas de marca. Chave de marca: omita ou envie o próprio id.",
+        "name": "X-Conty-Brand-Id",
+        "in": "header"
+      }
+    }
   },
   "paths": {
     "/me": {
@@ -11999,6 +12112,104 @@
         }
       }
     },
+    "/brands": {
+      "get": {
+        "tags": [
+          "Conta"
+        ],
+        "summary": "Listar clientes da agência",
+        "description": "Lista as marcas vinculadas à agência dona da chave, da mais nova para a mais antiga, sem as excluídas. O id de cada uma vai no cabeçalho X-Conty-Brand-Id para operar como ela. Ignora o cabeçalho X-Conty-Brand-Id. Chave de marca responde 403 agency_only.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "description": "Quantos itens por página, de 1 a 100. Padrão 20.",
+              "example": 20
+            },
+            "required": false,
+            "description": "Quantos itens por página, de 1 a 100. Padrão 20.",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Cursor opaco devolvido em next_cursor pela página anterior."
+            },
+            "required": false,
+            "description": "Cursor opaco devolvido em next_cursor pela página anterior.",
+            "name": "cursor",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Página de clientes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrandList"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "invalid_api_key: Chave de API ausente, inválida ou revogada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. agency_only: Só a chave de uma agência pode usar este recurso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "validation_failed: Os dados enviados são inválidos.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "rate_limited: Limite de requisições atingido. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "internal_error: Erro interno. Tente de novo em instantes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/coupons": {
       "post": {
         "tags": [
@@ -12019,6 +12230,9 @@
             "description": "Chave de idempotência, de 1 a 255 caracteres. Repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -12053,7 +12267,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. coupons_disabled: O cupom por creator não está liberado para esta conta.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. coupons_disabled: O cupom por creator não está liberado para esta conta.",
             "content": {
               "application/json": {
                 "schema": {
@@ -12209,6 +12423,9 @@
             "description": "Código do cupom. Espaços nas pontas saem e as letras viram maiúsculas.",
             "name": "code",
             "in": "query"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "responses": {
@@ -12233,7 +12450,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. coupons_disabled: O cupom por creator não está liberado para esta conta.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. coupons_disabled: O cupom por creator não está liberado para esta conta.",
             "content": {
               "application/json": {
                 "schema": {
@@ -12294,6 +12511,9 @@
             "description": "Id do cupom.",
             "name": "id",
             "in": "path"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "responses": {
@@ -12318,7 +12538,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. coupons_disabled: O cupom por creator não está liberado para esta conta.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. coupons_disabled: O cupom por creator não está liberado para esta conta.",
             "content": {
               "application/json": {
                 "schema": {
@@ -12387,6 +12607,9 @@
             "description": "Id do cupom.",
             "name": "id",
             "in": "path"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -12421,7 +12644,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. coupons_disabled: O cupom por creator não está liberado para esta conta.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. coupons_disabled: O cupom por creator não está liberado para esta conta.",
             "content": {
               "application/json": {
                 "schema": {
@@ -12502,6 +12725,9 @@
             "description": "Id do cupom.",
             "name": "id",
             "in": "path"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -12536,7 +12762,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. coupons_disabled: O cupom por creator não está liberado para esta conta.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. coupons_disabled: O cupom por creator não está liberado para esta conta.",
             "content": {
               "application/json": {
                 "schema": {
@@ -12617,6 +12843,9 @@
             "description": "Id do cupom.",
             "name": "id",
             "in": "path"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "responses": {
@@ -12641,7 +12870,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. coupons_disabled: O cupom por creator não está liberado para esta conta.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. coupons_disabled: O cupom por creator não está liberado para esta conta.",
             "content": {
               "application/json": {
                 "schema": {
@@ -12735,6 +12964,9 @@
             "description": "Id da venda no seu sistema. Repetir o mesmo id atualiza a venda em vez de criar outra.",
             "name": "external_id",
             "in": "path"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -12779,7 +13011,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. coupons_disabled: O cupom por creator não está liberado para esta conta.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. coupons_disabled: O cupom por creator não está liberado para esta conta.",
             "content": {
               "application/json": {
                 "schema": {
@@ -12875,6 +13107,9 @@
             "description": "Cursor opaco devolvido em next_cursor pela página anterior.",
             "name": "cursor",
             "in": "query"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "responses": {
@@ -12899,7 +13134,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. coupons_disabled: O cupom por creator não está liberado para esta conta.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. coupons_disabled: O cupom por creator não está liberado para esta conta.",
             "content": {
               "application/json": {
                 "schema": {
@@ -12990,7 +13225,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas.",
             "content": {
               "application/json": {
                 "schema": {
@@ -13029,7 +13264,12 @@
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
+          }
+        ]
       }
     },
     "/campaigns/proposal-suggestions": {
@@ -13067,6 +13307,9 @@
             "description": "Quantos creators a campanha quer contratar.",
             "name": "creators_limit",
             "in": "query"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "responses": {
@@ -13091,7 +13334,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas.",
             "content": {
               "application/json": {
                 "schema": {
@@ -13152,6 +13395,9 @@
             "description": "Obrigatória nesta rota. Chave de idempotência, de 1 a 255 caracteres: repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -13294,7 +13540,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação. coupon_commission_budget_forbidden: Você não tem permissão para definir a verba da comissão.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação. coupon_commission_budget_forbidden: Você não tem permissão para definir a verba da comissão.",
             "content": {
               "application/json": {
                 "schema": {
@@ -13411,6 +13657,9 @@
             "description": "Busca pelo nome da campanha.",
             "name": "q",
             "in": "query"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "responses": {
@@ -13435,7 +13684,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas.",
             "content": {
               "application/json": {
                 "schema": {
@@ -13509,6 +13758,9 @@
             "description": "Chave de idempotência, de 1 a 255 caracteres. Repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -13563,7 +13815,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação. coupon_commission_budget_forbidden: Você não tem permissão para definir a verba da comissão.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação. coupon_commission_budget_forbidden: Você não tem permissão para definir a verba da comissão.",
             "content": {
               "application/json": {
                 "schema": {
@@ -13642,6 +13894,9 @@
             "description": "Id da campanha. Id de um bloco de campanha com kind agreement responde 404.",
             "name": "id",
             "in": "path"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "responses": {
@@ -13659,7 +13914,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
             "content": {
               "application/json": {
                 "schema": {
@@ -13738,6 +13993,9 @@
             "description": "Id da campanha. Id de um bloco de campanha com kind agreement responde 404.",
             "name": "id",
             "in": "path"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "responses": {
@@ -13762,7 +14020,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas.",
             "content": {
               "application/json": {
                 "schema": {
@@ -13846,6 +14104,9 @@
             "description": "Chave de idempotência, de 1 a 255 caracteres. Repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -13890,7 +14151,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação. coupon_commission_budget_forbidden: Você não tem permissão para definir a verba da comissão.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação. coupon_commission_budget_forbidden: Você não tem permissão para definir a verba da comissão.",
             "content": {
               "application/json": {
                 "schema": {
@@ -13983,6 +14244,9 @@
             "description": "Obrigatória nesta rota. Chave de idempotência, de 1 a 255 caracteres: repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -14027,7 +14291,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
             "content": {
               "application/json": {
                 "schema": {
@@ -14108,6 +14372,9 @@
             "description": "Id da campanha. Id de um bloco de campanha com kind agreement responde 404.",
             "name": "id",
             "in": "path"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "responses": {
@@ -14132,7 +14399,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas.",
             "content": {
               "application/json": {
                 "schema": {
@@ -14242,6 +14509,9 @@
             "description": "Busca pelo título do briefing.",
             "name": "q",
             "in": "query"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "responses": {
@@ -14266,7 +14536,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas.",
             "content": {
               "application/json": {
                 "schema": {
@@ -14349,6 +14619,9 @@
             "description": "Obrigatória nesta rota. Chave de idempotência, de 1 a 255 caracteres: repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -14383,7 +14656,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
             "content": {
               "application/json": {
                 "schema": {
@@ -14464,6 +14737,9 @@
             "description": "Obrigatória nesta rota. Chave de idempotência, de 1 a 255 caracteres: repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -14498,7 +14774,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige.",
             "content": {
               "application/json": {
                 "schema": {
@@ -14589,7 +14865,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige.",
             "content": {
               "application/json": {
                 "schema": {
@@ -14628,7 +14904,12 @@
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
+          }
+        ]
       }
     },
     "/campaigns/{id}/stages": {
@@ -14663,6 +14944,9 @@
             "description": "Busca de creator (nome, @instagram, @tiktok). A contagem passa a contar só quem casa.",
             "name": "q",
             "in": "query"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "responses": {
@@ -14687,7 +14971,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas.",
             "content": {
               "application/json": {
                 "schema": {
@@ -15106,6 +15390,9 @@
             "description": "Em quantas dessas campanhas, no mínimo, o creator precisa estar.",
             "name": "elsewhere_min",
             "in": "query"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "responses": {
@@ -15130,7 +15417,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas.",
             "content": {
               "application/json": {
                 "schema": {
@@ -15226,6 +15513,9 @@
             "description": "Chave de idempotência, de 1 a 255 caracteres. Repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -15260,7 +15550,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
             "content": {
               "application/json": {
                 "schema": {
@@ -15376,6 +15666,9 @@
             "description": "Chave de idempotência, de 1 a 255 caracteres. Repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -15410,7 +15703,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
             "content": {
               "application/json": {
                 "schema": {
@@ -15513,6 +15806,9 @@
             "description": "Obrigatória nesta rota. Chave de idempotência, de 1 a 255 caracteres: repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -15557,7 +15853,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
             "content": {
               "application/json": {
                 "schema": {
@@ -15673,6 +15969,9 @@
             "description": "Chave de idempotência, de 1 a 255 caracteres. Repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -15707,7 +16006,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
             "content": {
               "application/json": {
                 "schema": {
@@ -15823,6 +16122,9 @@
             "description": "Chave de idempotência, de 1 a 255 caracteres. Repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -15857,7 +16159,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
             "content": {
               "application/json": {
                 "schema": {
@@ -15973,6 +16275,9 @@
             "description": "Chave de idempotência, de 1 a 255 caracteres. Repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -16007,7 +16312,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação. module_disabled: Este recurso do painel não está ligado para esta marca.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação. module_disabled: Este recurso do painel não está ligado para esta marca.",
             "content": {
               "application/json": {
                 "schema": {
@@ -16123,6 +16428,9 @@
             "description": "Chave de idempotência, de 1 a 255 caracteres. Repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -16157,7 +16465,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
             "content": {
               "application/json": {
                 "schema": {
@@ -16273,6 +16581,9 @@
             "description": "Chave de idempotência, de 1 a 255 caracteres. Repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -16307,7 +16618,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
             "content": {
               "application/json": {
                 "schema": {
@@ -16423,6 +16734,9 @@
             "description": "Chave de idempotência, de 1 a 255 caracteres. Repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -16457,7 +16771,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação. module_disabled: Este recurso do painel não está ligado para esta marca.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação. module_disabled: Este recurso do painel não está ligado para esta marca.",
             "content": {
               "application/json": {
                 "schema": {
@@ -16561,6 +16875,9 @@
             "description": "Chave de idempotência, de 1 a 255 caracteres. Repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -16595,7 +16912,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
             "content": {
               "application/json": {
                 "schema": {
@@ -16698,6 +17015,9 @@
             "description": "Obrigatória nesta rota. Chave de idempotência, de 1 a 255 caracteres: repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -16732,7 +17052,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
             "content": {
               "application/json": {
                 "schema": {
@@ -16823,6 +17143,9 @@
             "description": "Obrigatória nesta rota. Chave de idempotência, de 1 a 255 caracteres: repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -16857,7 +17180,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
             "content": {
               "application/json": {
                 "schema": {
@@ -16948,6 +17271,9 @@
             "description": "Obrigatória nesta rota. Chave de idempotência, de 1 a 255 caracteres: repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -16982,7 +17308,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
             "content": {
               "application/json": {
                 "schema": {
@@ -17073,6 +17399,9 @@
             "description": "Obrigatória nesta rota. Chave de idempotência, de 1 a 255 caracteres: repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -17107,7 +17436,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação. module_disabled: Este recurso do painel não está ligado para esta marca.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação. module_disabled: Este recurso do painel não está ligado para esta marca.",
             "content": {
               "application/json": {
                 "schema": {
@@ -17198,6 +17527,9 @@
             "description": "Obrigatória nesta rota. Chave de idempotência, de 1 a 255 caracteres: repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -17232,7 +17564,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
             "content": {
               "application/json": {
                 "schema": {
@@ -17336,6 +17668,9 @@
             "description": "Chave de idempotência, de 1 a 255 caracteres. Repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -17370,7 +17705,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
             "content": {
               "application/json": {
                 "schema": {
@@ -17474,6 +17809,9 @@
             "description": "Chave de idempotência, de 1 a 255 caracteres. Repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -17508,7 +17846,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
             "content": {
               "application/json": {
                 "schema": {
@@ -17612,6 +17950,9 @@
             "description": "Chave de idempotência, de 1 a 255 caracteres. Repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -17646,7 +17987,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
             "content": {
               "application/json": {
                 "schema": {
@@ -17766,6 +18107,9 @@
             "description": "Chave de idempotência, de 1 a 255 caracteres. Repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -17800,7 +18144,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
             "content": {
               "application/json": {
                 "schema": {
@@ -17904,6 +18248,9 @@
             "description": "Chave de idempotência, de 1 a 255 caracteres. Repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -17938,7 +18285,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
             "content": {
               "application/json": {
                 "schema": {
@@ -18042,6 +18389,9 @@
             "description": "Chave de idempotência, de 1 a 255 caracteres. Repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -18076,7 +18426,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
             "content": {
               "application/json": {
                 "schema": {
@@ -18180,6 +18530,9 @@
             "description": "Chave de idempotência, de 1 a 255 caracteres. Repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -18214,7 +18567,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
             "content": {
               "application/json": {
                 "schema": {
@@ -18318,6 +18671,9 @@
             "description": "Chave de idempotência, de 1 a 255 caracteres. Repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -18362,7 +18718,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação. module_disabled: Este recurso do painel não está ligado para esta marca.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação. module_disabled: Este recurso do painel não está ligado para esta marca.",
             "content": {
               "application/json": {
                 "schema": {
@@ -18466,6 +18822,9 @@
             "description": "Chave de idempotência, de 1 a 255 caracteres. Repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -18500,7 +18859,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
             "content": {
               "application/json": {
                 "schema": {
@@ -18591,6 +18950,9 @@
             "description": "Id da missão.",
             "name": "id",
             "in": "path"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "responses": {
@@ -18615,7 +18977,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas.",
             "content": {
               "application/json": {
                 "schema": {
@@ -18698,6 +19060,9 @@
             "description": "Obrigatória nesta rota. Chave de idempotência, de 1 a 255 caracteres: repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -18732,7 +19097,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
             "content": {
               "application/json": {
                 "schema": {
@@ -18823,6 +19188,9 @@
             "description": "Id da missão.",
             "name": "id",
             "in": "path"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "responses": {
@@ -18840,7 +19208,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
             "content": {
               "application/json": {
                 "schema": {
@@ -18929,6 +19297,9 @@
             "description": "Id da missão.",
             "name": "id",
             "in": "path"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "responses": {
@@ -18953,7 +19324,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas.",
             "content": {
               "application/json": {
                 "schema": {
@@ -19025,6 +19396,9 @@
             "description": "Chave de idempotência, de 1 a 255 caracteres. Repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -19059,7 +19433,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação. module_disabled: Este recurso do painel não está ligado para esta marca.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação. module_disabled: Este recurso do painel não está ligado para esta marca.",
             "content": {
               "application/json": {
                 "schema": {
@@ -19163,6 +19537,9 @@
             "description": "Chave de idempotência, de 1 a 255 caracteres. Repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -19197,7 +19574,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
             "content": {
               "application/json": {
                 "schema": {
@@ -19286,6 +19663,9 @@
             "description": "Id da missão.",
             "name": "id",
             "in": "path"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "responses": {
@@ -19310,7 +19690,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada.",
             "content": {
               "application/json": {
                 "schema": {
@@ -19394,6 +19774,9 @@
             "description": "Chave de idempotência, de 1 a 255 caracteres. Repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -19428,7 +19811,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
             "content": {
               "application/json": {
                 "schema": {
@@ -19542,6 +19925,9 @@
             "description": "Chave de idempotência, de 1 a 255 caracteres. Repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -19576,7 +19962,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação. module_disabled: Este recurso do painel não está ligado para esta marca.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação. module_disabled: Este recurso do painel não está ligado para esta marca.",
             "content": {
               "application/json": {
                 "schema": {
@@ -19680,6 +20066,9 @@
             "description": "Chave de idempotência, de 1 a 255 caracteres. Repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -19714,7 +20103,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação. module_disabled: Este recurso do painel não está ligado para esta marca.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação. module_disabled: Este recurso do painel não está ligado para esta marca.",
             "content": {
               "application/json": {
                 "schema": {
@@ -19817,6 +20206,9 @@
             "description": "Obrigatória nesta rota. Chave de idempotência, de 1 a 255 caracteres: repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -19851,7 +20243,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação. coupons_disabled: O cupom por creator não está liberado para esta conta.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação. coupons_disabled: O cupom por creator não está liberado para esta conta.",
             "content": {
               "application/json": {
                 "schema": {
@@ -19965,6 +20357,9 @@
             "description": "Últimos N comentários, até 50.",
             "name": "limit",
             "in": "query"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "responses": {
@@ -19989,7 +20384,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. forbidden: Esta chave não tem acesso a campanhas.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. forbidden: Esta chave não tem acesso a campanhas.",
             "content": {
               "application/json": {
                 "schema": {
@@ -20070,6 +20465,9 @@
             "description": "Obrigatória nesta rota. Chave de idempotência, de 1 a 255 caracteres: repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -20104,7 +20502,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
             "content": {
               "application/json": {
                 "schema": {
@@ -20545,6 +20943,9 @@
             "description": "Colunas, separadas por vírgula. Ausente traz as colunas padrão do painel. Coluna que o dono da marca não vê fica de fora. Aceitas: creator_name, stage, campaign, email, phone, instagram, tiktok, youtube, instagram_followers, tiktok_followers, youtube_subscribers, engagement_rate, avg_views, average_score, city, state, postal_code, address, cluster, niches, profession, lists, scope_option, amount, coupon, briefing, entered_at, expires_at, invite_deadline, started_at, script_deadline, delivery_deadline, submitted_at, approved_at, rejected_at, posted_at, production_status, post_link, ad_code, views, likes, comments.",
             "name": "fields",
             "in": "query"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "responses": {
@@ -20575,7 +20976,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. forbidden: Esta chave não tem acesso a campanhas. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. forbidden: Esta chave não tem acesso a campanhas. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
             "content": {
               "application/json": {
                 "schema": {
@@ -20684,6 +21085,9 @@
             "required": false,
             "name": "offset",
             "in": "query"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "responses": {
@@ -20708,7 +21112,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. coupons_disabled: O cupom por creator não está liberado para esta conta. forbidden: Esta chave não tem acesso a campanhas.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. coupons_disabled: O cupom por creator não está liberado para esta conta. forbidden: Esta chave não tem acesso a campanhas.",
             "content": {
               "application/json": {
                 "schema": {
@@ -20789,6 +21193,9 @@
             "description": "Obrigatória nesta rota. Chave de idempotência, de 1 a 255 caracteres: repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -20823,7 +21230,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação. coupons_disabled: O cupom por creator não está liberado para esta conta.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação. coupons_disabled: O cupom por creator não está liberado para esta conta.",
             "content": {
               "application/json": {
                 "schema": {
@@ -20926,6 +21333,9 @@
             "description": "Obrigatória nesta rota. Chave de idempotência, de 1 a 255 caracteres: repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -20960,7 +21370,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação. coupons_disabled: O cupom por creator não está liberado para esta conta.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação. coupons_disabled: O cupom por creator não está liberado para esta conta.",
             "content": {
               "application/json": {
                 "schema": {
@@ -21063,6 +21473,9 @@
             "description": "Obrigatória nesta rota. Chave de idempotência, de 1 a 255 caracteres: repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -21107,7 +21520,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação. coupons_disabled: O cupom por creator não está liberado para esta conta. coupon_commission_budget_forbidden: Você não tem permissão para definir a verba da comissão. module_disabled: Este recurso do painel não está ligado para esta marca.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação. coupons_disabled: O cupom por creator não está liberado para esta conta. coupon_commission_budget_forbidden: Você não tem permissão para definir a verba da comissão. module_disabled: Este recurso do painel não está ligado para esta marca.",
             "content": {
               "application/json": {
                 "schema": {
@@ -21298,6 +21711,9 @@
             "description": "assigned: só cupons com creator. unassigned: só os do pool.",
             "name": "assignment",
             "in": "query"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "responses": {
@@ -21322,7 +21738,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. coupons_disabled: O cupom por creator não está liberado para esta conta. forbidden: Esta chave não tem acesso a campanhas.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. coupons_disabled: O cupom por creator não está liberado para esta conta. forbidden: Esta chave não tem acesso a campanhas.",
             "content": {
               "application/json": {
                 "schema": {
@@ -21404,6 +21820,9 @@
             "description": "Versão anterior do roteiro, do histórico de versões. Sem ela, vale a atual.",
             "name": "version_id",
             "in": "query"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "responses": {
@@ -21428,7 +21847,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas.",
             "content": {
               "application/json": {
                 "schema": {
@@ -21499,6 +21918,9 @@
             "description": "Id da missão.",
             "name": "id",
             "in": "path"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "responses": {
@@ -21523,7 +21945,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas.",
             "content": {
               "application/json": {
                 "schema": {
@@ -21607,6 +22029,9 @@
             "description": "Chave de idempotência, de 1 a 255 caracteres. Repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -21641,7 +22066,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
             "content": {
               "application/json": {
                 "schema": {
@@ -21745,6 +22170,9 @@
             "description": "Chave de idempotência, de 1 a 255 caracteres. Repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "responses": {
@@ -21769,7 +22197,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
             "content": {
               "application/json": {
                 "schema": {
@@ -21873,6 +22301,9 @@
             "description": "Chave de idempotência, de 1 a 255 caracteres. Repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "responses": {
@@ -21897,7 +22328,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação.",
             "content": {
               "application/json": {
                 "schema": {
@@ -22000,6 +22431,9 @@
             "description": "Id do job, de POST /campaigns/{id}/sync-metrics.",
             "name": "job_id",
             "in": "path"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "responses": {
@@ -22024,7 +22458,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas.",
             "content": {
               "application/json": {
                 "schema": {
@@ -22131,6 +22565,9 @@
             "description": "Busca pelo nome ou @ do creator.",
             "name": "q",
             "in": "query"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "responses": {
@@ -22155,7 +22592,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. module_disabled: Este recurso do painel não está ligado para esta marca.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. module_disabled: Este recurso do painel não está ligado para esta marca.",
             "content": {
               "application/json": {
                 "schema": {
@@ -22239,6 +22676,9 @@
             "description": "Chave de idempotência, de 1 a 255 caracteres. Repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -22273,7 +22713,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação. module_disabled: Este recurso do painel não está ligado para esta marca.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação. module_disabled: Este recurso do painel não está ligado para esta marca.",
             "content": {
               "application/json": {
                 "schema": {
@@ -22376,6 +22816,9 @@
             "description": "Obrigatória nesta rota. Chave de idempotência, de 1 a 255 caracteres: repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -22420,7 +22863,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação. module_disabled: Este recurso do painel não está ligado para esta marca.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação. module_disabled: Este recurso do painel não está ligado para esta marca.",
             "content": {
               "application/json": {
                 "schema": {
@@ -22533,6 +22976,9 @@
             "description": "next_cursor da página anterior.",
             "name": "cursor",
             "in": "query"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "responses": {
@@ -22557,7 +23003,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. module_disabled: Este recurso do painel não está ligado para esta marca.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. module_disabled: Este recurso do painel não está ligado para esta marca.",
             "content": {
               "application/json": {
                 "schema": {
@@ -22641,6 +23087,9 @@
             "description": "Busca de creator: nome, @instagram ou @tiktok.",
             "name": "q",
             "in": "query"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "responses": {
@@ -22665,7 +23114,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas.",
             "content": {
               "application/json": {
                 "schema": {
@@ -22902,6 +23351,9 @@
             "description": "Só creators com este briefing da campanha.",
             "name": "briefing_id",
             "in": "query"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "responses": {
@@ -22926,7 +23378,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas.",
             "content": {
               "application/json": {
                 "schema": {
@@ -23209,6 +23661,9 @@
             "description": "Quantos itens pular.",
             "name": "offset",
             "in": "query"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "responses": {
@@ -23233,7 +23688,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. module_disabled: Este recurso do painel não está ligado para esta marca.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. module_disabled: Este recurso do painel não está ligado para esta marca.",
             "content": {
               "application/json": {
                 "schema": {
@@ -23304,6 +23759,9 @@
             "description": "Id da campanha. Id de um bloco de campanha com kind agreement responde 404.",
             "name": "id",
             "in": "path"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "responses": {
@@ -23328,7 +23786,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. module_disabled: Este recurso do painel não está ligado para esta marca.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. module_disabled: Este recurso do painel não está ligado para esta marca.",
             "content": {
               "application/json": {
                 "schema": {
@@ -23410,6 +23868,9 @@
             "description": "Chave de idempotência, de 1 a 255 caracteres. Repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -23444,7 +23905,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação. module_disabled: Este recurso do painel não está ligado para esta marca.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. assisted_access_denied: A agência que cuida desta marca não liberou esta ação. module_disabled: Este recurso do painel não está ligado para esta marca.",
             "content": {
               "application/json": {
                 "schema": {
@@ -23570,6 +24031,9 @@
             "description": "Postados até este dia (AAAA-MM-DD).",
             "name": "posted_to",
             "in": "query"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "responses": {
@@ -23594,7 +24058,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas.",
             "content": {
               "application/json": {
                 "schema": {
@@ -23700,6 +24164,9 @@
             "description": "Postados até este dia (AAAA-MM-DD).",
             "name": "posted_to",
             "in": "query"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "responses": {
@@ -23724,7 +24191,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas.",
             "content": {
               "application/json": {
                 "schema": {
@@ -23941,6 +24408,9 @@
             "required": false,
             "name": "max_views",
             "in": "query"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "responses": {
@@ -23965,7 +24435,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas.",
             "content": {
               "application/json": {
                 "schema": {
@@ -24090,6 +24560,9 @@
             "description": "Só entregas destas redes, separadas por vírgula (instagram, tiktok, youtube, x, ugc, repost).",
             "name": "networks",
             "in": "query"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "responses": {
@@ -24114,7 +24587,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas.",
             "content": {
               "application/json": {
                 "schema": {
@@ -24246,6 +24719,9 @@
             "description": "Quantos itens pular.",
             "name": "offset",
             "in": "query"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "responses": {
@@ -24270,7 +24746,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. module_disabled: Este recurso do painel não está ligado para esta marca.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. module_disabled: Este recurso do painel não está ligado para esta marca.",
             "content": {
               "application/json": {
                 "schema": {
@@ -24379,6 +24855,9 @@
             "description": "Quantos itens pular.",
             "name": "offset",
             "in": "query"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "responses": {
@@ -24403,7 +24882,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. module_disabled: Este recurso do painel não está ligado para esta marca.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. module_disabled: Este recurso do painel não está ligado para esta marca.",
             "content": {
               "application/json": {
                 "schema": {
@@ -24475,6 +24954,9 @@
             "description": "Chave de idempotência, de 1 a 255 caracteres. Repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -24509,7 +24991,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. module_disabled: Este recurso do painel não está ligado para esta marca.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. insufficient_scope: Esta chave não tem o escopo que a ação exige. module_disabled: Este recurso do painel não está ligado para esta marca.",
             "content": {
               "application/json": {
                 "schema": {
@@ -24615,6 +25097,9 @@
             "description": "Falhas por página.",
             "name": "limit",
             "in": "query"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "responses": {
@@ -24639,7 +25124,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas.",
             "content": {
               "application/json": {
                 "schema": {
@@ -24735,6 +25220,9 @@
             "description": "Chave de idempotência, de 1 a 255 caracteres. Repetir a mesma chave com o mesmo corpo em até 24 horas devolve a primeira resposta, com Idempotent-Replayed: true, sem executar de novo.",
             "name": "idempotency-key",
             "in": "header"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "requestBody": {
@@ -24779,7 +25267,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. chat_disabled: O chat pela API não está liberado para esta marca. insufficient_scope: Esta chave não tem o escopo que a ação exige. chat_forbidden: Esta marca não pode conversar direto com o creator.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. chat_disabled: O chat pela API não está liberado para esta marca. insufficient_scope: Esta chave não tem o escopo que a ação exige. chat_forbidden: Esta marca não pode conversar direto com o creator.",
             "content": {
               "application/json": {
                 "schema": {
@@ -24917,6 +25405,9 @@
             "description": "true traz só as conversas em que a última mensagem é do creator. false traz as outras, inclusive as sem mensagem.",
             "name": "awaiting_reply",
             "in": "query"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "responses": {
@@ -24941,7 +25432,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. chat_disabled: O chat pela API não está liberado para esta marca. chat_forbidden: Esta marca não pode conversar direto com o creator.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. chat_disabled: O chat pela API não está liberado para esta marca. chat_forbidden: Esta marca não pode conversar direto com o creator.",
             "content": {
               "application/json": {
                 "schema": {
@@ -25037,6 +25528,9 @@
             "description": "Cursor opaco devolvido em next_cursor pela página anterior.",
             "name": "cursor",
             "in": "query"
+          },
+          {
+            "$ref": "#/components/parameters/BrandContextHeader"
           }
         ],
         "responses": {
@@ -25061,7 +25555,7 @@
             }
           },
           "403": {
-            "description": "open_api_disabled: A API pública não está liberada para esta conta. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. chat_disabled: O chat pela API não está liberado para esta marca. chat_forbidden: Esta marca não pode conversar direto com o creator.",
+            "description": "open_api_disabled: A API pública não está liberada para esta conta. brand_not_managed: Esta marca não é cliente da agência dona da chave. agency_only: Só a chave de uma agência pode usar este recurso. brand_blocked: Esta marca está bloqueada. plan_required: A marca precisa de um plano ativo para usar a API pública. forbidden: Esta chave não tem acesso a campanhas. chat_disabled: O chat pela API não está liberado para esta marca. chat_forbidden: Esta marca não pode conversar direto com o creator.",
             "content": {
               "application/json": {
                 "schema": {

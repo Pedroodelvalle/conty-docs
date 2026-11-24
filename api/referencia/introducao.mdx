@@ -29,7 +29,7 @@ curl https://api.appconty.com/public/v1/me \
   -H "Authorization: Bearer $CONTY_API_KEY"
 ```
 
-A chave já identifica a sua marca; não há cabeçalho extra. Para criar, guardar e revogar a chave, veja [Autenticação](/api/autenticacao).
+A chave da marca já identifica a sua marca; não há cabeçalho extra. A chave de agência manda o ID do cliente em `X-Conty-Brand-Id` ([Chave de agência](/api/autenticacao#chave-de-agência)). Para criar, guardar e revogar a chave, veja [Autenticação](/api/autenticacao).
 
 ## Formato de resposta
 
@@ -121,7 +121,7 @@ Mantenha os mesmos filtros em todas as páginas de uma varredura. Para mudar o f
 
 ## Limites
 
-Cada chave pode fazer **120 requisições por minuto**. O limite é por chave, não por marca. Acima dele, a API responde `429 rate_limited` com o cabeçalho `Retry-After` em segundos:
+Cada chave pode fazer **120 requisições por minuto**. O limite é por chave, não por marca: todos os clientes operados com a chave de uma agência dividem a mesma cota. Acima dele, a API responde `429 rate_limited` com o cabeçalho `Retry-After` em segundos:
 
 ```http
 HTTP/1.1 429 Too Many Requests
@@ -237,6 +237,9 @@ Todo erro tem o mesmo envelope:
 | 401 | `invalid_api_key` | Chave ausente, malformada, revogada ou desconhecida | Confira a chave e o cabeçalho `Authorization` |
 | 403 | `open_api_disabled` | A API pública não está liberada para a sua conta | Fale com o time da Conty |
 | 403 | `plan_required` | A marca e a agência que a gere estão sem plano ativo | Regularize o plano no painel ou fale com o time da Conty |
+| 403 | `brand_not_managed` | O `X-Conty-Brand-Id` não é de um cliente vinculado à agência dona da chave | Confira o ID em `GET /brands` |
+| 403 | `brand_blocked` | O `X-Conty-Brand-Id` é de um cliente bloqueado | Não opere o cliente até ele ser desbloqueado |
+| 403 | `agency_only` | Chave de marca chamou `GET /brands` ou mandou o ID de outra marca em `X-Conty-Brand-Id` | Use a chave da agência |
 | 404 | `not_found` | Rota inexistente, ou recurso que não existe ou é de outra marca | Confira o id e a chave usada |
 | 409 | `coupon_exists` | O creator já tem um cupom ativo nessa campanha | Use o cupom de `details[0].coupon_id`, ou cancele antes de criar outro |
 | 409 | `coupon_code_taken` | Outro cupom ativo da sua marca já usa esse código | Escolha outro código |

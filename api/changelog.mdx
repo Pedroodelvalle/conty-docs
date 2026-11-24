@@ -10,6 +10,28 @@ keywords:
 
 Toda mudança no contrato da API aparece aqui antes de entrar no ar. Enquanto a API estiver em beta, mudanças que quebram compatibilidade são possíveis, sempre anunciadas nesta página com o que muda e o que fazer.
 
+<Update label="Chave de agência e código do anúncio" description="23 de novembro de 2026">
+  A agência passa a integrar os clientes com uma chave só, e o código do anúncio do creator ganha evento. Ver o guia [Operar clientes como agência](/api/guias/agencia-operar-clientes).
+
+  **Chave de agência**
+  - A chave criada no painel de uma agência opera os clientes vinculados a ela. Mande o ID do cliente no cabeçalho `X-Conty-Brand-Id`: a API responde sobre o cliente, com as permissões que a agência tem nele no painel e os escopos da chave. Ver [Chave de agência](/api/autenticacao#chave-de-agência).
+  - Sem o cabeçalho, a chave de agência recebe `403 forbidden` nas rotas de marca. ID que não é de cliente vinculado, cliente excluído ou valor que não é UUID: `403 brand_not_managed`. Cliente bloqueado: `403 brand_blocked`.
+  - Chave de marca com o ID de outra marca no cabeçalho: `403 agency_only`. Com o ID da própria marca, o cabeçalho é ignorado. Integração de marca não muda.
+  - O limite de 120 requisições por minuto é por chave: todos os clientes operados com a chave da agência dividem a mesma cota.
+  - `GET /me` e `GET /brands` ignoram o cabeçalho, mesmo com um ID inválido: as duas descrevem a empresa dona da chave.
+  - Sem o cabeçalho, as rotas `/coupons` da chave de agência respondem sobre a própria agência.
+
+  **Clientes**
+  - `GET /brands`: lista paginada por cursor dos clientes da agência (`id`, `name`, `status`), sem os excluídos. Cliente bloqueado aparece com `status: "blocked"`, mas não pode ser operado.
+
+  **OpenAPI**
+  - As rotas de marca trazem o parâmetro de cabeçalho `X-Conty-Brand-Id` (opcional, só para chave de agência), e `Brand.status` é o enum `active | blocked`. Gerador de cliente a partir do [`openapi.json`](https://api.appconty.com/public/v1/openapi.json) já ganha o cabeçalho. Chave de marca responde `403 agency_only`.
+
+  **Webhooks**
+  - Endpoint cadastrado pela agência cobre sempre a própria agência, mais os clientes listados em `brand_ids` (até 50). Sem a lista, ou com `[]`, cobre só a agência. Na edição, a lista nova substitui a anterior, `[]` deixa só a agência e sem o campo nada muda; cliente novo só entra editando o endpoint. Quando o cliente sai da agência, por desvínculo ou por aceitar o convite de outra agência, os eventos dele param de chegar. ID que não é cliente responde `422 brand_not_managed`, mais de 50 responde `422`, e endpoint de marca não aceita `brand_ids` (`422 webhook_brand_ids_not_allowed`). A tela do painel ainda não tem o seletor de clientes: enquanto isso, a Conty grava os clientes cobertos. Ver [Webhook da agência](/api/guias/agencia-operar-clientes#webhook-da-agência).
+  - Novo evento `mission.ad_code_submitted`: o creator gravou um código de anúncio novo e não vazio na missão aprovada de uma campanha que pede o código. O código vem em `data.ad_code.code`. Gravar o mesmo código de novo ou apagar não gera evento. Ver [Código do anúncio](/api/webhooks/eventos/missoes#código-do-anúncio).
+</Update>
+
 <Update label="Permuta vira barter e idempotência mais segura" description="12 de novembro de 2026">
   <Warning>
     **Mudança que quebra leitura.** Em `GET /campaigns` e `GET /campaigns/{id}`, `payment.type` passa a vir `barter` no lugar de `permuta` a partir do deploy desta versão da API (esta entrada é publicada junto com ele). Se o seu código compara `payment.type === "permuta"`, troque para `"barter"`. Os outros valores (`per_video`, `per_view`, `affiliate`) não mudam. Os erros de produto seguem o mesmo nome: `barter_item_required` e `barter_product_not_allowed`.
