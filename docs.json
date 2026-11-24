@@ -474,14 +474,14 @@
               {
                 "group": "Operação",
                 "pages": [
+                  "marcas/visao-geral",
                   "marcas/criadores",
+                  "marcas/icones-das-redes",
                   "marcas/revisoes",
-                  "marcas/comunidades",
-                  "marcas/resultados",
                   "marcas/desfazer-aprovacao",
                   "marcas/curadoria-acoes-em-massa",
-                  "marcas/visao-geral",
-                  "marcas/icones-das-redes"
+                  "marcas/comunidades",
+                  "marcas/resultados"
                 ]
               },
               {
