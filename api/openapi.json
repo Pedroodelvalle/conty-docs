@@ -979,7 +979,7 @@
               "string",
               "null"
             ],
-            "description": "Bio do perfil.",
+            "description": "Bio do perfil. Telefone, e-mail e link ou número de WhatsApp/Telegram escritos na bio saem substituídos por \"[contato removido]\".",
             "example": "Criadora de conteúdo de beleza."
           },
           "profile_image_url": {
@@ -1011,7 +1011,7 @@
               "string",
               "null"
             ],
-            "description": "Profissão.",
+            "description": "Profissão. Contato escrito no campo sai como \"[contato removido]\".",
             "example": "Maquiadora"
           },
           "pro": {
@@ -1062,7 +1062,7 @@
               "string",
               "null"
             ],
-            "description": "Link do portfólio.",
+            "description": "Link do portfólio. Nulo quando o link é de contato (WhatsApp, Telegram, `mailto:`, `tel:` ou e-mail).",
             "example": "https://portfolio.appconty.com/maria"
           },
           "approved_missions_count": {
