@@ -149,6 +149,8 @@ async function fetchWithRetry(url, init, attempts = 3) {
 }
 ```
 
+A [busca de creators](/api/referencia/creators) tem um limite próprio de **30 requisições por minuto por chave**, além do geral: cada busca conta nos dois, e os clientes de uma agência dividem a mesma cota.
+
 <Note>
   O limite é contado por região da nossa rede, então é aproximado: em rajadas vindas de lugares diferentes, ele pode deixar passar um pouco mais ou cortar um pouco antes. Planeje a integração para ficar abaixo de 120 por minuto. Use `limit=100` nas listas e os [webhooks](/api/webhooks/visao-geral) em vez de consultar a API em intervalos.
 </Note>
@@ -239,6 +241,7 @@ Todo erro tem o mesmo envelope:
 | 403 | `plan_required` | A marca e a agência que a gere estão sem plano ativo | Regularize o plano no painel ou fale com o time da Conty |
 | 403 | `brand_not_managed` | O `X-Conty-Brand-Id` não é de um cliente vinculado à agência dona da chave | Confira o ID em `GET /brands` |
 | 403 | `brand_blocked` | O `X-Conty-Brand-Id` é de um cliente bloqueado | Não opere o cliente até ele ser desbloqueado |
+| 403 | `creator_search_disabled` | A [busca de creators](/api/referencia/creators) não está liberada na empresa dona da chave | Fale com o time da Conty |
 | 403 | `agency_only` | Chave de marca chamou `GET /brands` ou mandou o ID de outra marca em `X-Conty-Brand-Id` | Use a chave da agência |
 | 404 | `not_found` | Rota inexistente, ou recurso que não existe ou é de outra marca | Confira o id e a chave usada |
 | 409 | `coupon_exists` | O creator já tem um cupom ativo nessa campanha | Use o cupom de `details[0].coupon_id`, ou cancele antes de criar outro |
@@ -248,7 +251,7 @@ Todo erro tem o mesmo envelope:
 | 422 | `validation_failed` | Corpo, query ou cursor inválido | Corrija os campos de `details` |
 | 422 | `mission_closed` | A missão está expirada ou recusada em definitivo | Não crie nem vincule cupom para essa missão |
 | 422 | `coupon_campaign_mismatch` | A missão é de outra campanha que não a do cupom | Use um cupom disponível da campanha da missão |
-| 429 | `rate_limited` | Mais de 120 requisições por minuto na chave | Espere o `Retry-After` e tente de novo |
+| 429 | `rate_limited` | Mais de 120 requisições por minuto na chave, ou mais de 30 buscas de creators por minuto | Espere o `Retry-After` e tente de novo |
 | 500 | `internal_error` | Erro inesperado do nosso lado | Tente de novo com espera; se persistir, mande o `request_id` |
 
 ### Erros da escrita de campanhas

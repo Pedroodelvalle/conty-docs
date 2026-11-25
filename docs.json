@@ -103,6 +103,10 @@
       "destination": "/api/referencia/entrega-e-pos-entrega"
     },
     {
+      "source": "/api/referencia/em-breve/buscar-creators",
+      "destination": "/api/referencia/creators"
+    },
+    {
       "source": "/api/referencia/em-breve/criar-campanha",
       "destination": "/api/referencia/campanhas-escrita"
     },
@@ -892,10 +896,11 @@
                       },
                       {
                         "group": "Creators",
-                        "tag": "Em breve",
                         "expanded": false,
+                        "openapi": "api/openapi.json",
                         "pages": [
-                          "api/referencia/em-breve/buscar-creators"
+                          "api/referencia/creators",
+                          "GET /creators/search"
                         ]
                       },
                       {
