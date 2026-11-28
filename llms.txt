@@ -5,6 +5,7 @@
 ## Antes de começar
 
 - A API pública é servidor a servidor, autenticada pela chave da marca: `Authorization: Bearer ck_live_...`. A chave é criada no painel da marca, em Desenvolvedores, e aparece uma vez só.
+- A chave de uma agência opera os clientes vinculados: mande o ID do cliente em `X-Conty-Brand-Id`. Sem o cabeçalho, as rotas de marca respondem 403 `forbidden`; cliente fora do vínculo, 403 `brand_not_managed`; cliente bloqueado, 403 `brand_blocked`; chave de marca com ID de outra marca, 403 `agency_only`. `GET /me` e `GET /brands` ignoram o cabeçalho. O webhook da agência cobre a própria agência mais os clientes listados em `brand_ids` (até 50); sem a lista, só a agência. Enquanto o painel não tem o seletor de clientes, a Conty grava os clientes cobertos. O limite de 120 chamadas por minuto é por chave: os clientes de uma agência dividem a mesma cota. No OpenAPI, as rotas de marca trazem o parâmetro de cabeçalho `X-Conty-Brand-Id`.
 - A API pública, os webhooks e os cupons são liberados por marca pela Conty. Sem liberação, `/public/v1/*` responde 403 `open_api_disabled` e as rotas de cupom respondem 403 `coupons_disabled`.
 - Todo erro vem no mesmo envelope: `{ "error": { "code", "message", "details?", "request_id" } }`. Decida pelo `code`, nunca pela `message`.
 - Listas paginam por cursor no servidor: `{ data, has_more, next_cursor }`, com `limit` de 1 a 100. Repita a chamada com `cursor=<next_cursor>` até `has_more` ser `false`. Não filtre nem ordene no cliente: use os parâmetros da rota.
@@ -22,6 +23,7 @@
 
 - [Cupom por creator](/api/guias/cupom-por-creator): criar ou vincular um cupom para cada creator, registrar vendas e calcular a comissão.
 - [Acompanhar o quadro](/api/guias/acompanhar-quadro): listar campanhas, ler as etapas, paginar os itens com filtros e abrir a missão.
+- [Operar clientes como agência](/api/guias/agencia-operar-clientes): chave da agência, ID de cada cliente no cabeçalho `X-Conty-Brand-Id`, `GET /brands` e o webhook que cobre os clientes.
 
 ## Referência
 
@@ -29,7 +31,8 @@
 - [Cupons e vendas](/api/referencia/cupons): `POST /coupons`, `GET /coupons`, `GET /coupons/{id}`, `PATCH /coupons/{id}`, `POST /coupons/{id}/assign`, `POST /coupons/{id}/unassign`, `PUT /coupons/{id}/sales/{external_id}`, `GET /coupons/{id}/sales`.
 - [Campanhas e quadro](/api/referencia/campanhas): `GET /campaigns`, `GET /campaigns/{id}`, `GET /campaigns/{id}/stages`, `GET /campaigns/{id}/items`. Campanha é o acordo ou a campanha avulsa, com um id só. `/items` aceita os filtros e as ordenações do quadro, e o `/stages` diz quais valem em cada etapa.
 - [Missões](/api/referencia/missoes): `GET /missions/{id}`, com creator, etapas, conteúdo, link do post e cupom.
-- `GET /me`: identifica a marca dona da chave. Use para testar a chave.
+- `GET /me`: identifica a empresa dona da chave, sem olhar `X-Conty-Brand-Id`. Use para testar a chave.
+- `GET /brands`: só com chave de agência, lista os clientes vinculados (`id`, `name`, `status`). O `id` vai em `X-Conty-Brand-Id` para operar o cliente.
 
 ## Webhooks
 

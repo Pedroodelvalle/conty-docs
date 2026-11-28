@@ -1,0 +1,382 @@
+---
+title: "Buscar creators"
+sidebarTitle: "Buscar creators"
+description: "Busque creators da base da Conty com os mesmos filtros e a mesma ordenação da aba Creators do painel, paginando por cursor."
+icon: "magnifying-glass"
+keywords:
+  - creators
+  - busca
+  - curadoria
+  - filtros
+  - paginação
+  - cursor
+---
+
+`GET /creators/search` faz a mesma busca da aba **Creators** do painel da marca: a mesma seleção, a mesma ordenação e as mesmas exclusões (creator bloqueado pela marca, creator em bloqueio do Conty Shield e creators ocultos para a marca). A diferença é a resposta: só o perfil público, as métricas e as redes do creator.
+
+Creators de beleza no Instagram, em SP, com 10 mil a 100 mil seguidores:
+
+<CodeGroup>
+
+```bash cURL
+curl "https://api.appconty.com/public/v1/creators/search?niches=beleza&platforms=instagram&state=SP&followers_min=10000&followers_max=100000" \
+  -H "Authorization: Bearer $CONTY_API_KEY"
+```
+
+```js Node
+const params = new URLSearchParams({
+  niches: "beleza",
+  platforms: "instagram",
+  state: "SP",
+  followers_min: "10000",
+  followers_max: "100000",
+});
+
+const res = await fetch(`https://api.appconty.com/public/v1/creators/search?${params}`, {
+  headers: { Authorization: `Bearer ${process.env.CONTY_API_KEY}` },
+});
+const { data, total, next_cursor } = await res.json();
+```
+
+</CodeGroup>
+
+```json Resposta
+{
+  "data": [
+    {
+      "id": "8f3c2a1e-5b7d-4c9a-8e2f-1a3b5c7d9e0f",
+      "name": "Maria Silva",
+      "followers": 48200,
+      "networks": [{ "platform": "instagram", "handle": "maria.silva", "followers": 48200 }],
+      "approved_missions_count": 12,
+      "average_score": 4.8
+    }
+  ],
+  "total": 170,
+  "has_more": true,
+  "next_cursor": "MXwyfGVUVFVXbC1EMS1mUWFiVFU"
+}
+```
+
+Para a próxima página, repita a chamada com `cursor=<next_cursor>`. A resposta completa de cada creator está em [Objeto](#o-objeto-creatorsearchitem).
+
+## Antes de começar
+
+- **Módulo de busca liberado.** A busca é liberada pela Conty na empresa **dona da chave**. Sem ela, a rota responde `403 creator_search_disabled`, e as outras rotas da chave seguem funcionando. Fale com o seu contato na Conty para ligar.
+- **Chave de marca ou de agência.** Com a chave da marca, a busca roda na própria marca. Com a chave de agência, mande o ID do cliente em `X-Conty-Brand-Id` ([Chave de agência](/api/autenticacao#chave-de-agência)): a busca roda no cliente, com as exclusões dele. Basta a agência ter o módulo; o cliente não precisa. Sem o cabeçalho, a chave de agência recebe `403 forbidden`.
+- **Mesma permissão do painel.** Se quem a chave representa não pode usar a aba Creators naquela marca, a rota responde `403 forbidden`.
+
+## Filtros
+
+Todos os filtros valem no servidor, antes da paginação: `total` e cada página já vêm filtrados. Parâmetro desconhecido ou valor fora da lista responde `422 validation_failed`, com o campo em `details[].path`.
+
+Listas aceitam vírgula (`platforms=instagram,tiktok`) ou o parâmetro repetido. Booleanos aceitam `true`/`false` ou `1`/`0`; `false` vale o mesmo que não mandar.
+
+<ParamField query="q" type="string">
+  Nome, @ ou link do perfil do creator. De 1 a 100 caracteres.
+</ParamField>
+
+<ParamField query="platforms" type="string[]">
+  Redes do creator: `instagram`, `tiktok`, `x` e `youtube`.
+</ParamField>
+
+### Localização
+
+<ParamField query="state" type="string">
+  UF do creator, como `SP`.
+</ParamField>
+
+<ParamField query="city" type="string">
+  Cidade do creator, como `São Paulo`. De 2 a 120 caracteres.
+</ParamField>
+
+<ParamField query="country" type="string">
+  País do creator, em duas letras (ISO 3166-1), como `BR` ou `PT`. Creator sem país no cadastro conta como `BR`.
+</ParamField>
+
+<ParamField query="locations" type="string[]">
+  Localizações do creator: basta bater com uma delas. Cada uma no formato `PAÍS:UF:Cidade`, com UF e cidade opcionais: `BR:SP` (o estado inteiro), `BR:SP:Campinas`, `PT::Lisboa` (fora do Brasil não há UF) ou só `AR`. No Brasil, cidade exige UF. Até 20 localizações.
+</ParamField>
+
+### Perfil
+
+<ParamField query="niches" type="string[]">
+  Nichos do creator: `moda`, `beleza`, `fitness`, `esportes`, `bem_estar`, `gastronomia`, `viagens`, `lifestyle`, `casa`, `diy`, `sustentabilidade`, `maternidade`, `familia`, `pets`, `tecnologia`, `games`, `automotivo`, `educacao`, `livros`, `negocios`, `financas`, `humor`, `cinema`, `musica`, `arte`, `fotografia` e `religiao`.
+</ParamField>
+
+<ParamField query="gender" type="string">
+  `feminino`, `masculino`, `nao_binario` ou `prefiro_nao_dizer`.
+</ParamField>
+
+<ParamField query="profession" type="string">
+  Trecho da profissão que o creator declarou no cadastro, como `nutricionista`. De 1 a 100 caracteres.
+</ParamField>
+
+<ParamField query="occupation" type="string">
+  Trecho da ocupação que a análise da Conty identificou no perfil, como `restaurante`. De 2 a 60 caracteres. Creator ainda sem análise fica de fora.
+</ParamField>
+
+<ParamField query="profile_type" type="string">
+  Tipo da conta, pela análise da Conty: `pessoa`, `negocio` ou `misto`.
+</ParamField>
+
+<ParamField query="followers_min" type="integer">
+  Mínimo de seguidores, de `0` a `2147483647`.
+</ParamField>
+
+<ParamField query="followers_max" type="integer">
+  Máximo de seguidores, até `2147483647`. Precisa ser maior ou igual a `followers_min`.
+</ParamField>
+
+<ParamField query="age_min" type="integer">
+  Idade mínima, de 13 a 120.
+</ParamField>
+
+<ParamField query="age_max" type="integer">
+  Idade máxima, de 13 a 120. Precisa ser maior ou igual a `age_min`.
+</ParamField>
+
+### Métricas
+
+As métricas vêm da análise da Conty sobre o Instagram do creator. Creator ainda sem análise fica de fora sempre que um destes filtros é usado.
+
+<ParamField query="min_engagement_rate" type="number">
+  Engajamento mediano mínimo, em percentual: `2` é 2%. A partir de `0`.
+</ParamField>
+
+<ParamField query="max_sponsored_rate" type="number">
+  Fatia máxima de posts publicitários, de `0` a `1`: `0.3` é até 30% de publis.
+</ParamField>
+
+<ParamField query="audience_gender" type="string">
+  Gênero predominante da audiência: `female`, `male` ou `balanced`.
+</ParamField>
+
+<ParamField query="brand_safety" type="string[]">
+  Níveis de brand safety aceitos: `safe`, `attention` e `risk`. Com o módulo de brand safety do **Conty Shield** liberado, vale o nível já revisado pela equipe da Conty; sem ele, vale o nível que a análise apontou.
+</ParamField>
+
+### Exclusões
+
+Tiram creators do resultado, e o `total` já vem sem eles. Os ids de lista e de comunidade vêm do painel da marca, que ainda não tem rota pública para eles: excluindo uma lista na aba Creators, o id dela aparece na URL (`excludeListIds`), e a comunidade aberta no painel mostra o id na URL. O id de campanha é o `id` de [Listar campanhas](/api/referencia/campanhas). Id de lista ou de campanha de outra marca não exclui ninguém.
+
+<ParamField query="exclude_in_brand_campaigns" type="boolean">
+  `true` tira quem já participa de alguma campanha no ar da marca: convidado, fazendo, aprovado ou recusado.
+</ParamField>
+
+<ParamField query="exclude_campaign_ids" type="string[]">
+  Ids de campanhas da marca, no ar ou encerradas, cujos participantes ficam de fora. Num acordo, use o id do acordo. Até 20. Com `exclude_in_brand_campaigns=true`, é ignorado.
+</ParamField>
+
+<ParamField query="exclude_in_any_list" type="boolean">
+  `true` tira quem já está em alguma lista de creators da marca.
+</ParamField>
+
+<ParamField query="exclude_list_ids" type="string[]">
+  Ids de listas de creators da marca cujos membros ficam de fora. Até 50. Com `exclude_in_any_list=true`, é ignorado.
+</ParamField>
+
+<ParamField query="exclude_community_id" type="string">
+  Id de uma comunidade da marca. Tira quem já é membro ou convidado dela. Comunidade que não existe, ou de empresa que a chave não acessa, responde `404 not_found`.
+</ParamField>
+
+<ParamField query="exclude_niches" type="string[]">
+  Nichos que tiram o creator, nos valores de `niches`.
+</ParamField>
+
+<ParamField query="exclude_locations" type="string[]">
+  Localizações que tiram o creator, no formato de `locations`. Até 20.
+</ParamField>
+
+<ParamField query="exclude_genders" type="string[]">
+  Gêneros que tiram o creator, nos valores de `gender`.
+</ParamField>
+
+<ParamField query="exclude_suspect_audience" type="boolean">
+  `true` tira quem tem audiência suspeita pelo **Conty Shield** (público concentrado em países fora do contexto do perfil). Creator sem dado de audiência continua. Só vale com o módulo de audiência do Conty Shield liberado; sem ele, o filtro é ignorado.
+</ParamField>
+
+### Ordenação e página
+
+<ParamField query="sort" type="string" default="relevance">
+  `relevance` (a ordem padrão do painel), `pro_first` (creators PRO primeiro), `rating_desc` (maior nota primeiro), `followers_desc` ou `followers_asc`.
+</ParamField>
+
+<ParamField query="limit" type="integer" default="20">
+  Creators por página, de 1 a 50.
+</ParamField>
+
+<ParamField query="cursor" type="string">
+  O `next_cursor` da página anterior. Omita na primeira página.
+</ParamField>
+
+## Paginação
+
+A busca pagina por cursor, como as listas da [referência](/api/referencia/introducao#paginação-por-cursor), com duas regras próprias:
+
+- **O cursor é da busca que o gerou.** Ele vale só com os mesmos filtros (todos eles, exclusões inclusive), o mesmo `sort` e o mesmo `limit`. A ordem dos valores numa lista não importa. Mudou qualquer um deles, comece de novo sem `cursor`. Cursor de outra busca, ou alterado, responde `422 validation_failed` com `details[0].path = "cursor"`.
+- **Até 500 creators por busca.** A navegação para no 500º resultado: a página que chega lá vem só até ele, com `has_more: false` e `next_cursor: null`. `total` continua sendo o número real de creators encontrados, mesmo acima de 500. Cursor que passaria do teto responde `422 validation_failed`. Para chegar em outros creators, refine os filtros.
+
+<ResponseField name="data" type="CreatorSearchItem[]" required>
+  Os creators da página.
+</ResponseField>
+
+<ResponseField name="has_more" type="boolean" required>
+  `true` quando há mais páginas dentro do teto de 500.
+</ResponseField>
+
+<ResponseField name="next_cursor" type="string | null" required>
+  Cursor da próxima página, ou `null` na última.
+</ResponseField>
+
+<ResponseField name="total" type="integer" required>
+  Total real de creators que batem com os filtros.
+</ResponseField>
+
+Percorrendo uma busca até o fim, em Node 18 ou mais novo:
+
+```javascript search-creators.mjs
+const BASE_URL = "https://api.appconty.com/public/v1";
+
+async function* searchCreators(filters) {
+  let cursor = null;
+
+  do {
+    const params = new URLSearchParams({ ...filters, limit: "50" });
+    if (cursor) params.set("cursor", cursor);
+
+    const response = await fetch(`${BASE_URL}/creators/search?${params}`, {
+      headers: { Authorization: `Bearer ${process.env.CONTY_API_KEY}` },
+    });
+
+    if (!response.ok) {
+      const { error } = await response.json();
+      throw new Error(`${error.code}: ${error.message}`);
+    }
+
+    const page = await response.json();
+    yield* page.data;
+    cursor = page.has_more ? page.next_cursor : null;
+  } while (cursor);
+}
+
+for await (const creator of searchCreators({ niches: "beleza", state: "SP" })) {
+  console.log(creator.name, creator.followers);
+}
+```
+
+## Limite
+
+Além do [limite geral](/api/referencia/introducao#limites) de 120 requisições por minuto, a busca tem um limite próprio de **30 requisições por minuto por chave**. Cada chamada conta nos dois. Como o geral, ele é contado por região da nossa rede e é aproximado: em rajadas de lugares diferentes, pode deixar passar um pouco mais ou cortar um pouco antes. Como os outros limites, ele é por chave, não por marca: todos os clientes buscados com a chave de uma agência dividem a mesma cota de 30. Acima dele, a busca responde `429 rate_limited` com `Retry-After`, e as outras rotas da chave seguem no limite geral.
+
+Use `limit=50` para precisar de menos páginas.
+
+## O objeto CreatorSearchItem
+
+```json
+{
+  "id": "9d3f1b7c-5e2a-4c8d-a6b1-2f3e4d5c6b7a",
+  "name": "Maria Silva",
+  "biography": "Criadora de conteúdo de beleza.",
+  "profile_image_url": "https://cdn.appconty.com/avatar.jpg",
+  "gender": "feminino",
+  "age": 27,
+  "profession": "Maquiadora",
+  "pro": false,
+  "followers": 48200,
+  "networks": [
+    { "platform": "instagram", "handle": "maria.silva", "followers": 48200 },
+    { "platform": "tiktok", "handle": "mariasilva", "followers": null }
+  ],
+  "instagram_verified": false,
+  "instagram_business_category": "Criador de conteúdo digital",
+  "portfolio_url": "https://portfolio.appconty.com/maria",
+  "approved_missions_count": 12,
+  "total_missions_count": 14,
+  "average_score": 4.8
+}
+```
+
+<ResponseField name="id" type="string" required>
+  Id do creator. É o id que vai em `target_creator_ids[]` para convidar o creator num [acordo](/api/referencia/campanhas-escrita).
+</ResponseField>
+
+<ResponseField name="name" type="string" required>
+  Nome do creator.
+</ResponseField>
+
+<ResponseField name="biography" type="string | null" required>
+  Bio do perfil. Telefone, e-mail (inclusive escrito como `nome [at] gmail.com` ou `nome arroba gmail.com`) e link ou número de WhatsApp e Telegram escritos na bio saem como `[contato removido]`. O resto do texto vem como o creator escreveu.
+</ResponseField>
+
+<ResponseField name="profile_image_url" type="string | null" required>
+  Foto do perfil.
+</ResponseField>
+
+<ResponseField name="gender" type="string | null" required>
+  Gênero, nos mesmos valores do filtro `gender`.
+</ResponseField>
+
+<ResponseField name="age" type="integer | null" required>
+  Idade.
+</ResponseField>
+
+<ResponseField name="profession" type="string | null" required>
+  Profissão. Contato escrito no campo sai como `[contato removido]`.
+</ResponseField>
+
+<ResponseField name="pro" type="boolean" required>
+  `true` quando o creator é PRO.
+</ResponseField>
+
+<ResponseField name="followers" type="integer | null" required>
+  Maior número de seguidores entre as redes filtradas em `platforms`.
+</ResponseField>
+
+<ResponseField name="networks" type="object[]" required>
+  Redes informadas no perfil do creator, na ordem `instagram`, `tiktok`, `youtube`, `x`. Cada uma traz `platform`, `handle` (o @ na rede) e `followers`. Por enquanto, `followers` só vem no Instagram; nas outras redes ele vem `null`.
+</ResponseField>
+
+<ResponseField name="instagram_verified" type="boolean | null" required>
+  Selo de verificado no Instagram.
+</ResponseField>
+
+<ResponseField name="instagram_business_category" type="string | null" required>
+  Categoria do perfil comercial no Instagram.
+</ResponseField>
+
+<ResponseField name="portfolio_url" type="string | null" required>
+  Link do portfólio do creator. Vem `null` quando o link é de contato (WhatsApp, Telegram, `mailto:`, `tel:` ou e-mail).
+</ResponseField>
+
+<ResponseField name="approved_missions_count" type="integer" required>
+  Missões aprovadas do creator na Conty.
+</ResponseField>
+
+<ResponseField name="total_missions_count" type="integer" required>
+  Missões do creator na Conty, no total.
+</ResponseField>
+
+<ResponseField name="average_score" type="number | null" required>
+  Nota média das avaliações, ou `null` sem avaliação.
+</ResponseField>
+
+### O que não vem na resposta
+
+A busca não devolve dado de contato nem dado privado do creator: nada de e-mail, telefone, documento ou endereço. Telefone, e-mail e WhatsApp que o creator escreveu na bio ou na profissão saem como `[contato removido]`, e o `portfolio_url` que é link de contato (WhatsApp, Telegram, `mailto:` ou e-mail) vem `null`. Também não vêm as campanhas da marca com o creator nem os dados internos da busca do painel. Para falar com o creator, use a campanha: convide pelo acordo e converse pelo [chat](/api/referencia/mensagens).
+
+## Erros
+
+| Status | Código | Quando |
+|---|---|---|
+| 403 | `creator_search_disabled` | A busca de creators não está liberada na empresa dona da chave |
+| 403 | `plan_required` | A marca e a agência que a gere estão sem plano ativo |
+| 403 | `forbidden` | Chave de agência sem `X-Conty-Brand-Id`, ou quem a chave representa não pode usar a aba Creators na marca |
+| 403 | `brand_not_managed` | O `X-Conty-Brand-Id` não é de um cliente vinculado à agência dona da chave |
+| 403 | `brand_blocked` | O `X-Conty-Brand-Id` é de um cliente bloqueado |
+| 404 | `not_found` | `exclude_community_id` de comunidade que não existe ou de empresa que a chave não acessa |
+| 422 | `validation_failed` | Filtro desconhecido ou inválido, `followers_min` ou `followers_max` acima de 2147483647, `followers_max` menor que `followers_min`, `age_max` menor que `age_min`, cursor de outra busca ou além do teto de 500 |
+| 429 | `rate_limited` | Mais de 30 buscas por minuto na chave, ou mais de 120 requisições por minuto no total |
+| 500 | `internal_error` | A busca falhou do nosso lado. Tente de novo em instantes; se persistir, mande o `request_id` |
+
+Os erros gerais, como `401 invalid_api_key` e `403 open_api_disabled`, estão em [Erros](/api/referencia/introducao#erros).

@@ -21,6 +21,10 @@ A mensagem sai em nome do dono da marca, e o creator vê o nome dele, como se el
 
 O envio pela API precisa estar liberado pela Conty para a sua marca. Sem isso, a rota responde `403 chat_disabled`: fale com o time da Conty para liberar.
 
+<Note>
+  **Beta, ainda não publicado em produção.** A rota passa a exigir uma chave com o escopo `chat:write`. Sem ele, a API responde `403 insufficient_scope` com `details[0].required_scope = "chat:write"`. As chaves que já existiam receberam `chat:write` e continuam enviando como antes. Veja [Escopos da chave](/api/autenticacao#escopos-da-chave).
+</Note>
+
 ## Regras
 
 - Só texto, de 1 a 4000 caracteres. Espaços nas pontas são removidos, e texto só com espaços responde `422 validation_failed`.
@@ -89,6 +93,7 @@ Em todos os casos abaixo, nenhuma mensagem é gravada.
 | Status | Código | Quando |
 |---|---|---|
 | 403 | `chat_disabled` | O chat pela API não está liberado para esta marca. |
+| 403 | `insufficient_scope` | A chave não tem o escopo `chat:write` (beta, ainda não publicado) |
 | 403 | `forbidden` | A chave não tem acesso a campanhas |
 | 403 | `forbidden` | O dono da marca não tem permissão para enviar mensagens |
 | 403 | `chat_forbidden` | A marca é atendida por agência e não conversa direto com o creator |

@@ -1,0 +1,111 @@
+---
+title: "Vendas sem conector"
+description: "Use a API de vendas para comissionar os creators pelas compras avulsas e pelas assinaturas cobradas no Stripe ou no seu próprio sistema: uma venda por cobrança paga."
+icon: "repeat"
+keywords:
+  - compra avulsa
+  - assinatura
+  - recorrência
+  - stripe
+  - checkout próprio
+  - vendas
+  - comissão
+---
+
+Sem conector para o seu meio de pagamento, as vendas entram na Conty pela [API de vendas](/api/guias/registrar-vendas), com `PUT /coupons/{id}/sales/{external_id}`: **cada cobrança paga vira uma venda** no cupom do creator que trouxe o cliente. Vale para compra avulsa (uma cobrança) e para assinatura (uma cobrança por ciclo).
+
+<Note>
+  Vende pelo **RevenueCat** (compras no app) ou pelo **Asaas**? Use o conector: [RevenueCat](/api/referencia/conectores/revenuecat) ou [Asaas](/api/referencia/conectores/asaas). Ele confere cada cobrança, trata o reembolso e aplica o limite de cobranças de assinatura do acordo sozinho.
+</Note>
+
+## Antes de começar
+
+- **Chave de API e cupons liberados.** Veja [Primeiros passos](/api/guias/primeiros-passos).
+- **Acordo com cupom por creator e comissão.** Cada creator aprovado tem um cupom. Veja [Cupom por creator](/api/guias/cupom-por-creator).
+
+## Compra avulsa
+
+Uma compra paga uma vez é uma venda. Guarde o código do cupom no pedido (no Stripe, nos `metadata` do Checkout Session ou do PaymentIntent) e, quando o pagamento for aprovado (no Stripe, `checkout.session.completed` ou `payment_intent.succeeded`), chame `PUT /coupons/{id}/sales/{external_id}` com o id do pagamento como `external_id`. O reembolso é o mesmo `PUT` com `"status": "canceled"`.
+
+```bash curl
+curl -X PUT https://api.appconty.com/public/v1/coupons/4f2c7a1e-9b3d-4c8a-a1f0-6d2e8b7c5a10/sales/stripe-pi_3QxYz2AbCdEf \
+  -H "Authorization: Bearer $CONTY_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "amount_cents": 14990, "status": "confirmed", "occurred_at": "2026-11-15T09:12:00Z" }'
+```
+
+O passo a passo completo, com Node.js e o tratamento de erros, está em [Registrar vendas pela API](/api/guias/registrar-vendas).
+
+## Assinatura
+
+<Steps>
+  <Step title="Guarde o código na assinatura">
+    Na hora da assinatura, guarde o código do cupom do creator junto da assinatura no seu sistema (no Stripe, por exemplo, nos `metadata` da assinatura). O código vem de um campo de cupom no checkout ou de um parâmetro do link do creator que o site guarda até a compra.
+
+    Guarde também o `id` do cupom na Conty, buscado uma vez com `GET /coupons?code=`, como mostra [Registrar vendas](/api/guias/registrar-vendas#como-funciona). Assim cada renovação não precisa buscar de novo.
+  </Step>
+
+  <Step title="Mande cada cobrança paga como uma venda">
+    A cada cobrança paga (no Stripe, o evento `invoice.paid`), chame `PUT /coupons/{id}/sales/{external_id}` com o **id da cobrança** como `external_id`. Cada cobrança tem o seu id, então cada mês vira uma venda separada, e o reenvio do mesmo evento não duplica.
+
+    <CodeGroup>
+    ```bash curl
+    curl -X PUT https://api.appconty.com/public/v1/coupons/4f2c7a1e-9b3d-4c8a-a1f0-6d2e8b7c5a10/sales/stripe-in_1QxYz2AbCdEf \
+      -H "Authorization: Bearer $CONTY_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{ "amount_cents": 2990, "status": "confirmed", "occurred_at": "2026-11-15T09:12:00Z" }'
+    ```
+
+    ```javascript Node.js
+    // Chame no handler do pagamento aprovado da sua cobrança recorrente.
+    async function syncSubscriptionCharge(charge) {
+      if (!charge.contyCouponId) return; // assinatura sem código de creator
+
+      const externalId = `stripe-${charge.id}`;
+      const url = `https://api.appconty.com/public/v1/coupons/${charge.contyCouponId}/sales/${encodeURIComponent(externalId)}`;
+      const response = await fetch(url, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${process.env.CONTY_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          amount_cents: charge.amountPaidCents,
+          status: charge.refunded ? "canceled" : "confirmed",
+          occurred_at: charge.paidAt,
+        }),
+      });
+      const body = await response.json();
+      if (!response.ok) throw new Error(`${body.error.code}: ${body.error.message}`);
+      return body;
+    }
+    ```
+    </CodeGroup>
+
+    Em `amount_cents`, mande o valor pago pelo assinante naquela cobrança, em centavos, sem impostos destacados. Em `occurred_at`, a data do pagamento.
+  </Step>
+
+  <Step title="Mande o reembolso da cobrança">
+    Reembolso ou chargeback de uma cobrança (no Stripe, `charge.refunded` ou `charge.dispute.created`) é o mesmo `PUT`, com o mesmo `external_id` e `"status": "canceled"`. Só aquela cobrança sai; as outras do assinante continuam.
+  </Step>
+</Steps>
+
+## Quantas cobranças comissionar
+
+O campo **Cobranças de assinatura que comissionam** do acordo vale para os conectores RevenueCat e Asaas, e só para as cobranças recorrentes: lá, compra avulsa sempre comissiona. Pela API, **quem decide é o seu sistema**: a Conty registra toda venda que você manda.
+
+- **Comissão só na primeira cobrança:** mande só a primeira cobrança paga de cada assinante.
+- **Comissão nas N primeiras:** conte as cobranças pagas do assinante no seu sistema e pare de mandar depois da N-ésima.
+- **Comissão enquanto a pessoa assinar:** mande todas.
+- **Compra avulsa:** mande sempre, como nos conectores.
+
+Para medir as renovações sem pagar comissão sobre elas, use um acordo com taxa `0` (cupom só de rastreio): as vendas contam e a comissão vem `0`.
+
+## O que saber antes de ir para produção
+
+- **Renovação depois do fim do acordo não tem comissão.** A venda é registrada com `commission_status` `after_campaign_end`.
+- **A data precisa ser depois da criação do cupom.** Cobrança antiga, de antes do cupom existir, responde `422 sale_occurred_at_out_of_range`.
+- **A venda fica com o dono do cupom no dia da cobrança.** Se o cupom trocar de dono, as renovações seguintes vão para o novo dono.
+- **Teste grátis não é venda.** A API recusa `amount_cents` zero. Mande a venda só quando houver cobrança paga.
+
+Confira as vendas registradas com `GET /coupons/{id}/sales`, como mostra [Consultar as vendas](/api/guias/registrar-vendas#consultar-as-vendas).

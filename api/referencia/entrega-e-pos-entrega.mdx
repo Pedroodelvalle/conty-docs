@@ -1,0 +1,190 @@
+---
+title: "Entrega e pós-entrega"
+description: "Envio de produto, link e data do post, conferência do post, cupom do creator, comentários, exportação do quadro e as leituras de resultado e rastreio da campanha."
+icon: "truck"
+keywords:
+  - envio de produto
+  - rastreio
+  - link do post
+  - cupom do creator
+  - comentários
+  - exportar quadro
+  - resultados
+---
+
+<Note>
+  **Beta, ainda não publicado em produção.** As rotas desta página estão em desenvolvimento e ainda não respondem em `https://api.appconty.com`. O contrato pode mudar até o lançamento. Acompanhe o [changelog](/api/changelog).
+</Note>
+
+Depois que o creator entra no acordo, a marca envia o produto, combina a data do post, confere o link publicado, entrega o cupom e acompanha os resultados. Tudo pelo mesmo serviço do painel, com os mesmos avisos ao creator. As regras gerais (`409 invalid_transition`, marca assistida, lotes, campanha avulsa legada) são as de [Operar o quadro](/api/referencia/quadro#regras).
+
+As rotas de escrita pedem o escopo `campaigns:write`; a verba de comissão do cupom pede também `campaigns:spend`. Ação que depende de um módulo não liberado para a marca responde `403 module_disabled`.
+
+## Envio de produto
+
+`POST /missions/{id}/product-shipment` marca o produto da missão como enviado, com o código de rastreio opcional. No primeiro envio o creator é avisado. Chamar de novo só troca o código; sem `tracking_code` depois do envio, `409 invalid_transition`.
+
+```bash
+curl -X POST https://api.appconty.com/public/v1/missions/2b9e4d7a-1c3f-4e5a-8b6d-9f0a1c2e3d4b/product-shipment \
+  -H "Authorization: Bearer $CONTY_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "tracking_code": "br 123456789 br" }'
+```
+
+- **Código de rastreio.** Código dos Correios (`AA123456789BR`) é gravado em maiúsculas e sem espaços: o exemplo acima vira `BR123456789BR`. Código de outra transportadora é aceito e fica como veio, até 80 caracteres. `null` ou vazio apaga.
+- **Recebimento é do creator.** Ele declara no app que recebeu, com foto opcional. A API não marca recebimento.
+- Campanha sem produto responde `409 no_product`; sem envio físico, `409 shipping_disabled`; produto já recebido, `409 already_received`; missão fora de produção, `409 invalid_transition`.
+
+`GET /missions/{id}/product-shipment` devolve o estado do envio. A resposta do `POST` traz o mesmo objeto em `product_shipment`, junto da `mission`.
+
+```json
+{
+  "shipped_at": "2026-11-10T14:30:00.000Z",
+  "tracking_code": "BR123456789BR",
+  "received_at": "2026-11-14T16:20:40.000Z",
+  "received_photo_url": "https://files.conty.test/recebimento.jpg?X-Amz-Signature=...",
+  "carrier_status": "delivered",
+  "carrier_delivered_at": "2026-11-13T10:47:00.000Z"
+}
+```
+
+<ResponseField name="received_at" type="string | null" required>
+  Quando o creator confirmou o recebimento. Só o creator confirma: a entrega da transportadora não preenche este campo.
+</ResponseField>
+
+<ResponseField name="received_photo_url" type="string | null" required>
+  URL assinada da foto que o creator mandou ao confirmar, válida por 10 minutos. `null` sem foto. Baixe logo; não guarde a URL.
+</ResponseField>
+
+<ResponseField name="carrier_status" type="string | null" required>
+  Último estado do rastreio automático dos Correios: `posted`, `in_transit`, `out_for_delivery`, `delivered`, `returned` ou `unknown`. `null` quando o rastreio não consultou: recurso desligado, código de outra transportadora ou ainda não consultado. `delivered` não é recebimento.
+</ResponseField>
+
+<ResponseField name="carrier_delivered_at" type="string | null" required>
+  Quando a transportadora marcou o produto como entregue. `null` até lá.
+</ResponseField>
+
+<Note>
+  O rastreio automático dos Correios está em beta e desligado por padrão: fica **disponível sob ativação**. Fale com o time da Conty. Sem ele, `carrier_status` e `carrier_delivered_at` ficam `null`.
+</Note>
+
+Os webhooks [`mission.product_delivered_by_carrier`](/api/webhooks/eventos/missoes#produto-enviado-pela-marca) e `mission.product_received` avisam cada um dos dois momentos.
+
+## Link e data do post
+
+`PUT /missions/{id}/post-url` grava o link do post publicado, por rede (`network`: `instagram`, `tiktok`, `x` ou `youtube`), pela mesma conferência do painel.
+
+```bash
+curl -X PUT https://api.appconty.com/public/v1/missions/2b9e4d7a-1c3f-4e5a-8b6d-9f0a1c2e3d4b/post-url \
+  -H "Authorization: Bearer $CONTY_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "network": "instagram", "url": "https://www.instagram.com/reel/C9xYz12AbCd/" }'
+```
+
+- A resposta traz `post_link.state`: `confirmed` (o link já vale) ou `pending` (a Conty está conferindo, com `job_id`). O resultado aparece em `post_urls` da missão.
+- **Só depois da entrega aprovada.** Antes, a resposta é `409 invalid_transition` com `details[].code = "mission_not_approved"`. Link já confirmado ou em conferência também responde `409 invalid_transition`.
+- Link inválido responde `422 invalid_url`; de outra rede, `422 platform_mismatch`. Conferência fora do ar, `503 check_unavailable`.
+- Em marca assistida é só da agência (`403 forbidden`).
+
+`PUT /missions/{id}/posted-at` combina a data em que o creator publica (`posted_at`, data ou data e hora com fuso), e o creator é avisado. Depende do módulo de liberação de postagem (`403 module_disabled` sem ele). Data no passado responde `422 approval_posted_at_in_past`; missão que já publicou ou não pede data, `409 invalid_transition`.
+
+## Conferência do post
+
+Quando a conferência do post publicado acha divergência (ou dúvida), a marca pode aceitá-la e liberar o repasse que esperava por ela. Depende do módulo de conferência do post.
+
+- `POST /missions/{id}/post-check/accept` aceita a conferência atual da missão (`check_id`, com `note` opcional). Conferência que não é a atual, já foi aceita ou não tem o que aceitar responde `409 invalid_transition` com `details[].code = "post_check_not_divergent"`. Na cadeia de revisão, quem decide é o último lado (`403 forbidden`).
+- `POST /post-checks/accept` aceita até 100 de uma vez (`items[]` com `mission_id`, `check_id` e `note`). Cada uma volta em `results` com `accepted` e, quando não deu, o motivo em `code`, sem derrubar as outras.
+
+## Cupom do creator
+
+Com cupons liberados para a marca (`403 coupons_disabled` sem eles):
+
+| Rota | O que faz |
+|---|---|
+| `POST /missions/{id}/coupon` | Cria o cupom do creator (`code`, com `discount_description`) ou vincula um cupom do pool (`coupon_id`). O creator é avisado no app. Responde `201` com a missão e o cupom em `coupon` |
+| `GET /campaigns/{id}/coupon-pool` | Cupons da campanha que ainda não têm creator |
+| `POST /campaigns/{id}/coupon-pool` | Cadastra até 500 códigos prontos no pool. Inválido, repetido ou já usado volta em `results` sem derrubar o resto |
+| `POST /campaigns/{id}/coupons/bulk` | Dá cupom a até 200 creators: do pool (`mode: "pool"`), gerado por prefixo (`generate`) ou com o código de cada um (`custom`). `dry_run: true` simula |
+| `POST /campaigns/{id}/coupon-commission/budget` | Soma `amount_cents` à verba que paga a comissão das vendas por cupom, tirando do saldo livre da marca. Pede `campaigns:spend` e a permissão de depósito do dono; `dry_run: true` só simula e dispensa `campaigns:spend`. Saldo livre insuficiente, `402 insufficient_free_balance` |
+| `GET /campaigns/{id}/coupon-sales` | Vendas, receita e comissão por cupom da campanha, com totais |
+
+As rotas que criam cupom ou movem verba exigem `Idempotency-Key`. Repetir a mesma chave devolve a primeira resposta com o cabeçalho `Idempotent-Replayed: true`, sem criar outro cupom nem debitar de novo. No `POST /missions/{id}/coupon`, código em uso responde `409 coupon_code_taken`; creator que já tem cupom, `409 coupon_exists`; missão encerrada, `422 mission_closed`. Veja também [Cupons](/api/referencia/cupons).
+
+## Comentários
+
+Os comentários da entrega, como a aba do painel, em dois canais:
+
+| `channel` | O que é |
+|---|---|
+| `creator` | A conversa com o creator na entrega |
+| `agency` | A conversa interna da marca com a agência, na marca assistida |
+
+- `GET /missions/{id}/comments` traz os últimos comentários (`limit` até 50), do mais antigo para o mais novo, com `available_channels`. Sem `channel`, vem o primeiro disponível. Como no painel, ler marca a conversa como lida para o dono da marca.
+- `POST /missions/{id}/comments` publica com `channel`, `body` (até 2000 caracteres), `mentioned_user_ids` e `video_time_seconds` (o segundo do vídeo). O autor é o dono da marca. Exige `Idempotency-Key`. Mencionar o creator ou alguém de fora da marca e da agência responde `422 mention_not_allowed`.
+- Canal que a marca não vê responde `403 forbidden`.
+
+## Exportar o quadro
+
+`GET /campaigns/{id}/export?stage=<id>` exporta uma etapa do quadro, com as colunas da exportação do painel.
+
+- `stage` é qualquer `id` devolvido por `GET /campaigns/{id}/stages`, inclusive as fases de produção. Id fora do `/stages` responde `422 validation_failed` com `path: "stage"`.
+- As linhas são os mesmos itens de `GET /campaigns/{id}/items` na etapa, com os mesmos filtros no servidor, e batem com a contagem do `/stages`. Etapa vazia exporta 0 linhas.
+- `format=csv` (padrão) devolve o arquivo, como o do painel. `format=json` devolve `{ columns, rows, total }`, com a chave de cada coluna.
+- `fields` escolhe as colunas, separadas por vírgula. Coluna que o dono da marca não vê fica de fora.
+- Síncrono, **até 2000 linhas**: etapa maior responde `422` pedindo filtro.
+
+```json
+{
+  "columns": [
+    { "key": "creator_name", "label": "Creator" },
+    { "key": "stage", "label": "Etapa" }
+  ],
+  "rows": [{ "creator_name": "Fulana Souza", "stage": "Aprovados" }],
+  "total": 1
+}
+```
+
+## Arquivos e avisos
+
+| Rota | O que faz |
+|---|---|
+| `GET /missions/{id}/script-file` | URL assinada e temporária do roteiro enviado, o atual ou uma versão anterior (`version_id`) |
+| `GET /missions/{id}/delivery-download` | URL assinada e temporária do vídeo. Antes da aprovação, MP4 com marca d'água (`watermarked: true`); a primeira chamada pode voltar `status: "preparing"`, então chame de novo. Depois, o original limpo |
+| `POST /missions/{id}/notify` | Manda de novo ao creator o aviso de `approved`, `changes_requested`, `rejected` ou `paid`, com texto opcional. A missão precisa estar no status do aviso |
+| `POST /missions/{id}/sync-metrics` | Pede a leitura das métricas dos posts da missão agora; `next_sync_at` diz quando roda |
+
+## Visões, resultados e rastreio
+
+Leituras da campanha com os números do painel, dinheiro em centavos e filtros no servidor. Valores de dinheiro saem `null` quando a marca não vê dinheiro.
+
+| Rota | O que traz |
+|---|---|
+| `GET /campaigns/{id}/counts` | Os contadores da barra lateral: missões por etapa, candidaturas, convites e vagas |
+| `GET /campaigns/{id}/segments` | Creators agrupados por lista da marca ou por etapa |
+| `GET /campaigns/{id}/suggestions` | Creators da base sugeridos para a campanha, com a nota de compatibilidade. Depende do módulo de sugestões |
+| `GET /campaigns/{id}/results` e `/results/timeseries` | A aba Resultados: visualizações, engajamento, gasto e CPM, e a curva diária |
+| `GET /campaigns/{id}/results/creators` e `/results/creators/{creator_id}/deliveries` | Ranking de creators e cada entrega de um creator |
+| `GET /campaigns/{id}/results/traffic` e `/results/traffic/events` | Funil de tráfego e os eventos de analytics atribuídos. Depende do módulo de rastreio |
+| `PUT /conversion-events` | Escolhe quais eventos de analytics contam como conversão, na marca inteira |
+| `POST /campaigns/{id}/sync-metrics` | Pede a leitura das métricas de todos os posts do acordo, um job por bloco; acompanhe em `GET /campaigns/{id}/sync-metrics/jobs/{job_id}` |
+| `GET /campaigns/{id}/tracking` e `PUT /campaigns/{id}/tracking/destination` | Destino dos links, UTMs e números por creator, e a troca do destino. Depende do módulo de rastreio |
+| `POST /campaigns/{id}/short-links` | Cria o link curto rastreado da campanha ou de um creator. Exige `Idempotency-Key` |
+| `GET /campaigns/{id}/creator-invoices` | Notas fiscais que os creators emitiram pelos repasses do acordo |
+| `GET` e `PUT /campaigns/{id}/ai-rubric` | O que a pré-análise de IA confere em cada vídeo, por bloco. Depende do módulo de pré-análise |
+
+## Erros
+
+| Status | Código | Quando |
+|---|---|---|
+| 402 | `insufficient_free_balance` | O saldo livre não cobre a verba de comissão |
+| 403 | `module_disabled` | O módulo da ação não está liberado para a marca |
+| 403 | `coupons_disabled` | Cupons não estão liberados para a marca |
+| 403 | `insufficient_scope` | Falta `campaigns:write`, ou `campaigns:spend` para a verba de comissão |
+| 409 | `invalid_transition` | A missão não está no estado que a ação pede. Em `details[].code`, o motivo, como `mission_not_approved` ou `post_check_not_divergent` |
+| 409 | `no_product`, `shipping_disabled`, `already_received` | A campanha não tem produto, não tem envio físico, ou o creator já recebeu |
+| 409 | `coupon_exists`, `coupon_code_taken` | O creator já tem cupom, ou o código está em uso |
+| 422 | `invalid_url`, `platform_mismatch` | Link inválido ou de outra rede |
+| 422 | `approval_posted_at_in_past` | Data do post no passado |
+| 422 | `mention_not_allowed` | Menção ao creator ou a alguém de fora da marca e da agência |
+| 422 | `mission_closed` | A missão do creator já foi encerrada |
+| 503 | `check_unavailable` | A conferência do link está fora do ar. Tente de novo |

@@ -1,0 +1,227 @@
+---
+title: "Operar clientes como agência"
+description: "Use a chave de API da agência para ler e operar as marcas clientes: pegue o ID de cada cliente, mande no cabeçalho X-Conty-Brand-Id e receba os eventos dos clientes num webhook só."
+icon: "building-user"
+keywords:
+  - agência
+  - clientes
+  - X-Conty-Brand-Id
+  - id da empresa
+  - brands
+  - brand_ids
+  - mission.ad_code_submitted
+---
+
+A agência usa **uma chave só** para todos os clientes. Em cada chamada, você diz qual cliente quer operar no cabeçalho `X-Conty-Brand-Id`, com o ID da empresa do cliente. A API responde como se a chamada fosse daquela marca, com as permissões que a agência tem nela no painel.
+
+<Note>
+  A chave de agência só opera marcas **vinculadas** à agência, as que aparecem em **Clientes** no painel. Marca de outra agência, ou que deixou de ser cliente, responde `403 brand_not_managed`. Cliente bloqueado responde `403 brand_blocked`.
+</Note>
+
+## Antes de começar
+
+- **A chave é criada no painel da agência**, não no do cliente. Em **Plugins → Integrações**, clique em **Nova chave**, escolha os [escopos](/api/autenticacao#escopos-da-chave) e copie a chave na hora. Os escopos da chave valem para todos os clientes.
+- **A API pública liberada para a agência.** Sem liberação, toda rota responde `403 open_api_disabled`. Sem plano ativo, `403 plan_required`.
+- **Os recursos de cada cliente seguem a liberação do cliente.** Com o cabeçalho, a API usa os módulos da marca: se o cliente não tem cupons liberados, as rotas `/coupons` respondem `403 coupons_disabled` para ele.
+- **A busca de creators segue a liberação da agência.** Ao contrário dos outros recursos, a [busca de creators](/api/referencia/creators) confere o módulo na agência dona da chave, não no cliente. Sem ele, `403 creator_search_disabled`.
+- **Uma cota para todos os clientes.** O [limite de requisições](/api/referencia/introducao#limites) é por chave: todos os clientes operados com a chave da agência dividem a mesma cota de 120 requisições por minuto, e a de 30 buscas de creators por minuto.
+- **Cupons sem o cabeçalho são da agência.** Sem `X-Conty-Brand-Id`, as rotas `/coupons` respondem sobre a própria agência, não sobre um cliente.
+
+## Como pegar o ID da empresa
+
+O ID da empresa é um UUID, como `5e4d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c1b`. Há três jeitos de achar.
+
+<Tabs>
+  <Tab title="Clientes">
+    No painel da agência, abra **Clientes**. No menu **…** do cliente, clique em **Copiar ID**. O ID inteiro vai para a área de transferência.
+  </Tab>
+  <Tab title="Configurações">
+    Entre no painel da empresa e abra **Configurações**. No perfil da empresa, no canto superior direito, aparece **ID** com o começo e o fim do ID. O botão de copiar ao lado copia o ID inteiro.
+  </Tab>
+  <Tab title="Pela API">
+    Com a chave da agência, chame `GET /brands`. A resposta lista os clientes vinculados, com `id`, `name` e `status`:
+
+    ```bash
+    curl "https://api.appconty.com/public/v1/brands?limit=20" \
+      -H "Authorization: Bearer $CONTY_API_KEY"
+    ```
+  </Tab>
+</Tabs>
+
+<Tip>
+  `GET /me` e `GET /brands` ignoram o `X-Conty-Brand-Id`, mesmo com um ID inválido: as duas descrevem a empresa **dona da chave**. Com a chave da agência, o `enterprise` do `/me` é a agência. Use `/me` para testar a chave e `/brands` para listar os clientes.
+</Tip>
+
+## Fluxo ponta a ponta
+
+<Steps>
+  <Step title="Liste os clientes">
+    `GET /brands` pagina por cursor, do cliente mais novo para o mais antigo, sem os excluídos. Repita com `cursor=<next_cursor>` até `has_more` ser `false`.
+
+    ```json 200
+    {
+      "data": [
+        { "id": "5e4d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c1b", "name": "Marca Exemplo", "status": "active" },
+        { "id": "7c8d9e0f-1a2b-4c3d-9e4f-5a6b7c8d9e0f", "name": "Loja Modelo", "status": "active" }
+      ],
+      "has_more": false,
+      "next_cursor": null
+    }
+    ```
+
+    `status` é o da conta do cliente: `active` ou `blocked`. O cliente bloqueado aparece na lista, mas não pode ser operado: com o ID dele no cabeçalho, a API responde `403 brand_blocked`. Guarde o `id` de cada um no seu sistema.
+  </Step>
+
+  <Step title="Opere um cliente com X-Conty-Brand-Id">
+    Mande o `id` do cliente no cabeçalho `X-Conty-Brand-Id`. Toda rota de marca passa a responder sobre ele. Aqui, as campanhas da Marca Exemplo:
+
+    <CodeGroup>
+
+    ```bash cURL
+    # 1. Os clientes da agência
+    curl "https://api.appconty.com/public/v1/brands" \
+      -H "Authorization: Bearer $CONTY_API_KEY"
+
+    # 2. As campanhas de um cliente
+    curl "https://api.appconty.com/public/v1/campaigns?status=approved&limit=20" \
+      -H "Authorization: Bearer $CONTY_API_KEY" \
+      -H "X-Conty-Brand-Id: 5e4d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c1b"
+    ```
+
+    ```javascript Node.js
+    const BASE_URL = "https://api.appconty.com/public/v1";
+
+    async function conty(path, brandId) {
+      const headers = { Authorization: `Bearer ${process.env.CONTY_API_KEY}` };
+      if (brandId) headers["X-Conty-Brand-Id"] = brandId;
+
+      const response = await fetch(`${BASE_URL}${path}`, { headers });
+      const body = await response.json();
+      if (!response.ok) {
+        throw new Error(`${body.error.code}: ${body.error.message} (${body.error.request_id})`);
+      }
+      return body;
+    }
+
+    async function listClients() {
+      const clients = [];
+      let cursor = null;
+      do {
+        const query = new URLSearchParams({ limit: "100" });
+        if (cursor) query.set("cursor", cursor);
+        const page = await conty(`/brands?${query}`);
+        clients.push(...page.data);
+        cursor = page.has_more ? page.next_cursor : null;
+      } while (cursor);
+      return clients;
+    }
+
+    const clients = await listClients();
+    for (const client of clients.filter((client) => client.status === "active")) {
+      const campaigns = await conty("/campaigns?status=approved&limit=20", client.id);
+      console.log(client.name, campaigns.data.map((campaign) => campaign.name));
+    }
+    ```
+
+    </CodeGroup>
+
+    A resposta é a mesma de [`GET /campaigns`](/api/referencia/campanhas) para uma chave da própria marca. O id da campanha, da missão e do creator também: depois do primeiro passo, o fluxo é igual ao de uma marca, sempre com o cabeçalho.
+  </Step>
+
+  <Step title="Escreva no cliente">
+    Escrita também leva o cabeçalho, e vale o escopo da chave da agência. As ações que o painel reserva à agência numa marca assistida, como mudar prazo, renovar, reconvidar, subir cachê e informar o link do post, funcionam pela chave da agência como no painel.
+  </Step>
+</Steps>
+
+### O que muda com o cabeçalho
+
+| Chave | `X-Conty-Brand-Id` | Resultado |
+|---|---|---|
+| Agência | ID de um cliente vinculado | Opera o cliente, com as permissões da agência nele |
+| Agência | Ausente | As rotas de marca, como `/campaigns`, respondem `403 forbidden`. `/coupons` responde sobre a própria agência |
+| Agência | Marca que não é cliente, cliente excluído ou valor que não é UUID | `403 brand_not_managed` |
+| Agência | Cliente bloqueado | `403 brand_blocked` |
+| Qualquer | Qualquer valor, em `GET /me` e `GET /brands` | O cabeçalho é ignorado |
+| Marca | O ID da própria marca | O cabeçalho é ignorado |
+| Marca | O ID de outra marca | `403 agency_only` |
+| Marca | Sem cabeçalho ou com qualquer valor, em `GET /brands` | `403 agency_only` |
+
+## Erros
+
+Todos vêm no [envelope comum](/api/referencia/introducao#erros). Decida pelo `code`.
+
+| Status | `code` | Quando acontece | O que fazer |
+|---|---|---|---|
+| 403 | `forbidden` | Chave de agência sem `X-Conty-Brand-Id` numa rota de marca, ou a agência não tem no cliente a permissão que a ação exige | Mande o cabeçalho com o ID do cliente |
+| 403 | `brand_not_managed` | O ID não é de um cliente vinculado à agência, o cliente foi excluído ou o valor não é UUID | Confira o ID em `GET /brands` |
+| 403 | `brand_blocked` | O cliente está bloqueado (`status: "blocked"` em `GET /brands`) | Não opere o cliente até ele ser desbloqueado |
+| 403 | `agency_only` | Chave de marca chamou `GET /brands` ou mandou o ID de outra marca no cabeçalho | Use a chave da agência |
+
+```json 403
+{
+  "error": {
+    "code": "brand_not_managed",
+    "message": "Esta marca não é cliente da agência dona da chave.",
+    "request_id": "req_01JC8Z3K9W2Q4R6T8V0X2Z4B6D"
+  }
+}
+```
+
+## Webhook da agência
+
+Um endpoint cadastrado pela agência, no painel em **Plugins → Integrações → Webhooks**, recebe os eventos da própria agência e dos clientes que ele cobre. Veja [Webhooks](/api/webhooks/visao-geral).
+
+- **O que o endpoint cobre.** Sempre a própria agência, mais os clientes listados em `brand_ids`, até 50. Sem `brand_ids`, ou com `[]`, cobre só a agência.
+- **Editar a lista.** A lista nova substitui a anterior, e uma lista vazia deixa só a agência. Cliente vinculado depois só entra editando o endpoint.
+- **Cliente que sai da agência.** Quando o cliente é desvinculado, ou o dono dele aceita o convite de outra agência, os eventos dele param de chegar.
+- **Só ID de cliente.** ID que não é cliente da agência é recusado (`422 brand_not_managed`), e mais de 50 clientes também. Endpoint de marca não aceita `brand_ids`: cobre só a própria marca (`422 webhook_brand_ids_not_allowed`).
+- **Limite.** Cada agência pode ter até 5 endpoints.
+
+<Warning>
+  **A tela de webhooks do painel ainda não tem o seletor de clientes**: o endpoint criado por ela cobre só a agência. Enquanto o seletor não chega, a Conty grava os clientes cobertos: crie o endpoint e mande ao seu contato na Conty o endpoint e os IDs dos clientes.
+</Warning>
+
+Cada evento traz o cliente em `data.brand.id`. É o mesmo ID do `X-Conty-Brand-Id`: use para saber de qual cliente é o evento e chamar a API de volta sobre ele.
+
+## Exemplo: receber o código do anúncio
+
+Na campanha que pede código de anúncio, o creator grava o código na missão aprovada, para a marca impulsionar o post. O evento [`mission.ad_code_submitted`](/api/webhooks/eventos/missoes#código-do-anúncio) avisa na hora, com o código em `data.ad_code.code`.
+
+<Steps>
+  <Step title="Assine o evento">
+    No endpoint da agência que cobre o cliente, marque **Enviou o código do anúncio** (`mission.ad_code_submitted`).
+  </Step>
+  <Step title="Receba o evento">
+    ```json
+    {
+      "id": "4b3a2c1d-0e9f-4a8b-9c7d-6e5f4a3b2c1d",
+      "type": "mission.ad_code_submitted",
+      "created_at": "2026-11-23T16:28:09.893Z",
+      "tenant": "conty",
+      "summary": "Marca Exemplo: Fulana Souza enviou o código do anúncio da campanha \"Verão 2027\".",
+      "data": {
+        "brand": { "id": "5e4d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c1b", "name": "Marca Exemplo" },
+        "campaign": {
+          "id": "6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f",
+          "name": "Verão 2027",
+          "url": "https://appconty.com/campaigns/6c1e8f2a-3b4d-4a5c-9e7f-0a1b2c3d4e5f"
+        },
+        "creator": { "id": "8d4c3b2a-1f0e-4d9c-8b7a-6f5e4d3c2b1a", "name": "Fulana Souza", "handle": "@fulana" },
+        "mission": { "id": "c3a2b1d0-e9f8-4a7b-9c6d-5e4f3a2b1c0d", "status": "aprovado", "platform": "instagram" },
+        "ad_code": { "code": "VERAO27-AD-0042" }
+      }
+    }
+    ```
+  </Step>
+  <Step title="Use o código e leia a missão do cliente">
+    [Verifique a assinatura](/api/webhooks/assinatura), guarde `data.ad_code.code` no seu gerenciador de anúncios e, se precisar de mais contexto, leia a missão com o cliente do evento no cabeçalho:
+
+    ```bash
+    curl "https://api.appconty.com/public/v1/missions/c3a2b1d0-e9f8-4a7b-9c6d-5e4f3a2b1c0d" \
+      -H "Authorization: Bearer $CONTY_API_KEY" \
+      -H "X-Conty-Brand-Id: 5e4d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c1b"
+    ```
+  </Step>
+</Steps>
+
+O evento sai só quando o código gravado é novo e não vazio. Gravar o mesmo código de novo, ou apagar o código, não gera evento.

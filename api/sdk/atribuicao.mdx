@@ -1,0 +1,36 @@
+---
+title: "Atribuição ao creator"
+description: "Como o SDK guarda as UTMs do link do creator e quando um evento sai atribuído."
+icon: "link"
+keywords:
+  - sdk
+  - atribuição
+  - utm
+  - creator
+  - último toque
+---
+
+<Steps>
+  <Step title="O creator divulga o link dele">
+    O link do creator leva para o destino da campanha com as UTMs. `utm_campaign` é a campanha e `utm_content` é o código do creator: `cr_` seguido de 8 caracteres hexadecimais (`cr_ab12cd34`) ou o id do creator.
+  </Step>
+
+  <Step title="O SDK guarda a atribuição">
+    No site e no app, o SDK guarda as UTMs por 30 dias (`conty_attribution`, em `localStorage` ou no AsyncStorage). Só guarda quando o link traz `utm_campaign` e o código do creator em `utm_content`.
+  </Step>
+
+  <Step title="Cada evento sai atribuído">
+    Todo `track` leva `utm_campaign` e `utm_content` guardados. No servidor, você manda as duas UTMs do pedido ou o `link_code`.
+  </Step>
+</Steps>
+
+Vale o **último toque com creator**: um link novo de creator substitui a atribuição guardada.
+
+## Quando não atribui
+
+- Link só de campanha, sem o código do creator em `utm_content`, ou link sem `utm_campaign`. Ele também não apaga a atribuição guardada.
+- `utm_content` sem `utm_campaign`, no servidor.
+- Evento depois de 30 dias do último link de creator, no site e no app.
+- UTMs que não batem com nenhum link de creator da sua marca.
+
+Esses eventos entram no total da marca em **Tráfego**, sem creator. A regra de busca do link está em [Eventos de conversão](/api/guias/eventos-de-conversao#atribuição-ao-creator-e-à-campanha).

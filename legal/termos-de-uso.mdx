@@ -243,6 +243,36 @@ A Conty é um aplicativo de marketing gamificado que combina tecnologia de intel
 - Ao conectar o TikTok, o uso fica sujeito aos [Termos de Serviço do TikTok](https://www.tiktok.com/legal/terms-of-service) e à [Política de Privacidade do TikTok](https://www.tiktok.com/legal/privacy-policy).
 - Você pode revogar a autorização a qualquer momento, na Conty ou nas configurações da própria rede. Os dados lidos, a retenção e a exclusão estão na [Política de Privacidade](/legal/politica-de-privacidade#contas-conectadas-youtube-instagram-e-tiktok).
 
+### 5.2 Integrações e conectores (Marcas)
+
+A Marca pode conectar à Conty contas que mantém em outras plataformas, como **Meta Ads**, **Google Analytics 4**, **PostHog** e **App Store Connect**, além dos conectores listados na [documentação de conectores](/api/referencia/conectores) à medida que forem lançados. Ao conectar uma conta, a Marca:
+
+- autoriza a Conty a acessar a conta conectada com as permissões exibidas no momento da conexão, seja no login da própria plataforma, seja nas credenciais que a Marca informa;
+- declara que tem poderes para conceder esse acesso em nome do titular da conta conectada.
+
+**Somente leitura, salvo na Meta Ads.** Nos conectores de análise (Google Analytics 4, PostHog e App Store Connect), a Conty só lê dados e não altera nada na conta conectada. Na Meta Ads, além de ler o desempenho, a Conty age na conta de anúncios da Marca sempre por comando da Marca no painel: cria campanhas, conjuntos de anúncios e anúncios de parceria com os vídeos aprovados dos Criadores, altera a configuração desses conjuntos e ativa ou pausa esses anúncios. O anúncio é criado pausado. O valor investido em anúncios é cobrado pela Meta na conta de anúncios da Marca, conforme as regras da Meta.
+
+**Termos de terceiros.** O uso de cada conector também fica sujeito aos termos e às políticas da plataforma conectada, como os [Termos da Plataforma Meta](https://developers.facebook.com/terms/) e os termos e políticas do Google, do PostHog e da Apple.
+
+**Dados do provedor.** Os dados vêm da plataforma conectada e podem mudar, chegar com atraso, ser revisados pela própria plataforma ou ficar indisponíveis. A Conty não responde pela exatidão desses dados, por instabilidades da plataforma conectada nem por mudanças nas APIs ou nas regras dela.
+
+**Desconexão.** A Marca pode desconectar qualquer conector a qualquer momento no painel, em **Integrações**. Ao desconectar a Meta Ads, a Conty deixa de criar anúncios e de ler o desempenho, apaga o token de acesso e pausa os anúncios ativos que criou; os anúncios continuam existindo na conta da Marca na Meta.
+
+**Disponibilidade.** A Conty pode habilitar ou desabilitar cada conector para cada Marca, e lançar, alterar ou descontinuar conectores, mediante aviso na plataforma.
+
+### 5.3 API de eventos e script do site (Marcas)
+
+A Marca pode enviar à Conty eventos de conversão, como cadastros e compras, pela API de eventos ou pelo script da Conty instalado no próprio site, usando a chave de eventos criada no painel. Os eventos são usados para medir os resultados das campanhas e não geram venda de cupom nem comissão ao Criador.
+
+A Marca é a única responsável:
+
+- pelos eventos e dados que envia e pela veracidade deles;
+- por ter base legal, nos termos da LGPD, para tratar e enviar esses dados;
+- por informar os usuários do seu site e do seu app, na sua política de privacidade e, quando exigido, no seu aviso de cookies e tecnologias de armazenamento, sobre o uso da Conty. O script da Conty guarda no navegador do visitante (armazenamento local, sem cookies) as UTMs da visita por até 30 dias, para atribuir o evento ao Criador;
+- por não enviar dados pessoais sensíveis nem dados que identifiquem diretamente o usuário final (como nome, e-mail, telefone ou CPF) nos campos do evento.
+
+A Marca pode revogar a chave de eventos a qualquer momento no painel. A Conty pode limitar ou recusar envios, revogar chaves e suspender o recebimento de eventos da Marca em caso de uso abusivo, envio de eventos falsos ou violação destes Termos.
+
 ---
 
 ## 6. Fluxo da Missão — Passo a Passo

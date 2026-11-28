@@ -12,12 +12,12 @@ Ao fim desta página você terá uma chave de API funcionando, uma chamada auten
 
 <Steps>
   <Step title="Crie a chave de API">
-    No painel da Conty, abra **Menu → Desenvolvedores** e clique em **Criar chave**. Dê um nome que diga onde ela vai ser usada, por exemplo `Integração loja`.
+    No painel da Conty, abra **Plugins → Integrações** e clique em **Nova chave**. Dê um nome que diga onde ela vai ser usada, por exemplo `Integração loja`.
 
     A chave aparece **uma vez só**, no formato `ck_live_…`. Copie e guarde no gerenciador de segredos do seu servidor.
 
     <Note>
-      Para ver a página Desenvolvedores, o seu cargo precisa da permissão **Gerenciar chaves de API e webhooks**. Se ela não aparece, peça ao dono da conta.
+      Para ver a página Integrações, o seu cargo precisa da permissão **Gerenciar chaves de API e webhooks**. Se ela não aparece, peça ao dono da conta.
     </Note>
   </Step>
 
@@ -33,16 +33,18 @@ Ao fim desta página você terá uma chave de API funcionando, uma chamada auten
 
     ```json
     {
-      "enterprise": { "id": "5e4d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c1b", "name": "BeConfident" },
+      "enterprise": { "id": "5e4d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c1b", "name": "Marca Exemplo" },
       "api_key": { "id": "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d", "name": "Integração loja", "hint": "0MmY" }
     }
     ```
+
+    Com a [escrita de campanhas](/api/referencia/campanhas-escrita), em beta e ainda não publicada em produção, a resposta traz também `api_key.scopes`, os [escopos](/api/autenticacao#escopos-da-chave) da chave, e `campaign_model`: a escrita de campanha pela API exige `agreement`, a marca que trabalha com acordos.
 
     Recebeu `401 invalid_api_key`? Confira se a chave foi copiada inteira e se ela não foi revogada.
   </Step>
 
   <Step title="Cadastre um webhook">
-    Ainda em **Desenvolvedores**, abra **Webhooks** e clique em **Adicionar endpoint**:
+    Ainda em **Plugins → Integrações**, abra **Webhooks** e clique em **Novo webhook**:
 
     - **URL**: o endereço HTTPS público que vai receber os eventos;
     - **Eventos**: marque os que interessam, por exemplo `application.approved`.

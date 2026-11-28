@@ -10,6 +10,211 @@ keywords:
 
 Toda mudança no contrato da API aparece aqui antes de entrar no ar. Enquanto a API estiver em beta, mudanças que quebram compatibilidade são possíveis, sempre anunciadas nesta página com o que muda e o que fazer.
 
+<Update label="Busca de creators" description="25 de novembro de 2026">
+  A curadoria de creators sai do painel: a API busca na base da Conty com os mesmos filtros e a mesma ordenação da aba Creators. Ver [Buscar creators](/api/referencia/creators).
+
+  **Creators**
+  - `GET /creators/search`: os filtros da aba Creators, todos no servidor. Busca e rede: `q` (nome, @ ou link do perfil) e `platforms`. Localização: `state`, `city`, `country` e `locations`. Perfil: `niches`, `gender`, `profession`, `occupation`, `profile_type`, `followers_min`, `followers_max`, `age_min` e `age_max`. Métricas: `min_engagement_rate`, `max_sponsored_rate`, `audience_gender` e `brand_safety`. Exclusões: `exclude_in_brand_campaigns`, `exclude_campaign_ids`, `exclude_in_any_list`, `exclude_list_ids`, `exclude_community_id`, `exclude_niches`, `exclude_locations`, `exclude_genders` e `exclude_suspect_audience` (Conty Shield). Ordem: `sort` (`relevance`, `pro_first`, `rating_desc`, `followers_desc`, `followers_asc`). Parâmetro desconhecido ou inválido responde `422 validation_failed`.
+  - Resposta `{ data, has_more, next_cursor, total }`. Cada item traz só o perfil público, as métricas e as redes (`networks`); nada de e-mail, telefone, documento ou endereço. O `id` do creator é o mesmo de `target_creator_ids[]` no acordo.
+  - Paginação por cursor, com `limit` de 1 a 50 (padrão 20) e até **500 resultados por busca**. `total` traz o número real, mesmo acima de 500. Cursor de outros filtros, de outro `sort` ou de outro `limit`, ou que passaria do teto, responde `422 validation_failed` com `details[0].path = "cursor"`.
+  - Chave de marca, ou chave de agência com `X-Conty-Brand-Id` do cliente: a busca roda no cliente, com as exclusões dele.
+
+  **Liberação e limite**
+  - Módulo novo, liberado pela Conty na empresa **dona da chave** (a agência, no caso de chave de agência). Desligado, a rota responde `403 creator_search_disabled`. Ver [Disponibilidade](/api/autenticacao#disponibilidade).
+  - Limite próprio de **30 buscas por minuto por chave**, além das 120 requisições por minuto do limite geral. Todos os clientes de uma agência dividem a mesma cota. Acima dele, `429 rate_limited` com `Retry-After`. Ver [Limites](/api/referencia/introducao#limites).
+
+  **OpenAPI**
+  - Tag nova `Creators`, com os schemas `CreatorSearchPage`, `CreatorSearchItem` e `CreatorSearchNetwork`, e o erro `creator_search_disabled`.
+</Update>
+
+<Update label="Chave de agência e código do anúncio" description="23 de novembro de 2026">
+  A agência passa a integrar os clientes com uma chave só, e o código do anúncio do creator ganha evento. Ver o guia [Operar clientes como agência](/api/guias/agencia-operar-clientes).
+
+  **Chave de agência**
+  - A chave criada no painel de uma agência opera os clientes vinculados a ela. Mande o ID do cliente no cabeçalho `X-Conty-Brand-Id`: a API responde sobre o cliente, com as permissões que a agência tem nele no painel e os escopos da chave. Ver [Chave de agência](/api/autenticacao#chave-de-agência).
+  - Sem o cabeçalho, a chave de agência recebe `403 forbidden` nas rotas de marca. ID que não é de cliente vinculado, cliente excluído ou valor que não é UUID: `403 brand_not_managed`. Cliente bloqueado: `403 brand_blocked`.
+  - Chave de marca com o ID de outra marca no cabeçalho: `403 agency_only`. Com o ID da própria marca, o cabeçalho é ignorado. Integração de marca não muda.
+  - O limite de 120 requisições por minuto é por chave: todos os clientes operados com a chave da agência dividem a mesma cota.
+  - `GET /me` e `GET /brands` ignoram o cabeçalho, mesmo com um ID inválido: as duas descrevem a empresa dona da chave.
+  - Sem o cabeçalho, as rotas `/coupons` da chave de agência respondem sobre a própria agência.
+
+  **Clientes**
+  - `GET /brands`: lista paginada por cursor dos clientes da agência (`id`, `name`, `status`), sem os excluídos. Cliente bloqueado aparece com `status: "blocked"`, mas não pode ser operado.
+
+  **OpenAPI**
+  - As rotas de marca trazem o parâmetro de cabeçalho `X-Conty-Brand-Id` (opcional, só para chave de agência), e `Brand.status` é o enum `active | blocked`. Gerador de cliente a partir do [`openapi.json`](https://api.appconty.com/public/v1/openapi.json) já ganha o cabeçalho. Chave de marca responde `403 agency_only`.
+
+  **Webhooks**
+  - Endpoint cadastrado pela agência cobre sempre a própria agência, mais os clientes listados em `brand_ids` (até 50). Sem a lista, ou com `[]`, cobre só a agência. Na edição, a lista nova substitui a anterior, `[]` deixa só a agência e sem o campo nada muda; cliente novo só entra editando o endpoint. Quando o cliente sai da agência, por desvínculo ou por aceitar o convite de outra agência, os eventos dele param de chegar. ID que não é cliente responde `422 brand_not_managed`, mais de 50 responde `422`, e endpoint de marca não aceita `brand_ids` (`422 webhook_brand_ids_not_allowed`). A tela do painel ainda não tem o seletor de clientes: enquanto isso, a Conty grava os clientes cobertos. Ver [Webhook da agência](/api/guias/agencia-operar-clientes#webhook-da-agência).
+  - Novo evento `mission.ad_code_submitted`: o creator gravou um código de anúncio novo e não vazio na missão aprovada de uma campanha que pede o código. O código vem em `data.ad_code.code`. Gravar o mesmo código de novo ou apagar não gera evento. Ver [Código do anúncio](/api/webhooks/eventos/missoes#código-do-anúncio).
+</Update>
+
+<Update label="Permuta vira barter e idempotência mais segura" description="12 de novembro de 2026">
+  <Warning>
+    **Mudança que quebra leitura.** Em `GET /campaigns` e `GET /campaigns/{id}`, `payment.type` passa a vir `barter` no lugar de `permuta` a partir do deploy desta versão da API (esta entrada é publicada junto com ele). Se o seu código compara `payment.type === "permuta"`, troque para `"barter"`. Os outros valores (`per_video`, `per_view`, `affiliate`) não mudam. Os erros de produto seguem o mesmo nome: `barter_item_required` e `barter_product_not_allowed`.
+  </Warning>
+
+  **Escrita de campanhas (beta)**
+  - `POST /campaigns` e `PATCH /campaigns/{id}`: `payment_type` aceita `per_video`, `barter` ou `affiliate`, e os campos do produto passam a ser `barter_item`, `barter_description` e `barter_value_cents` (antes `permuta_item`, `permuta_description` e `permuta_value_cents`). Ver [Pagamento](/api/referencia/campanhas-escrita#pagamento).
+  - `PATCH /campaigns/{id}` em acordo fora do rascunho que muda `budget_cents`, `usage_rights_duration`, `payment_type` ou `coupon_commission_budget_cents` passa a pedir `campaigns:spend`, porque subir a verba compromete saldo da marca. Sem o escopo, `403 insufficient_scope`. Ver [Escopos da chave](/api/autenticacao#por-que-publicar-tem-um-escopo-à-parte).
+
+  **Idempotência**
+  - Novo erro `409 idempotency_key_failed` em toda rota que aceita `Idempotency-Key`: se a primeira chamada com a chave voltou `5xx` ou caiu no meio, ela pode ter tido efeito, e repetir com a mesma chave responde esse erro. Confira o recurso e, se for repetir, use uma chave nova.
+  - A resposta guardada só volta para a mesma chave de API que fez a primeira chamada. A mesma `Idempotency-Key` mandada por outra chave de API da marca responde `422 idempotency_key_reused`.
+  - Ver [Idempotência](/api/referencia/introducao#idempotência).
+</Update>
+
+<Update label="Entrega e pós-entrega pela API (beta)" description="12 de novembro de 2026">
+  Envio de produto, post, cupom do creator, comentários, exportação e as leituras de resultado e rastreio da campanha. Ver [Entrega e pós-entrega](/api/referencia/entrega-e-pos-entrega).
+
+  <Note>
+    Em beta e **ainda não publicado em produção**: as rotas abaixo estão em desenvolvimento.
+  </Note>
+
+  **Entrega e post**
+  - `POST` e `GET /missions/{id}/product-shipment`: marca o envio do produto, com o código de rastreio (o dos Correios é normalizado; outras transportadoras são aceitas como vieram), e lê o estado: `shipped_at`, `received_at`, `received_photo_url` (assinada, 10 minutos), `carrier_status` e `carrier_delivered_at`. O recebimento é declarado pelo creator no app.
+  - `PUT /missions/{id}/post-url`: link do post, só depois da entrega aprovada (`409 invalid_transition` com `details[].code = "mission_not_approved"`). `PUT /missions/{id}/posted-at`: data do post, com o módulo de liberação de postagem (`403 module_disabled`).
+  - `POST /missions/{id}/post-check/accept` e `POST /post-checks/accept`: aceite da conferência do post.
+  - `GET /missions/{id}/script-file`, `GET /missions/{id}/delivery-download`, `POST /missions/{id}/notify` e `POST /missions/{id}/sync-metrics`.
+
+  **Cupons da campanha**
+  - `POST /missions/{id}/coupon`, `GET` e `POST /campaigns/{id}/coupon-pool`, `POST /campaigns/{id}/coupons/bulk` e `GET /campaigns/{id}/coupon-sales`. Criar cupom exige `Idempotency-Key`, e a repetição volta com `Idempotent-Replayed: true`.
+  - `POST /campaigns/{id}/coupon-commission/budget`: verba de comissão do cupom, com `campaigns:spend`.
+
+  **Comentários e exportação**
+  - `GET` e `POST /missions/{id}/comments`, nos canais `creator` e `agency`.
+  - `GET /campaigns/{id}/export`: qualquer etapa do `/stages`, em CSV ou JSON (`{ columns, rows, total }`), até 2000 linhas.
+
+  **Visões, resultados e rastreio**
+  - `GET /campaigns/{id}/counts`, `/segments`, `/suggestions`, `/results`, `/results/timeseries`, `/results/creators`, `/results/creators/{creator_id}/deliveries`, `/results/traffic`, `/results/traffic/events`, `/tracking`, `/creator-invoices` e `/ai-rubric`.
+  - `PUT /conversion-events`, `PUT /campaigns/{id}/tracking/destination`, `POST /campaigns/{id}/short-links`, `PUT /campaigns/{id}/ai-rubric` e `POST /campaigns/{id}/sync-metrics` (com `GET .../sync-metrics/jobs/{job_id}`).
+
+  **Webhooks**
+  - `mission.product_received`: o creator confirmou no app que recebeu o produto. Sai uma vez.
+  - `mission.product_delivered_by_carrier`: o rastreio dos Correios marcou o produto como entregue. Não é o recebimento: o creator ainda precisa confirmar.
+  - Os dois trazem `data.product` (`shipped_at`, `received_at`, `has_photo`, `tracking_code`), nunca a foto nem o endereço. Ver [Eventos de missão](/api/webhooks/eventos/missoes#produto-enviado-pela-marca).
+  - O rastreio automático dos Correios está em beta e desligado por padrão, **disponível sob ativação**. Sem ele, `carrier_status` fica `null` e `mission.product_delivered_by_carrier` não sai.
+</Update>
+
+<Update label="Quadro da campanha pela API (beta)" description="12 de novembro de 2026">
+  A chave passa a operar o quadro do acordo, com as mesmas transições e os mesmos avisos do painel. Ver [Operar o quadro](/api/referencia/quadro) e o guia [Agente cria e acompanha campanha](/api/guias/agente-cria-campanha).
+
+  <Note>
+    Em beta e **ainda não publicado em produção**: as rotas abaixo estão em desenvolvimento.
+  </Note>
+
+  **Candidaturas e creators**
+  - `POST /campaigns/{id}/applications/{application_id}/approve`, `/reject` e `/restore`, e `POST /campaigns/{id}/applications/bulk` (`approve` responde `202` com `job_id`; `reject` responde `200`).
+  - Contraproposta antes de aprovar: `PATCH .../proposed-deadline` e `PATCH .../proposed-amount`.
+  - No acordo, por creator: `PATCH /campaigns/{id}/creators/{creator_id}/scope-option`, `/briefing` e `/scope-amount`, e `POST /campaigns/{id}/creators/bulk/exclude`.
+
+  **Entregas**
+  - `POST /missions/{id}/approve`, `/request-changes` e `/reject`; `POST /missions/{id}/assets/{asset}/review` (roteiro, capa ou legenda) e `PATCH /missions/{id}/asset-version`; `POST /mission-combos/{id}/status`.
+  - Em lote: `POST /campaigns/{id}/missions/bulk-status` (pedir alteração ou recusar) e `POST /missions/approve-pending`.
+  - Conforme a campanha, aprovar a entrega pede `posted_at` (`422 approval_posted_at_required`).
+
+  **Prazo, briefing, remoção e reconvite**
+  - `PATCH /missions/{id}/deadline` e `POST /missions/bulk/deadline`: mudam `dates.delivery_deadline_at`, só com a missão em `fazendo` ou expirada por prazo. Durante uma alteração vale `change_deadline_at`.
+  - `POST /missions/{id}/send` e `POST /missions/bulk/send`; `DELETE /missions/{id}`, `POST /missions/bulk/remove` e `POST /missions/{id}/restore`; `GET /missions/{id}/reinvite-eligibility` e `POST /missions/{id}/reinvite`.
+
+  **Regras**
+  - Transição que não cabe responde `409 invalid_transition`, nunca `200` sem efeito.
+  - Subir cachê pede `campaigns:spend`. Ação que depende de um módulo não liberado responde `403 module_disabled`.
+  - Lotes respondem `202` com `job_id`; acompanhe em `GET /bulk-jobs/{id}` até `done` ou `failed`, com as falhas por item. A renovação por creator também.
+  - `GET /missions/{id}` traz `dates.delivery_deadline_at`.
+</Update>
+
+<Update label="Entrega por rede e formato" description="12 de novembro de 2026">
+  A entrega passa a ser descrita por rede e formato, no lugar do código de plataforma.
+
+  - **Leitura**: `Campaign.platforms` vira `networks` (as redes da campanha, sem repetir: `instagram`, `tiktok`, `youtube`, `x`, `ugc` ou `repost`). `blocks[]` do detalhe traz `network` e `formats` no lugar de `platform` e `video_format`. `block` da missão traz `network` no lugar de `platform`. Quem lê `platforms` ou `platform` precisa passar a ler os campos novos.
+  - **Escrita** (beta, ainda não publicada): cada item de `deliverables[]` usa `network`, `formats` e `key` no lugar de `platform`, `delivery_formats`, `instagram_formats`, `youtube_formats` e `platform_key`. `scope_options[].items[].deliverable_key` e `repost_source.deliverable_key` apontam para o `key`.
+  - Formatos por rede: `instagram` aceita `reels`, `collab`, `stories` e `feed`; `tiktok`, `video`; `youtube`, `long` e `shorts`; `x`, `post`, `thread` e `video`; `ugc`, `video` e `vertical`; `repost` não tem formato. Formato fora da rede responde `422 invalid_delivery_format`.
+  - Os webhooks não mudam: `data.mission.platform` continua igual.
+</Update>
+
+<Update label="Escrita de campanhas (beta)" description="12 de novembro de 2026">
+  A chave passa a criar e operar acordos, com as mesmas regras do painel. Ver [Criar e gerenciar campanhas](/api/referencia/campanhas-escrita) e o guia [Agente cria e acompanha campanha](/api/guias/agente-cria-campanha).
+
+  <Note>
+    Em beta e **ainda não publicado em produção**: as rotas abaixo estão em desenvolvimento. Esta entrada avisa o que muda antes de entrar no ar.
+  </Note>
+
+  **Campanhas**
+  - `POST /campaigns/validate`: confere o corpo sem gravar. Responde `valid`, `can_publish`, `missing`, `issues[]` (`path`, `code`, `message`, `blocking`), `publish_cost_cents` e `balance_cents`.
+  - `POST /campaigns` e `PATCH /campaigns/{id}`: criam e editam acordos com o corpo completo do painel: `deliverables[]`, `scope_options[]` e `briefings[]`. `kind` é opcional e só aceita `agreement`. Marca com `campaign_model: "campaign"` e campanha avulsa legada ficam só na leitura: escrita nelas responde `422 unsupported_for_campaign_model`. Sem `status`, a criação publica: mande `status: "draft"` para o rascunho.
+  - `POST /campaigns/{id}/status`: `review` publica, `approved` retoma a pausada, `paused` pausa, `completed` encerra, `archived` arquiva e `active` restaura a arquivada. Publicar sem saldo deixa a campanha em `review` até o saldo cobrir. Transição que não se aplica responde `409 invalid_transition`; entrega em andamento responde `409 blocking_missions`, e `force_close` encerra mesmo assim.
+  - `DELETE /campaigns/{id}`: exclui como o painel, que arquiva. A campanha continua legível com `status: "archived"` e volta com `status: "active"`. Com entrega em andamento, encerre antes com `force_close` no `/status`.
+  - `POST /campaigns/{id}/renew`: renova com datas novas, sempre em `blocks` ou `scope_options`. Com `creator_ids`, responde `202` com `job_id`.
+  - Leituras de apoio: `GET /campaigns/{id}/publish-cost`, `GET /campaigns/{id}/briefings` e `GET /campaigns/proposal-suggestions`.
+
+  - Convidar creators pela chave ainda não existe: chega junto com a busca de creators.
+
+  **Arquivos**
+  - `POST /uploads` devolve uma URL assinada para enviar o arquivo por `PUT` e o `upload_ref` para usar no corpo da campanha. `POST /uploads/import` busca o arquivo por link `https` ou `base64`. `POST /campaigns/{id}/briefings/attachments` anexa um arquivo a um briefing do acordo.
+  - `upload_ref` de outra marca ou de outra finalidade responde `422 invalid_upload_ref`.
+
+  **Escopos da chave**
+  - A chave ganha escopos de escrita, escolhidos na criação: `campaigns:write`, `campaigns:spend` e `chat:write`. `communities:write` e `ads:write` ficam reservados, em breve, ainda sem rotas. Ler não precisa de escopo. Ver [Escopos da chave](/api/autenticacao#escopos-da-chave).
+  - `campaigns:spend` é exigido para publicar, renovar e editar acordo em `review`.
+  - Sem o escopo, a API responde `403 insufficient_scope` com `details[0].required_scope`.
+  - **A rota de mensagem ao creator passa a exigir `chat:write`.** As chaves que já existem receberam `chat:write` e continuam enviando como antes: nada a fazer.
+  - **Criação de chave**: corpo inválido passa a responder `422 validation_failed`, com o campo em `details`, em vez de `400`. Se a sua automação cria chaves e trata o `400`, passe a tratar o `422`.
+
+  **Idempotência**
+  - Cabeçalho `Idempotency-Key`, de 1 a 255 caracteres: obrigatório em `POST /campaigns`, `/renew`, `/briefings/attachments` e `/uploads/import`; opcional em `PATCH /campaigns/{id}`, `POST /campaigns/{id}/status` e no envio de mensagem. Repetir a mesma chave com a mesma requisição em até 24 horas, por marca, devolve a primeira resposta com `Idempotent-Replayed: true`. Ver [Idempotência](/api/referencia/introducao#idempotência).
+  - Novos erros: `422 idempotency_key_required`, `422 idempotency_key_reused` e `409 idempotency_in_progress`.
+
+  **Campos novos em respostas que já existem**
+  - `GET /me` traz `api_key.scopes` e `campaign_model` (`agreement` ou `campaign`); a escrita exige `agreement`.
+  - `GET /campaigns/{id}` traz `briefings[]`, os briefings do acordo com os anexos em URL assinada.
+  - O envelope de erro aceita em `details[]` os campos `required_scope`, `code`, `counts` e `blocking_block_id`.
+  - Campos aditivos: quem só lê não precisa mudar nada.
+
+  **SDK**
+  - `@conty/node` ganha `createContyApi({ apiKey })`, com `conty.campaigns.validate`, `create`, `update`, `setStatus`, `remove`, `renew`, `publishCost` e `attachBriefingFile`, além das leituras.
+</Update>
+
+<Update label="Webhooks de conversa" description="11 de novembro de 2026">
+  Quatro eventos novos para o que o creator faz na conversa da campanha ou do acordo. Ver [Eventos de conversa](/api/webhooks/eventos/conversas).
+
+  - `message.received`: o creator mandou uma mensagem. Em reply, `data.message.reply_to_id` traz o `id` da mensagem respondida.
+  - `message.edited`: o creator editou uma mensagem, com `data.message.edited_at`.
+  - `message.reaction_added` e `message.reaction_removed`: o creator pôs ou tirou uma reação, com `data.reaction.emoji` e o `id` da mensagem reagida em `data.message.id`.
+  - Os eventos trazem `data.conversation.id`, o mesmo de `GET /conversations`, e nunca o texto da mensagem. Mensagem, edição e reação da marca, da agência, de DM fora de campanha e de comunidade não geram evento.
+  - Para receber, marque os eventos no endpoint em **Desenvolvedores → Webhooks**. Endpoints que já existem não passam a recebê-los sozinhos.
+</Update>
+
+<Update label="Vendas por RevenueCat e Asaas" description="11 de novembro de 2026">
+  Conectores RevenueCat e Asaas: cada venda paga com o código de um creator, compra avulsa ou cobrança de assinatura, vira venda do cupom dele, com comissão. Ver [RevenueCat](/api/referencia/conectores/revenuecat) e [Asaas](/api/referencia/conectores/asaas).
+
+  **Conectores**
+  - [RevenueCat](/api/referencia/conectores/revenuecat): a marca cola a chave secreta da API v2 e o ID do projeto (`proj…`) em **Plugins → Conectores** e cadastra no RevenueCat a URL do webhook e o `Authorization` que a Conty mostra uma vez só. O app grava o código do cupom no atributo `coupon` do cliente, com o SDK do RevenueCat, antes da compra. Contam assinaturas (`INITIAL_PURCHASE`, `RENEWAL`) e compras avulsas (`NON_RENEWING_PURCHASE`).
+  - [Asaas](/api/referencia/conectores/asaas): a marca cola a chave de API e a Conty cadastra o webhook de cobranças na conta sozinha, autenticado pelo header `asaas-access-token`. O código do cupom vai no `externalReference` da cobrança avulsa, do link de pagamento ou da assinatura.
+  - Cada cobrança é conferida no provedor com a chave da marca antes de virar venda. Sandbox, moeda diferente de BRL, valor zero, cobrança não confirmada e código desconhecido ficam sem venda.
+  - O valor da venda é o líquido: `price_in_purchased_currency × takehome_percentage` no RevenueCat, `netValue` no Asaas. A venda aparece no cupom com `external_id` `sub:revenuecat:{transaction_id}` ou `sub:asaas:{id da cobrança}`.
+  - Reembolso e chargeback cancelam a venda e estornam a comissão pelas regras do cupom.
+
+  **Acordo**
+  - Campo **Cobranças de assinatura que comissionam** no passo financeiro: vale só para cobranças recorrentes. Vazio comissiona todas as cobranças de cada assinante; N comissiona até a N-ésima, e as seguintes ficam sem venda. Compra avulsa sempre comissiona, com cupom ativo e o código do creator.
+</Update>
+
+<Update label="API de eventos" description="6 de novembro de 2026">
+  Envio de eventos de conversão (cadastro, compra e outros) do site, do app ou do servidor da marca, atribuídos ao creator e à campanha. Ver [Eventos de conversão](/api/guias/eventos-de-conversao).
+
+  **API de eventos**
+  - `POST https://conty.link/v1/events`: recebe um lote de 1 a 100 eventos e responde `202` com `accepted`. A gravação é em segundo plano. Fica fora da API pública e da aba Referência.
+  - Par de chaves criado junto em **Desenvolvedores → Eventos**: a pública, `cpk_…`, vai no site e no app; a secreta, `cev_…`, só no servidor. A pública aparece no painel a qualquer momento; a secreta aparece uma vez só, na criação, e a Conty guarda só o hash e os 4 últimos caracteres.
+  - Origens permitidas na chave pública: até 10, no formato `https://dominio` (com porta, se precisar) ou `http://localhost`. Sem nenhuma, qualquer origem é aceita. Envio de outra origem recebe `403 origin_not_allowed`.
+  - Chave pública ignora `value_cents` e grava o `external_id` como `pk:<id>`. Compras e receita saem do servidor, com a chave secreta.
+  - Evento: `event`, `occurred_at`, `external_id`, `link_code`, `utm_campaign`, `utm_content`, `value_cents` e `properties`. Atribuição pelo `link_code` ou pelo par `utm_campaign` + `utm_content` (`cr_…`); sem atribuição, o evento conta só no total da marca. Reenvio com o mesmo `external_id` não duplica.
+  - Evento é métrica: `value_cents` aparece como receita de evento em **Tráfego** e não gera venda de cupom nem comissão.
+  - Limites: 600 requisições por minuto por IP, `properties` até 2048 bytes, `value_cents` até `2147483647`. Erros `400 invalid_json`, `401 invalid_event_key`, `403 origin_not_allowed`, `413 event_batch_too_large`, `422 invalid_event_batch` (com `details.index`), `429 rate_limited` (com `Retry-After`) e `503 ingest_unavailable`.
+
+  **SDK**
+  - Script do site em `https://conty.link/sdk.js`, `@conty/web`, `@conty/react-native` e `@conty/node`. Os três primeiros usam a chave pública e guardam as UTMs do link do creator; o `@conty/node` usa a chave secreta e tenta de novo em falha de rede, `429` e `5xx`. Ver [SDK de eventos](/api/sdk/visao-geral).
+</Update>
+
 <Update label="Chat com o creator" description="4 de novembro de 2026">
   Envio de mensagem de texto ao creator pela chave, na conversa da campanha, e leitura das conversas e do histórico.
 
