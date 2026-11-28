@@ -478,8 +478,12 @@
               {
                 "group": "Operação",
                 "pages": [
+                  "marcas/visao-geral",
                   "marcas/criadores",
+                  "marcas/icones-das-redes",
                   "marcas/revisoes",
+                  "marcas/desfazer-aprovacao",
+                  "marcas/curadoria-acoes-em-massa",
                   "marcas/comunidades",
                   "marcas/resultados"
                 ]
