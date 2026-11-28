@@ -77,6 +77,7 @@ A API pública, os webhooks e os cupons são liberados por marca pela Conty. Fal
 |---|---|
 | API pública e webhooks | `403 open_api_disabled` em toda rota de `/public/v1` |
 | Cupons | `403 coupons_disabled` nas rotas `/coupons` |
+| Busca de creators | `403 creator_search_disabled` em `GET /creators/search`. Vale a liberação da empresa dona da chave: com chave de agência, basta a agência ter |
 | Comissão do cupom | O cupom e as vendas funcionam, com `commission_rate_bps` e `commission_cents` em `null`. Cupom só de rastreio segue com taxa `0` |
 
 ```json 403

@@ -10,6 +10,23 @@ keywords:
 
 Toda mudança no contrato da API aparece aqui antes de entrar no ar. Enquanto a API estiver em beta, mudanças que quebram compatibilidade são possíveis, sempre anunciadas nesta página com o que muda e o que fazer.
 
+<Update label="Busca de creators" description="25 de novembro de 2026">
+  A curadoria de creators sai do painel: a API busca na base da Conty com os mesmos filtros e a mesma ordenação da aba Creators. Ver [Buscar creators](/api/referencia/creators).
+
+  **Creators**
+  - `GET /creators/search`: os filtros da aba Creators, todos no servidor. Busca e rede: `q` (nome, @ ou link do perfil) e `platforms`. Localização: `state`, `city`, `country` e `locations`. Perfil: `niches`, `gender`, `profession`, `occupation`, `profile_type`, `followers_min`, `followers_max`, `age_min` e `age_max`. Métricas: `min_engagement_rate`, `max_sponsored_rate`, `audience_gender` e `brand_safety`. Exclusões: `exclude_in_brand_campaigns`, `exclude_campaign_ids`, `exclude_in_any_list`, `exclude_list_ids`, `exclude_community_id`, `exclude_niches`, `exclude_locations`, `exclude_genders` e `exclude_suspect_audience` (Conty Shield). Ordem: `sort` (`relevance`, `pro_first`, `rating_desc`, `followers_desc`, `followers_asc`). Parâmetro desconhecido ou inválido responde `422 validation_failed`.
+  - Resposta `{ data, has_more, next_cursor, total }`. Cada item traz só o perfil público, as métricas e as redes (`networks`); nada de e-mail, telefone, documento ou endereço. O `id` do creator é o mesmo de `target_creator_ids[]` no acordo.
+  - Paginação por cursor, com `limit` de 1 a 50 (padrão 20) e até **500 resultados por busca**. `total` traz o número real, mesmo acima de 500. Cursor de outros filtros, de outro `sort` ou de outro `limit`, ou que passaria do teto, responde `422 validation_failed` com `details[0].path = "cursor"`.
+  - Chave de marca, ou chave de agência com `X-Conty-Brand-Id` do cliente: a busca roda no cliente, com as exclusões dele.
+
+  **Liberação e limite**
+  - Módulo novo, liberado pela Conty na empresa **dona da chave** (a agência, no caso de chave de agência). Desligado, a rota responde `403 creator_search_disabled`. Ver [Disponibilidade](/api/autenticacao#disponibilidade).
+  - Limite próprio de **30 buscas por minuto por chave**, além das 120 requisições por minuto do limite geral. Todos os clientes de uma agência dividem a mesma cota. Acima dele, `429 rate_limited` com `Retry-After`. Ver [Limites](/api/referencia/introducao#limites).
+
+  **OpenAPI**
+  - Tag nova `Creators`, com os schemas `CreatorSearchPage`, `CreatorSearchItem` e `CreatorSearchNetwork`, e o erro `creator_search_disabled`.
+</Update>
+
 <Update label="Chave de agência e código do anúncio" description="23 de novembro de 2026">
   A agência passa a integrar os clientes com uma chave só, e o código do anúncio do creator ganha evento. Ver o guia [Operar clientes como agência](/api/guias/agencia-operar-clientes).
 

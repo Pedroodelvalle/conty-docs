@@ -23,7 +23,8 @@ A agência usa **uma chave só** para todos os clientes. Em cada chamada, você 
 - **A chave é criada no painel da agência**, não no do cliente. Em **Plugins → Integrações**, clique em **Nova chave**, escolha os [escopos](/api/autenticacao#escopos-da-chave) e copie a chave na hora. Os escopos da chave valem para todos os clientes.
 - **A API pública liberada para a agência.** Sem liberação, toda rota responde `403 open_api_disabled`. Sem plano ativo, `403 plan_required`.
 - **Os recursos de cada cliente seguem a liberação do cliente.** Com o cabeçalho, a API usa os módulos da marca: se o cliente não tem cupons liberados, as rotas `/coupons` respondem `403 coupons_disabled` para ele.
-- **Uma cota para todos os clientes.** O [limite de requisições](/api/referencia/introducao#limites) é por chave: todos os clientes operados com a chave da agência dividem a mesma cota de 120 requisições por minuto.
+- **A busca de creators segue a liberação da agência.** Ao contrário dos outros recursos, a [busca de creators](/api/referencia/creators) confere o módulo na agência dona da chave, não no cliente. Sem ele, `403 creator_search_disabled`.
+- **Uma cota para todos os clientes.** O [limite de requisições](/api/referencia/introducao#limites) é por chave: todos os clientes operados com a chave da agência dividem a mesma cota de 120 requisições por minuto, e a de 30 buscas de creators por minuto.
 - **Cupons sem o cabeçalho são da agência.** Sem `X-Conty-Brand-Id`, as rotas `/coupons` respondem sobre a própria agência, não sobre um cliente.
 
 ## Como pegar o ID da empresa
